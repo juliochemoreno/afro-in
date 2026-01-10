@@ -1,0 +1,524 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import {
+  Users,
+  DollarSign,
+  FileText,
+  Calendar,
+  User,
+  Mail,
+  CreditCard,
+  MessageSquare,
+} from "lucide-astro";
+
+// Auth removed as requested
+
+let donors: any[] = [];
+let error = null;
+let stats = {
+  totalDonors: 0,
+  totalAmount: 0,
+  confirmedDonors: 0,
+};
+
+// Always fetch data
+try {
+  const runtime = Astro.locals.runtime;
+  if (runtime && runtime.env.DB) {
+    // Fetch donors from D1
+    const result = await runtime.env.DB.prepare(
+      "SELECT * FROM donors ORDER BY created_at DESC"
+    ).all();
+    donors = result.results || [];
+
+    // Calculate basic stats
+    stats.totalDonors = donors.length;
+    stats.confirmedDonors = donors.filter(
+      (d: any) => d.status === "completed"
+    ).length;
+    stats.totalAmount = donors
+      .filter((d: any) => d.status === "completed")
+      .reduce((sum: number, d: any) => sum + (Number(d.amount) || 0), 0);
+  } else {
+    // Mock data for local dev
+    donors = [
+      {
+        created_at: new Date().toISOString(),
+        name: "Donante de Prueba",
+        email: "test@example.com",
+        phone: "+57 300 123 4567",
+        amount: 50000,
+        status: "completed",
+        message: "¡Mucha fuerza con el proyecto!",
+      },
+      {
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        name: "Otro Donante",
+        email: "otro@example.com",
+        amount: 20000,
+        status: "pending_payment",
+        message: "",
+      },
+      {
+        created_at: new Date(Date.now() - 172800000).toISOString(),
+        name: "Maria Gonzalez",
+        email: "maria@example.com",
+        amount: 100000,
+        status: "completed",
+        message: "Desde Cali con amor ❤️",
+      },
+    ];
+    // Recalc stats for mock
+    stats.totalDonors = donors.length;
+    stats.confirmedDonors = donors.filter(
+      (d: any) => d.status === "completed"
+    ).length;
+    stats.totalAmount = donors
+      .filter((d: any) => d.status === "completed")
+      .reduce((sum: number, d: any) => sum + (Number(d.amount) || 0), 0);
+
+    error = "Modo Desarrollo: Mostrando datos de prueba.";
+  }
+} catch (e: any) {
+  console.error("Error fetching donors:", e);
+  error = e.message;
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+  }).format(amount);
+}
+
+function formatDate(dateString: string) {
+  if (!dateString) return "-";
+  // Force Colombia Timezone
+  return new Date(dateString).toLocaleString("es-CO", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+---
+
+<Layout title="Admin Donadores | AFRO IN">
+  <main class="admin-page">
+    <div class="container">
+      <header class="admin-header">
+        <div class="header-content">
+          <div>
+            <h1>Panel de Administración</h1>
+            <p>Gestión de Donadores - 1 Millón de Corazones</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard">
+        {
+          error && (
+            <div class="error-banner">
+              <p>⚠️ {error}</p>
+            </div>
+          )
+        }
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon bg-primary">
+              <DollarSign size={24} />
+            </div>
+            <div class="stat-info">
+              <h3>Total Recaudado</h3>
+              <p class="stat-value text-gradient">
+                {formatCurrency(stats.totalAmount)}
+              </p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-success">
+              <Users size={24} />
+            </div>
+            <div class="stat-info">
+              <h3>Donantes Confirmados</h3>
+              <p class="stat-value">{stats.confirmedDonors}</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-dark">
+              <FileText size={24} />
+            </div>
+            <div class="stat-info">
+              <h3>Total Registros</h3>
+              <p class="stat-value">{stats.totalDonors}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Donors Table -->
+        <div class="table-card">
+          <div class="table-header">
+            <h2>Listado de Donaciones</h2>
+            <span class="badge-count">{donors.length} registros</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="donors-table">
+              <thead>
+                <tr>
+                  <th
+                    ><div class="th-content">
+                      <Calendar size={14} /> Fecha (COL)
+                    </div></th
+                  >
+                  <th
+                    ><div class="th-content"><User size={14} /> Nombre</div></th
+                  >
+                  <th
+                    ><div class="th-content">
+                      <Mail size={14} /> Contacto
+                    </div></th
+                  >
+                  <th
+                    ><div class="th-content">
+                      <CreditCard size={14} /> Monto
+                    </div></th
+                  >
+                  <th>Estado</th>
+                  <th
+                    ><div class="th-content">
+                      <MessageSquare size={14} /> Mensaje
+                    </div></th
+                  >
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  donors.length > 0 ? (
+                    donors.map((donor: any) => (
+                      <tr class={donor.status}>
+                        <td class="text-sm text-light whitespace-nowrap">
+                          {formatDate(donor.created_at)}
+                        </td>
+                        <td class="font-bold text-dark">{donor.name}</td>
+                        <td>
+                          <div class="contact-info">
+                            <span class="email">{donor.email}</span>
+                            {donor.phone && (
+                              <span class="phone">{donor.phone}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td class="amount">{formatCurrency(donor.amount)}</td>
+                        <td>
+                          <span class={`status-badge ${donor.status}`}>
+                            {donor.status === "completed"
+                              ? "Completado"
+                              : donor.status === "pending_payment"
+                                ? "Pendiente"
+                                : donor.status}
+                          </span>
+                        </td>
+                        <td class="message-cell" title={donor.message}>
+                          {donor.message ? (
+                            <span class="msg-content">{donor.message}</span>
+                          ) : (
+                            <span class="text-light">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colspan="6" class="empty-state">
+                        <div class="empty-content">
+                          <Users size={48} className="opacity-20 mb-2" />
+                          <p>No hay donadores registrados aún.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .admin-page {
+    padding: 100px 0 40px; /* Reduced padding */
+    min-height: 100vh;
+    background: var(--color-cream);
+  }
+
+  .admin-header {
+    margin-bottom: 2rem; /* Reduced margin */
+  }
+
+  .admin-header h1 {
+    font-size: 2rem; /* Slighly smaller title */
+    color: var(--color-secondary);
+    margin-bottom: 0.25rem;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem; /* Reduced gap from 1.5rem */
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--color-white);
+    padding: 1.25rem; /* Reduced padding */
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: transform var(--transition-normal);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .stat-icon {
+    width: 48px; /* Reduced from 64px */
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .bg-primary {
+    background: var(--gradient-gold);
+  }
+  .bg-success {
+    background: var(--color-success);
+  }
+  .bg-dark {
+    background: var(--color-secondary);
+  }
+
+  .stat-info h3 {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    margin-bottom: 0.15rem;
+    font-weight: 500;
+  }
+
+  .stat-value {
+    font-size: 1.5rem; /* Reduced from 1.8rem */
+    font-weight: 800;
+    color: var(--color-secondary);
+    line-height: 1.1;
+  }
+
+  .text-gradient {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Table Card */
+  .table-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--color-cream-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .table-header h2 {
+    font-size: 1.25rem;
+    color: var(--color-secondary);
+  }
+
+  .badge-count {
+    background: var(--color-cream);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    font-weight: 600;
+  }
+
+  /* Table Styles */
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .donors-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+  }
+
+  .donors-table th,
+  .donors-table td {
+    padding: 1.25rem 2rem;
+    text-align: left;
+    border-bottom: 1px solid var(--color-cream-dark);
+  }
+
+  .donors-table th {
+    background: #fcfcfc;
+    font-weight: 600;
+    color: var(--color-text-light);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .th-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .donors-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .donors-table tr:hover td {
+    background-color: #fafafa;
+  }
+
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .email {
+    font-size: 0.95rem;
+  }
+  .phone {
+    font-size: 0.8rem;
+    color: var(--color-text-light);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .amount {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-primary);
+    font-size: 1.1rem;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .status-badge.completed {
+    background: rgba(45, 106, 79, 0.1);
+    color: var(--color-success);
+    border: 1px solid rgba(45, 106, 79, 0.2);
+  }
+
+  .status-badge.pending_payment {
+    background: rgba(255, 193, 7, 0.1);
+    color: #bfa004;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+  }
+
+  .message-cell {
+    max-width: 250px;
+  }
+
+  .msg-content {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  .text-light {
+    color: var(--color-text-light);
+  }
+  .text-dark {
+    color: var(--color-secondary);
+  }
+  .text-sm {
+    font-size: 0.9rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem !important;
+  }
+
+  .empty-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--color-text-light);
+  }
+
+  .error-banner {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .donors-table th,
+    .donors-table td {
+      padding: 1rem;
+    }
+
+    .message-cell {
+      display: none; /* Hide messages on very small screens to save space */
+    }
+  }
+</style>
