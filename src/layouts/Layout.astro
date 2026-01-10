@@ -5,11 +5,15 @@ import "../styles/cart.css";
 interface Props {
   title: string;
   description?: string;
+  image?: string;
+  canonicalURL?: string;
 }
 
 const {
   title,
-  description = "1 Millón de Corazones - Apoyando el arte afro independiente",
+  description = "AFRO IN - 1 Millón de Corazones. Apoyando el arte afro independiente y la cultura en el Caribe Colombiano.",
+  image = "/blog-placeholder-about.jpg",
+  canonicalURL = new URL(Astro.url.pathname, Astro.site).toString(),
 } = Astro.props;
 
 import { ClientRouter } from "astro:transitions";
@@ -23,15 +27,51 @@ import { ClientRouter } from "astro:transitions";
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO Meta Tags -->
+    <title>{title} | AFRO IN</title>
+    <meta name="title" content={`${title} | AFRO IN`} />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url} />
+    <meta property="og:title" content={`${title} | AFRO IN`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, Astro.url)} />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={Astro.url} />
+    <meta property="twitter:title" content={`${title} | AFRO IN`} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={new URL(image, Astro.url)} />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json" is:inline>
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "AFRO IN",
+        "url": "https://afroin.com",
+        "logo": "https://afroin.com/favicon.svg",
+        "description": "Movimiento Cultural AFRO IN - 1 Millón de Corazones",
+        "sameAs": [
+          "https://instagram.com/afro_in_",
+          "https://facebook.com/afroincolombia"
+        ]
+      }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <title>{title} | AFRO IN</title>
     <ClientRouter />
   </head>
   <body>
