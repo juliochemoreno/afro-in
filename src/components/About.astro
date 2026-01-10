@@ -1,0 +1,421 @@
+---
+import {
+  Drama,
+  Music,
+  Shirt,
+  BookOpen,
+  School,
+  Plane,
+  Tent,
+  BookText,
+  ArrowRight,
+  Calendar,
+  MapPin,
+  Palette,
+  Users,
+} from "lucide-astro";
+
+const features = [
+  {
+    Icon: Drama,
+    title: "Arte Afro",
+    description:
+      "Danza tradicional, contemporánea y moderna de las raíces africanas y afro-colombianas.",
+  },
+  {
+    Icon: Music,
+    title: "Música en Vivo",
+    description:
+      "Tambores, marimba, y ritmos ancestrales que conectan con nuestras raíces.",
+  },
+  {
+    Icon: Shirt,
+    title: "Moda Africana",
+    description:
+      "Desfiles de moda con diseños únicos que celebran la identidad afro.",
+  },
+  {
+    Icon: BookOpen,
+    title: "Formación",
+    description: "Talleres y programas educativos en colegios y comunidades.",
+  },
+];
+
+const stats = [
+  { number: 10, suffix: "+", label: "Años de Historia", Icon: Calendar },
+  { number: 8, suffix: "", label: "Ediciones en Palenque", Icon: MapPin },
+  { number: 100, suffix: "+", label: "Artistas Participantes", Icon: Palette },
+  { number: 5000, suffix: "+", label: "Asistentes", Icon: Users },
+];
+---
+
+<section class="about section" id="sobre">
+  <div class="container">
+    <div
+      class="about-header text-center animate-fade-in-up"
+      style="animation-delay: 0.1s"
+    >
+      <span class="section-badge">Nuestra Misión</span>
+      <h2 class="section-title">¿Qué es AFRO IN?</h2>
+      <p class="section-subtitle">
+        Somos un movimiento cultural que busca reunir <strong
+          >1 millón de corazones</strong
+        >
+        comprometidos con el apoyo al arte afro independiente en Colombia y el mundo.
+      </p>
+    </div>
+
+    <div class="about-content">
+      <div class="about-text animate-fade-in-up" style="animation-delay: 0.3s">
+        <h3>El Poder de la Comunidad</h3>
+        <p>
+          Imagina 1 millón de personas conscientes de que con solo <strong
+            >$5 USD</strong
+          >
+          pueden cambiar el mundo. Multiplicado, eso son recursos para:
+        </p>
+        <ul class="impact-list">
+          <li>
+            <School size={20} class="impact-icon" /> Construir escuelas de danza afrolatina
+          </li>
+          <li>
+            <Plane size={20} class="impact-icon" /> Traer artistas internacionales
+            de África
+          </li>
+          <li>
+            <Tent size={20} class="impact-icon" /> Organizar festivales en comunidades
+          </li>
+          <li>
+            <BookText size={20} class="impact-icon" /> Crear programas educativos
+            en colegios
+          </li>
+        </ul>
+        <a href="#unirse" class="btn btn-primary"
+          ><span>Quiero Ser Parte</span> <ArrowRight size={20} /></a
+        >
+      </div>
+
+      <div class="about-features">
+        {
+          features.map((feature) => (
+            <div class="feature-card card">
+              <span class="feature-icon">
+                <feature.Icon size={40} />
+              </span>
+              <h4>{feature.title}</h4>
+              <p>{feature.description}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="about-stats">
+      {
+        stats.map((stat) => (
+          <div class="stat-item">
+            <span class="stat-icon">
+              <stat.Icon size={24} />
+            </span>
+            <span
+              class="stat-number"
+              data-target={stat.number}
+              data-suffix={stat.suffix}
+            >
+              {stat.number}
+              {stat.suffix}
+            </span>
+            <span class="stat-label">{stat.label}</span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .about {
+    background: var(--color-white);
+  }
+
+  .section-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(227, 28, 37, 0.1);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .section-subtitle {
+    font-size: 1.2rem;
+    color: var(--color-text-light);
+    max-width: 700px;
+    margin: 0 auto var(--space-xl);
+  }
+
+  .section-subtitle strong {
+    color: var(--color-primary);
+  }
+
+  .about-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+    align-items: start;
+    margin-bottom: var(--space-2xl);
+  }
+
+  .about-text h3 {
+    font-size: 1.75rem;
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .about-text p {
+    color: var(--color-text-light);
+    margin-bottom: var(--space-lg);
+  }
+
+  .about-text strong {
+    color: var(--color-primary);
+  }
+
+  .impact-list {
+    list-style: none;
+    margin-bottom: var(--space-xl);
+  }
+
+  .impact-list li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    font-size: 1.1rem;
+    color: var(--color-text);
+  }
+
+  .impact-icon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+
+  .about-features {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  .feature-card {
+    text-align: center;
+  }
+
+  .feature-icon {
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-md);
+    color: var(--color-primary);
+  }
+
+  .feature-card h4 {
+    font-size: 1.1rem;
+    color: var(--color-secondary);
+    margin-bottom: var(--space-sm);
+  }
+
+  .feature-card p {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+  }
+
+  .about-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-lg);
+    padding: var(--space-xl) var(--space-2xl);
+    background: linear-gradient(
+      135deg,
+      rgba(20, 20, 20, 0.98) 0%,
+      rgba(35, 35, 35, 0.95) 100%
+    );
+    border-radius: 1.5rem;
+    text-align: center;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .stat-item {
+    position: relative;
+    padding: 0 var(--space-md);
+  }
+
+  .stat-item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+  }
+
+  .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-sm);
+    color: var(--color-primary);
+    opacity: 0.8;
+  }
+
+  .stat-number {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    margin-bottom: var(--space-xs);
+    text-shadow: 0 0 30px rgba(227, 28, 37, 0.4);
+  }
+
+  .stat-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 968px) {
+    .about-content {
+      grid-template-columns: 1fr;
+    }
+
+    .about-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Reset borders for 2-column layout */
+    .stat-item::after {
+      display: none;
+    }
+
+    /* Add borders to odd items only (1 and 3) to separate from even items (2 and 4) */
+    .stat-item:nth-child(odd)::after {
+      display: block;
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 20%;
+      height: 60%;
+      width: 1px;
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      );
+    }
+  }
+
+  @media (max-width: 600px) {
+    .about-features {
+      grid-template-columns: 1fr;
+    }
+
+    .about-stats {
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+    }
+
+    /* Remove all vertical borders on mobile */
+    .stat-item::after {
+      display: none !important;
+    }
+
+    /* Add horizontal borders between items */
+    .stat-item:not(:last-child) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
+
+    /* Reduce padding for stats container on mobile */
+    .about-stats {
+      padding: var(--space-lg) var(--space-md);
+      gap: var(--space-lg);
+    }
+
+    .stat-number {
+      font-size: 2.25rem;
+    }
+  }
+</style>
+
+<script>
+  const statsSection = document.querySelector(".about-stats");
+  const statNumbers = document.querySelectorAll(".stat-number");
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(0) + "K";
+    }
+    return num.toString();
+  };
+
+  const animateCounter = (element: Element) => {
+    const target = parseInt(element.getAttribute("data-target") || "0");
+    const suffix = element.getAttribute("data-suffix") || "";
+    const duration = 2000;
+    const startTime = performance.now();
+
+    function updateCounter(currentTime: number) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOutExpo = 1 - Math.pow(2, -10 * progress);
+      const current = Math.round(target * easeOutExpo);
+
+      element.textContent = formatNumber(current) + suffix;
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCounter);
+      } else {
+        element.textContent = formatNumber(target) + suffix;
+      }
+    }
+
+    requestAnimationFrame(updateCounter);
+  };
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          statNumbers.forEach((el) => animateCounter(el));
+          observer.disconnect();
+        }
+      });
+    },
+    { threshold: 0.5 }
+  );
+
+  if (statsSection) {
+    observer.observe(statsSection);
+  }
+</script>

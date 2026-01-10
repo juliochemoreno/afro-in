@@ -1,0 +1,151 @@
+---
+import { Image } from "astro:assets";
+
+// Import horizontal community images for the preview
+import img1 from "@/assets/img/gente-afroin/gente-afroin-h-22.jpg";
+import img2 from "@/assets/img/gente-afroin/gente-afroin-h-30.jpg";
+import img3 from "@/assets/img/gente-afroin/gente-afroin-h-5.jpg";
+import img4 from "@/assets/img/gente-afroin/gente-afroin-h-10.jpg";
+import img5 from "@/assets/img/gente-afroin/gente-afroin-h-15.jpg";
+import img6 from "@/assets/img/gente-afroin/gente-afroin-h-20.jpg";
+
+const previewImages = [img1, img2, img3, img4, img5, img6];
+---
+
+<section class="community-section" id="comunidad">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">1 Millón de Corazones</span>
+      <h2>Nuestra Comunidad</h2>
+      <p>
+        Somos una familia unida por la pasión por la cultura afro-colombiana.
+        Conoce a las personas que hacen posible AFRO IN.
+      </p>
+    </div>
+
+    <div class="preview-grid">
+      {
+        previewImages.map((img, i) => (
+          <div class={`preview-item item-${i + 1}`}>
+            <Image
+              src={img}
+              alt={`Comunidad AFRO IN ${i + 1}`}
+              class="preview-img"
+              loading="lazy"
+            />
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="section-cta">
+      <a href="/comunidad" class="btn btn-primary">Ver Toda la Comunidad →</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .community-section {
+    padding: var(--space-2xl) 0;
+    background: linear-gradient(
+      135deg,
+      var(--color-secondary) 0%,
+      #1a1a2e 100%
+    );
+    color: var(--color-white);
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .section-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(227, 28, 37, 0.2);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+  }
+
+  .section-header h2 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin-bottom: var(--space-md);
+  }
+
+  .section-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Preview Grid - 3 columns, 2 rows */
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 160px);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .preview-item {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-normal);
+  }
+
+  .preview-item:hover .preview-img {
+    transform: scale(1.05);
+  }
+
+  .section-cta {
+    text-align: center;
+  }
+
+  /* Responsive */
+  @media (max-width: 968px) {
+    .preview-grid {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 150px);
+    }
+
+    .item-1,
+    .item-4 {
+      grid-row: span 1;
+    }
+
+    .item-1 {
+      grid-row: span 2;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .preview-grid {
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(4, 120px);
+      gap: var(--space-xs);
+    }
+
+    .item-1,
+    .item-4 {
+      grid-row: span 1;
+    }
+  }
+</style>

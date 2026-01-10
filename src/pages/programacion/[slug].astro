@@ -1,0 +1,1033 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+import { Image } from "astro:assets";
+import { Calendar, MapPin, Clock, ArrowLeft, Users, Music, Mic2, Headphones, GraduationCap, Waves, Utensils, PartyPopper, Bus, Sparkles } from "lucide-astro";
+import artistPlaceholder from "../../assets/img/artist-placeholder.png";
+
+// Map activity types to icons and labels
+const activityTypeConfig: Record<string, { icon: string; label: string; color: string }> = {
+  concierto: { icon: 'mic2', label: 'Concierto', color: '#E31C25' },
+  dj: { icon: 'headphones', label: 'DJ Set', color: '#8B5CF6' },
+  workshop: { icon: 'graduation-cap', label: 'Taller', color: '#10B981' },
+  pool: { icon: 'waves', label: 'Pool Party', color: '#06B6D4' },
+  cultural: { icon: 'sparkles', label: 'Cultural', color: '#F59E0B' },
+  gastronomia: { icon: 'utensils', label: 'Gastronomía', color: '#EC4899' },
+  fiesta: { icon: 'party-popper', label: 'Fiesta', color: '#F97316' },
+  viaje: { icon: 'bus', label: 'Traslado', color: '#6366F1' },
+};
+
+export async function getStaticPaths() {
+  const destinations = await getCollection("tour2026");
+  return destinations.map((destination) => ({
+    params: { slug: destination.id.replace(/\.md$/, "") },
+    props: { destination },
+  }));
+}
+
+interface Props {
+  destination: CollectionEntry<"tour2026">;
+}
+
+const { destination } = Astro.props as Props;
+const { data, body } = destination;
+
+// Program-specific navigation
+const programNavLinks = [
+  { href: "/", label: "Inicio" },
+  { href: "/tienda", label: "Tienda" },
+  { href: "/programacion", label: "Programación" },
+  { href: "/programacion/santa-marta", label: "Santa Marta" },
+  { href: "/programacion/palenque", label: "Palenque" },
+  { href: "/artistas", label: "Artistas" },
+  { href: "/#contacto", label: "Contacto" },
+];
+const programCta = { href: "/#unirse", label: "Únete al Tour" };
+
+// Calculate stats for the summary banner
+// Calculate stats for the summary banner
+const totalDays = data.stats?.days ?? data.schedule.length;
+const totalActivities = data.stats?.activities ?? data.schedule.reduce((acc, day) => acc + day.activities.length, 0);
+const uniqueVenues = data.stats?.venues ?? new Set(data.schedule.map(day => day.venue)).size;
+
+// Helper to generate Google Calendar links
+const getGoogleCalendarUrl = (day: any) => {
+  const title = encodeURIComponent(`AFRO IN Tour: ${day.venue}`);
+  const dateStr = `202601${day.day.padStart(2, '0')}`;
+  const dates = `${dateStr}T100000Z/${dateStr}T220000Z`;
+  
+  // Format activities for description
+  const activitiesList = day.activities
+    .map((act: any) => `${act.time} - ${act.title}${act.artist ? ` (${act.artist})` : ''}`)
+    .join('\n');
+    
+  const details = encodeURIComponent(`Programación en ${day.venue}:\n\n${activitiesList}\n\nConsulta más en afroin.org`);
+  const location = encodeURIComponent(day.venueSubtitle || day.venue);
+  return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+};
+---
+
+<Layout title={`${data.name} - AFRO IN Tour 2026`}>
+  <Header navLinks={programNavLinks} ctaLink={programCta} />
+
+  <main class="destination-page">
+    <!-- Hero Section with Image Slider -->
+    <section class="destination-hero">
+      <div class="hero-slider" id="heroSlider">
+        <!-- Hero Image (Primary) -->
+        <div class="slide active">
+          <Image src={data.heroImage} alt={data.name} class="hero-img" loading="eager" />
+        </div>
+        
+        <!-- Slider Images -->
+        {data.sliderImages?.map((img: any, index: number) => (
+          <div class="slide">
+            <Image src={img} alt={`${data.name} - ${index + 1}`} class="hero-img" />
+          </div>
+        ))}
+        
+        <div class="hero-overlay"></div>
+        
+        <!-- Slider Indicators -->
+        <div class="slider-indicators">
+          <button class="indicator active" data-slide="0" aria-label="Slide 1"></button>
+          {data.sliderImages?.map((_: any, index: number) => (
+            <button class="indicator" data-slide={index + 1} aria-label={`Slide ${index + 2}`}></button>
+          ))}
+        </div>
+      </div>
+      
+      <div class="container">
+        <div class="hero-content animate-fade-in-up">
+          <a href="/programacion" class="back-link">
+            <ArrowLeft size={16} />
+            Volver a Programación
+          </a>
+          <span class="destination-badge">{data.badge}</span>
+          <h1 class="destination-title">{data.name}</h1>
+          {data.tribute && (
+            <p class="destination-tribute-hero">
+              Homenaje a <strong>{data.tribute}</strong>
+            </p>
+          )}
+          <div class="destination-meta">
+            <span class="meta-item">
+              <Calendar size={20} />
+              {data.dates}
+            </span>
+            <span class="meta-item">
+              <MapPin size={20} />
+              {data.location}
+            </span>
+          </div>
+          
+          <!-- Tour Summary Banner -->
+          <div class="tour-summary-banner hero-stats">
+            <div class="summary-stat">
+              <span class="stat-value">{totalDays}</span>
+              <span class="stat-label">Días</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-stat">
+              <span class="stat-value">{uniqueVenues}</span>
+              <span class="stat-label">Sedes</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-stat">
+              <span class="stat-value">{totalActivities}</span>
+              <span class="stat-label">Actividades</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Description -->
+    <section class="description-section">
+      <div class="container">
+        <p class="destination-description animate-fade-in-up">
+          {body}
+        </p>
+      </div>
+    </section>
+
+    <!-- Schedule Timeline -->
+    <section class="schedule-section">
+      <div class="container">
+        <h2 class="section-title text-center animate-fade-in-up">
+          Programación Completa
+        </h2>
+
+
+
+        <!-- Sticky Day Navigation -->
+        <nav class="day-nav-sticky" id="dayNav">
+          <div class="day-nav-container">
+            {data.schedule.map((day, i) => (
+              <a href={`#day-${day.day}`} class="day-nav-item" data-day={day.day}>
+                <span class="day-nav-number">{day.day}</span>
+                <span class="day-nav-weekday">{day.weekday.slice(0, 3)}</span>
+              </a>
+            ))}
+          </div>
+        </nav>
+
+        <div class="timeline">
+          {data.schedule.map((day, dayIndex) => (
+            <div class="day-section animate-fade-in-up" id={`day-${day.day}`} style={`animation-delay: ${dayIndex * 0.1}s`}>
+              <!-- Day Header -->
+              <div class="day-header">
+                <div class="day-date-block">
+                  <span class="day-number">{day.day}</span>
+                  <span class="day-month">{day.month}</span>
+                </div>
+                <div class="day-info">
+                  <span class="day-weekday">{day.weekday}</span>
+                  <h3 class="day-venue">{day.venue}</h3>
+                  {day.venueSubtitle && day.venue !== "Gira de Medios" && (
+                    <a 
+                      href={day.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.venueSubtitle + " " + day.venue)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="venue-address-link"
+                      title="Ver en Google Maps"
+                    >
+                      <MapPin size={14} />
+                      {day.venueSubtitle}
+                    </a>
+                  )}
+                  {day.venueSubtitle && day.venue === "Gira de Medios" && (
+                    <span class="venue-subtitle-text">{day.venueSubtitle}</span>
+                  )}
+                </div>
+                {day.venue !== "Gira de Medios" && (
+                  <div class="day-actions">
+                    <a 
+                      href={getGoogleCalendarUrl(day)} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      class="calendar-btn"
+                      title="Agregar al Calendario"
+                    >
+                      <Calendar size={18} />
+                      <span>Agregar al Calendario</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <!-- Activities List - Minimal -->
+              <div class="activities-list">
+                {day.activities.filter((activity: any) => !activity.hidden).map((activity) => (
+                  <div class="activity-row">
+                    <div class="activity-time">
+                      {activity.time}
+                    </div>
+                    
+                    <div class="activity-details">
+                      <span class="activity-title">{activity.title}</span>
+                      {activity.artist && (
+                        <span class="activity-artist">— {activity.artist}</span>
+                      )}
+                      {activity.description && (
+                        <p class="activity-description">{activity.description}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .destination-page {
+    padding-top: 80px;
+  }
+
+  .destination-hero {
+    position: relative;
+    min-height: 60vh;
+    display: flex;
+    align-items: flex-end;
+    padding: var(--space-2xl) 0;
+    color: var(--color-white);
+  }
+
+  .hero-slider {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+  }
+
+  .slide.active {
+    opacity: 1;
+  }
+
+  .hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.85) 0%,
+      rgba(0, 0, 0, 0.4) 50%,
+      rgba(0, 0, 0, 0.5) 100%
+    );
+    z-index: 1;
+  }
+
+  .slider-indicators {
+    position: absolute;
+    bottom: var(--space-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+  }
+
+  .indicator:hover {
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  .indicator.active {
+    background: var(--color-white);
+    transform: scale(1.3);
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-lg);
+    transition: color var(--transition-normal);
+  }
+
+  .back-link:hover {
+    color: var(--color-white);
+  }
+
+  .destination-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+  }
+
+  .destination-title {
+    font-size: clamp(3rem, 8vw, 5rem);
+    margin-bottom: var(--space-md);
+  }
+
+  .destination-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .meta-item :global(svg) {
+    color: var(--color-primary);
+  }
+
+  .description-section {
+    padding: var(--space-xl) 0;
+    background: var(--color-white);
+  }
+
+  .destination-description {
+    font-size: 1.25rem;
+    color: var(--color-text-light);
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  .schedule-section {
+    padding: var(--space-2xl) 0;
+    background: var(--color-cream);
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-xl);
+  }
+
+  .destination-tribute-hero {
+    font-size: 1.5rem;
+    color: #e31c25;
+    margin-bottom: var(--space-lg);
+    font-weight: 500;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  /* Timeline Styles */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    max-width: 900px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .day-section {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+
+  .day-header {
+    display: flex;
+    align-items: stretch;
+    background: var(--gradient-dark);
+    color: var(--color-white);
+  }
+
+  .day-date-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg) var(--space-xl);
+    background: var(--color-primary);
+    min-width: 100px;
+  }
+
+  .day-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .day-month {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.9;
+  }
+
+  .day-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-lg);
+    flex: 1;
+  }
+
+  .day-weekday {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+    margin-bottom: var(--space-xs);
+  }
+
+  .day-venue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .venue-address-link {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    margin-top: var(--space-xs);
+    transition: all 0.2s ease;
+  }
+
+  .venue-address-link :global(svg) {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .venue-address-link:hover {
+    color: var(--color-white);
+    text-decoration: underline;
+  }
+
+  .venue-subtitle-text {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: var(--space-xs);
+  }
+
+  .day-actions {
+    padding: var(--space-lg);
+    display: flex;
+    align-items: center;
+  }
+
+  .calendar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-white);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .calendar-btn:hover {
+    background: var(--color-white);
+    color: var(--color-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Tour Summary Banner */
+  .tour-summary-banner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-xl);
+    padding: var(--space-lg);
+    background: #fdfdfd;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-xl);
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.02);
+  }
+
+  .summary-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--color-secondary);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-light);
+    margin-top: 4px;
+  }
+
+  .summary-divider {
+    width: 1px;
+    height: 30px;
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Hero Stats Variant */
+  .tour-summary-banner.hero-stats {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: var(--space-xl);
+    margin-bottom: 0;
+  }
+
+  .tour-summary-banner.hero-stats .stat-value {
+    color: var(--color-white);
+  }
+
+  .tour-summary-banner.hero-stats .stat-label {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .tour-summary-banner.hero-stats .summary-divider {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  @media (max-width: 600px) {
+    .tour-summary-banner {
+      gap: var(--space-md);
+      padding: var(--space-md);
+    }
+    
+    .stat-value {
+      font-size: 1.25rem;
+    }
+    
+    .day-header {
+      flex-direction: column;
+    }
+    
+    .day-actions {
+      padding: 0 var(--space-lg) var(--space-lg);
+      width: 100%;
+    }
+    
+    .calendar-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  /* Activities */
+  .activities-list {
+    padding: var(--space-md) var(--space-md) var(--space-md) var(--space-lg);
+  }
+
+  .activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-sm) 0;
+    transition: background 0.2s ease;
+  }
+
+  .activity-item:hover {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  .activity-time {
+    min-width: 85px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+
+  .activity-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+  }
+
+  .activity-title {
+    font-weight: 600;
+    color: var(--color-secondary);
+    font-size: 1rem;
+  }
+
+  .activity-artist {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.85rem;
+    color: var(--color-primary);
+    font-weight: 500;
+  }
+
+  .activity-artist :global(svg) {
+    opacity: 0.7;
+  }
+
+  .activity-description {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    line-height: 1.4;
+  }
+
+  /* Sticky Day Navigation - Full Width Subheader */
+  .day-nav-sticky {
+    position: sticky;
+    top: 80px;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: var(--space-xl);
+    padding: var(--space-sm) 0;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    width: 100vw;
+    border-bottom: 2px solid var(--color-primary);
+  }
+
+  .day-nav-container {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: var(--space-xs) var(--space-md);
+  }
+
+  .day-nav-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .day-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-text-light);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    min-width: 65px;
+    scroll-snap-align: center;
+    border-bottom: 2px solid transparent;
+  }
+
+  .day-nav-item:hover {
+    background: rgba(227, 28, 37, 0.05);
+    color: var(--color-primary);
+    border-bottom-color: rgba(227, 28, 37, 0.3);
+  }
+
+  .day-nav-item.active {
+    background: transparent;
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  .day-nav-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .day-nav-weekday {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+
+  /* Clean Activity Layout */
+  .activity-row {
+    display: flex;
+    gap: var(--space-lg);
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .activity-row:last-child {
+    border-bottom: none;
+  }
+
+  .activity-time {
+    min-width: 90px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+
+  .activity-details {
+    flex: 1;
+  }
+
+  .activity-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+
+  .activity-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-secondary);
+  }
+
+  .activity-artist {
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    font-weight: 500;
+    margin-left: var(--space-xs);
+  }
+
+  .activity-description {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    margin: 4px 0 0 0;
+    line-height: 1.4;
+  }
+
+  /* Artist Photo */
+  .artist-photo {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .artist-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  /* CTA */
+  .schedule-cta {
+    padding-top: var(--space-xl);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .schedule-cta .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .cta-note {
+    margin-top: var(--space-md);
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .day-header {
+      flex-direction: column;
+    }
+
+    .day-date-block {
+      flex-direction: row;
+      gap: var(--space-sm);
+      min-width: auto;
+      padding: var(--space-md);
+    }
+
+    .day-number {
+      font-size: 1.5rem;
+    }
+
+    .day-month {
+      font-size: 0.8rem;
+    }
+
+    .day-venue {
+      font-size: 1.25rem;
+    }
+
+    .day-nav-sticky {
+      top: 70px;
+      border-radius: 0;
+      margin-left: calc(-1 * var(--space-md));
+      margin-right: calc(-1 * var(--space-md));
+      max-width: none;
+      width: calc(100% + 2 * var(--space-md));
+    }
+
+    .day-nav-container {
+      justify-content: flex-start;
+    }
+
+    .day-nav-item {
+      min-width: 60px;
+      padding: var(--space-xs) var(--space-sm);
+      flex-shrink: 0;
+    }
+
+    .day-nav-number {
+      font-size: 1rem;
+    }
+
+    .artist-card {
+      width: 100%;
+      margin-left: 0;
+      margin-top: var(--space-sm);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .activity-item {
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+
+    .activity-time {
+      min-width: auto;
+      order: 2;
+    }
+
+    .activity-type-badge {
+      order: 1;
+    }
+
+    .activity-content {
+      order: 3;
+      width: 100%;
+      flex-basis: 100%;
+    }
+
+    .artist-card {
+      order: 4;
+      width: 100%;
+    }
+
+    .destination-meta {
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+  }
+</style>
+
+<script>
+  // Scroll spy for day navigation
+  document.addEventListener('DOMContentLoaded', () => {
+    const dayNav = document.getElementById('dayNav');
+    const navItems = document.querySelectorAll('.day-nav-item');
+    const daySections = document.querySelectorAll('.day-section');
+
+    if (!dayNav || navItems.length === 0 || daySections.length === 0) return;
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '-100px 0px -50% 0px',
+      threshold: 0
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const dayId = entry.target.id;
+          const dayNumber = dayId.replace('day-', '');
+          
+          navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('data-day') === dayNumber) {
+              item.classList.add('active');
+            }
+          });
+        }
+      });
+    }, observerOptions);
+
+    daySections.forEach(section => observer.observe(section));
+
+    // Smooth scroll on click
+    navItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = item.getAttribute('href');
+        if (!targetId) return;
+        const target = document.querySelector(targetId);
+        if (target) {
+          const headerOffset = 150;
+          const elementPosition = target.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+  });
+
+  // Hero Image Slider
+  (() => {
+    const slider = document.getElementById('heroSlider');
+    if (!slider) return;
+
+    const slides = slider.querySelectorAll('.slide');
+    const indicators = slider.querySelectorAll('.indicator');
+    
+    if (slides.length <= 1) return;
+
+    let currentSlide = 0;
+    let autoplayInterval: ReturnType<typeof setInterval> | undefined;
+
+    const goToSlide = (index: number) => {
+      slides.forEach(slide => slide.classList.remove('active'));
+      indicators.forEach(ind => ind.classList.remove('active'));
+      
+      currentSlide = index;
+      slides[currentSlide]?.classList.add('active');
+      indicators[currentSlide]?.classList.add('active');
+    };
+
+    const nextSlide = () => {
+      const next = (currentSlide + 1) % slides.length;
+      goToSlide(next);
+    };
+
+    const startAutoplay = () => {
+      autoplayInterval = setInterval(nextSlide, 5000);
+    };
+
+    const stopAutoplay = () => {
+      if (autoplayInterval) clearInterval(autoplayInterval);
+    };
+
+    // Click on indicators
+    indicators.forEach((indicator, index) => {
+      indicator.addEventListener('click', () => {
+        stopAutoplay();
+        goToSlide(index);
+        startAutoplay();
+      });
+    });
+
+    // Pause on hover
+    slider.addEventListener('mouseenter', stopAutoplay);
+    slider.addEventListener('mouseleave', startAutoplay);
+
+    // Start autoplay
+    startAutoplay();
+  })();
+</script>

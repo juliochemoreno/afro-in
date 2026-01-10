@@ -1,0 +1,316 @@
+---
+// Cart Widget - Astro component with vanilla JS cart functionality
+// Displays cart icon with badge and drawer with WhatsApp checkout
+---
+
+<div class="cart-widget">
+  <button class="cart-icon-button" id="cart-toggle" aria-label="Abrir carrito">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="9" cy="21" r="1"></circle>
+      <circle cx="20" cy="21" r="1"></circle>
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
+      ></path>
+    </svg>
+    <span class="cart-badge" id="cart-badge" style="display: none;">0</span>
+  </button>
+
+  <!-- Cart Overlay -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+
+  <!-- Cart Drawer -->
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-header">
+      <h2>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        Tu Carrito (<span id="cart-count">0</span>)
+      </h2>
+      <button class="close-btn" id="cart-close" aria-label="Cerrar">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="cart-content" id="cart-content">
+      <!-- Cart items will be rendered here -->
+      <div class="cart-empty" id="cart-empty">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <p>Tu carrito está vacío</p>
+        <span>Agrega productos para comenzar</span>
+      </div>
+      <div class="cart-items" id="cart-items"></div>
+    </div>
+
+    <div class="cart-footer" id="cart-footer" style="display: none;">
+      <div class="cart-customer-info">
+        <label for="cart-customer-name">Tu Nombre</label>
+        <input
+          type="text"
+          id="cart-customer-name"
+          placeholder="Escribe tu nombre aquí..."
+          autocomplete="name"
+          required
+        />
+      </div>
+      <div class="cart-total">
+        <span>Total:</span>
+        <strong id="cart-total">$0</strong>
+      </div>
+      <a href="#" class="checkout-btn" id="checkout-btn" target="_blank">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+          ></path>
+        </svg>
+        <span>Finalizar Pedido</span>
+      </a>
+      <button class="clear-cart-btn" id="clear-cart">Vaciar Carrito</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import {
+    getCart,
+    removeFromCart,
+    incrementItem,
+    decrementItem,
+    clearCart,
+    formatPrice,
+    onCartChange,
+    onCartOpen,
+    getWhatsAppCheckoutUrl,
+    showToast,
+  } from "@/lib/cart";
+
+  document.addEventListener("astro:page-load", () => {
+    const toggle = document.getElementById("cart-toggle");
+    const overlay = document.getElementById("cart-overlay");
+    const drawer = document.getElementById("cart-drawer");
+    const closeBtn = document.getElementById("cart-close");
+    const badge = document.getElementById("cart-badge");
+    const count = document.getElementById("cart-count");
+    const itemsContainer = document.getElementById("cart-items");
+    const emptyState = document.getElementById("cart-empty");
+    const footer = document.getElementById("cart-footer");
+    const totalEl = document.getElementById("cart-total");
+    const checkoutBtn = document.getElementById("checkout-btn");
+    const clearBtn = document.getElementById("clear-cart");
+    const nameInput = document.getElementById(
+      "cart-customer-name"
+    ) as HTMLInputElement;
+
+    function openDrawer() {
+      drawer?.classList.add("open");
+      overlay?.classList.add("open");
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("cart-open");
+    }
+
+    function closeDrawer() {
+      drawer?.classList.remove("open");
+      overlay?.classList.remove("open");
+      document.body.style.overflow = "";
+      document.body.classList.remove("cart-open");
+    }
+
+    function renderCart() {
+      const badges = document.querySelectorAll(".cart-badge");
+      const cart = getCart();
+
+      // Update badges
+      badges.forEach((badge) => {
+        if (badge instanceof HTMLElement) {
+          if (cart.totalItems > 0) {
+            badge.textContent = String(cart.totalItems);
+            badge.style.display = "flex";
+          } else {
+            badge.style.display = "none";
+          }
+        }
+      });
+
+      // Update count and total
+      if (count) count.textContent = String(cart.totalItems);
+      if (totalEl) totalEl.textContent = formatPrice(cart.totalPrice);
+
+      // Update checkout URL
+      if (checkoutBtn) {
+        (checkoutBtn as HTMLAnchorElement).href = getWhatsAppCheckoutUrl(
+          nameInput?.value
+        );
+      }
+
+      // Show/hide empty state and footer
+      if (cart.items.length === 0) {
+        if (emptyState) emptyState.style.display = "flex";
+        if (itemsContainer) itemsContainer.innerHTML = "";
+        if (footer) footer.style.display = "none";
+      } else {
+        if (emptyState) emptyState.style.display = "none";
+        if (footer) footer.style.display = "flex";
+
+        // Render items
+        if (itemsContainer) {
+          itemsContainer.innerHTML = cart.items
+            .map(
+              (item) => `
+            <div class="cart-item" data-id="${item.id}">
+              ${
+                item.image
+                  ? `
+                <div class="cart-item-image">
+                  <img src="${item.image}" alt="${item.name}" />
+                </div>
+              `
+                  : ""
+              }
+              <div class="cart-item-info">
+                <h4 class="cart-item-name">${item.name}${item.size ? `, ${item.size}` : ""}</h4>
+                <div class="cart-item-sku">${item.sku ? `SKU: ${item.sku}` : ""}</div>
+                <div class="cart-item-row">
+                  <div class="quantity-controls">
+                    <button class="qty-btn decrement">−</button>
+                    <span class="quantity">${item.quantity}</span>
+                    <button class="qty-btn increment">+</button>
+                  </div>
+                  <span class="cart-item-price">${formatPrice(item.price * item.quantity)}</span>
+                  <button class="remove-btn">Eliminar</button>
+                </div>
+              </div>
+            </div>
+          `
+            )
+            .join("");
+
+          // Add event listeners to quantity buttons
+          itemsContainer.querySelectorAll(".cart-item").forEach((itemEl) => {
+            const id = itemEl.getAttribute("data-id");
+            if (!id) return;
+
+            itemEl
+              .querySelector(".increment")
+              ?.addEventListener("click", () => {
+                incrementItem(id);
+                renderCart();
+              });
+
+            itemEl
+              .querySelector(".decrement")
+              ?.addEventListener("click", () => {
+                decrementItem(id);
+                renderCart();
+              });
+
+            itemEl
+              .querySelector(".remove-btn")
+              ?.addEventListener("click", () => {
+                removeFromCart(id);
+                renderCart();
+              });
+          });
+        }
+      }
+    }
+
+    // Event listeners
+    toggle?.addEventListener("click", openDrawer);
+    overlay?.addEventListener("click", closeDrawer);
+    closeBtn?.addEventListener("click", closeDrawer);
+    clearBtn?.addEventListener("click", () => {
+      clearCart();
+      renderCart();
+    });
+
+    checkoutBtn?.addEventListener("click", (e) => {
+      if (!nameInput?.value.trim()) {
+        e.preventDefault();
+        nameInput?.focus();
+        nameInput?.classList.add("error");
+        showToast("Por favor, ingresa tu nombre para continuar", "error"); // Assuming showToast is defined elsewhere
+
+        // Remove error class after animation
+        setTimeout(() => nameInput?.classList.remove("error"), 2000);
+      }
+    });
+
+    nameInput?.addEventListener("input", () => {
+      if (checkoutBtn) {
+        (checkoutBtn as HTMLAnchorElement).href = getWhatsAppCheckoutUrl(
+          nameInput.value
+        );
+      }
+      if (nameInput.value.trim()) {
+        nameInput.classList.remove("error");
+      }
+    });
+
+    // Subscribe to cart changes
+    onCartChange(() => renderCart());
+
+    // Listen for open cart events (from other pages)
+    onCartOpen(() => openDrawer());
+
+    // Initial render
+    renderCart();
+  });
+</script>

@@ -1,0 +1,285 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+
+// Simple navigation for the thanks page
+const navLinks = [
+  { href: "/", label: "Inicio" },
+  { href: "/tienda", label: "Tienda" },
+  { href: "/programacion", label: "AFRO IN Tour" },
+];
+---
+
+<Layout title="¡Gracias por tu apoyo! | AFRO IN">
+  <Header navLinks={navLinks} />
+
+  <main class="thanks-page">
+    <div class="container">
+      <div class="thanks-card">
+        <div class="icon-wrapper">
+          <span class="heart-icon">❤️</span>
+        </div>
+
+        <span class="section-badge">Movimiento un Millón de Corazones</span>
+        <h1>¡Gracias por tu aporte!</h1>
+        <p class="thanks-message">
+          Tu contribución es fundamental para seguir fortaleciendo la cultura
+          afro y apoyar a nuestras comunidades. Juntos estamos construyendo un
+          legado que late con fuerza.
+        </p>
+
+        <div class="next-steps">
+          <h3>¿Qué sigue?</h3>
+          <ul>
+            <li>
+              <span class="check">✓</span> Recibirás un correo de confirmación de
+              PayPal.
+            </li>
+            <li>
+              <span class="check">✓</span> Te mantendremos informado sobre el impacto
+              de tu donación.
+            </li>
+            <li>
+              <span class="check">✓</span> ¡Pasa la voz! Comparte el tour con tus
+              amigos.
+            </li>
+          </ul>
+        </div>
+
+        <div class="actions">
+          <a href="/" class="btn btn-primary">Volver al Inicio</a>
+          <a href="/tienda" class="btn btn-outline">Ver la Tienda</a>
+        </div>
+
+        <div class="share-section">
+          <p>Síguenos para ver el tour en vivo:</p>
+          <div class="social-links">
+            <a
+              href="https://instagram.com/afro_in_"
+              target="_blank"
+              rel="noopener">Instagram</a
+            >
+            <a
+              href="https://facebook.com/afroincolombia"
+              target="_blank"
+              rel="noopener">Facebook</a
+            >
+          </div>
+        </div>
+
+        <div class="counter-section">
+          <p>Corazones unidos hasta ahora:</p>
+          <span class="counter-number" id="donantes-counter">...</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .thanks-page {
+    padding: var(--space-2xl) 0;
+    padding-top: 140px;
+    min-height: calc(100vh - 400px);
+    background: var(--color-cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .thanks-card {
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--color-white);
+    padding: var(--space-2xl) var(--space-xl);
+    border-radius: var(--radius-2xl);
+    text-align: center;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--color-cream-dark);
+  }
+
+  .icon-wrapper {
+    width: 100px;
+    height: 100px;
+    background: rgba(227, 28, 37, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-lg);
+    font-size: 3rem;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .section-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: var(--color-primary);
+    color: var(--color-white);
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-md);
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .thanks-message {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: var(--color-text-light);
+    margin-bottom: var(--space-xl);
+  }
+
+  .next-steps {
+    text-align: left;
+    background: var(--color-cream);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-xl);
+  }
+
+  .next-steps h3 {
+    font-size: 1.1rem;
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .next-steps ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .next-steps li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    color: var(--color-text);
+  }
+
+  .check {
+    color: var(--color-primary);
+    font-weight: bold;
+  }
+
+  .actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .share-section {
+    border-top: 1px solid var(--color-cream-dark);
+    padding-top: var(--space-lg);
+  }
+
+  .share-section p {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-bottom: var(--space-sm);
+  }
+
+  .social-links {
+    display: flex;
+    gap: var(--space-lg);
+    justify-content: center;
+  }
+
+  .social-links a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .social-links a:hover {
+    opacity: 0.7;
+  }
+
+  @media (max-width: 600px) {
+    .actions {
+      flex-direction: column;
+    }
+    .thanks-card {
+      padding: var(--space-xl) var(--space-md);
+    }
+  }
+
+  .counter-section {
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
+    background: linear-gradient(135deg, var(--color-primary), #ff6b6b);
+    border-radius: var(--radius-lg);
+    color: white;
+  }
+
+  .counter-section p {
+    font-size: 0.9rem;
+    margin-bottom: var(--space-xs);
+    opacity: 0.9;
+  }
+
+  .counter-number {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    font-weight: bold;
+  }
+</style>
+
+<script>
+  document.addEventListener("astro:page-load", async () => {
+    // Confirm donation if there's a saved ID
+    const donorId = sessionStorage.getItem("donor_id");
+
+    if (donorId) {
+      try {
+        await fetch("/api/confirmar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: parseInt(donorId) }),
+        });
+        // Clear the ID after confirming
+        sessionStorage.removeItem("donor_id");
+      } catch (error) {
+        console.warn("Could not confirm donation:", error);
+      }
+    }
+
+    // Load the donors counter
+    const counterEl = document.getElementById("donantes-counter");
+    if (counterEl) {
+      try {
+        const response = await fetch("/api/contador");
+        if (response.ok) {
+          const data = (await response.json()) as { total: number };
+          counterEl.textContent = data.total.toLocaleString();
+        }
+      } catch (error) {
+        console.warn("Could not load counter:", error);
+      }
+    }
+  });
+</script>

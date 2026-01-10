@@ -1,0 +1,387 @@
+---
+import { MapPin, Mail, MessageSquare } from "lucide-astro";
+
+const contactEmail = "afroinsantamarta@gmail.com";
+const mapsLink = "https://maps.app.goo.gl/eRum8SuYxfJy9aL38";
+---
+
+<section class="contact-section section" id="contacto">
+  <div class="container">
+    <div class="contact-grid">
+      <!-- Info Column -->
+      <div class="contact-info animate-fade-in-up">
+        <span class="badge">Contacto</span>
+        <h2 class="section-title">Estamos aquí para ti</h2>
+        <p class="section-desc">
+          ¿Tienes alguna pregunta sobre el festival, los talleres o cómo unirte
+          al movimiento? Escríbenos.
+        </p>
+
+        <div class="contact-cards">
+          <!-- Location Card -->
+          <a
+            href={mapsLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="location-card group cursor-pointer"
+            aria-label="Ver ubicación en Google Maps"
+          >
+            <div class="icon-box">
+              <MapPin size={24} />
+            </div>
+            <div class="text-content">
+              <span class="label">Sede Principal</span>
+              <span class="title">Santa Marta</span>
+              <span class="subtitle">Colombia 🇨🇴</span>
+            </div>
+            <div class="arrow-icon">→</div>
+          </a>
+
+          <!-- Email Card -->
+          <a href={`mailto:${contactEmail}`} class="email-card group">
+            <div class="icon-box secondary">
+              <Mail size={24} />
+            </div>
+            <div class="text-content">
+              <span class="label">Escríbenos</span>
+              <span class="title"
+                ><!--email_off-->{contactEmail}<!--/email_off--></span
+              >
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Form Column -->
+      <div
+        class="contact-form-wrapper animate-fade-in-up"
+        style="animation-delay: 0.2s"
+      >
+        <div class="form-header">
+          <div class="icon-circle">
+            <MessageSquare size={20} />
+          </div>
+          <h3>Dudas Rápidas</h3>
+        </div>
+
+        <form class="contact-form" id="dudas-form">
+          <div class="form-group">
+            <label for="name">Tu Nombre</label>
+            <input
+              type="text"
+              id="name"
+              placeholder="Escribe tu nombre"
+              required
+              class="form-input"
+            />
+          </div>
+          <div class="form-group">
+            <label for="message">Tu Mensaje</label>
+            <textarea
+              id="message"
+              placeholder="¿Cómo podemos ayudarte?"
+              rows="4"
+              class="form-input resize-none"
+              required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary w-full">
+            Enviar Mensaje
+          </button>
+        </form>
+
+        <script>
+          const form = document.getElementById("dudas-form") as HTMLFormElement;
+          const WHATSAPP_NUMBER = "41782231433";
+
+          form?.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const nameInput = document.getElementById(
+              "name"
+            ) as HTMLInputElement;
+            const messageInput = document.getElementById(
+              "message"
+            ) as HTMLTextAreaElement;
+
+            const name = nameInput.value;
+            const messageText = messageInput.value;
+
+            const fullMessage = `Hola! Soy *${name}*.\nTengo una duda:\n\n${messageText}\n\n--- \nEnviado desde https://afroin.org`;
+
+            const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(fullMessage)}`;
+            window.open(waUrl, "_blank");
+          });
+        </script>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact-section {
+    background-color: var(--color-cream-dark);
+    position: relative;
+    overflow: hidden;
+    padding: var(--space-xl) 0; /* Reduced from default section padding */
+  }
+
+  /* Decorative background */
+  .contact-section::before {
+    content: "";
+    position: absolute;
+    top: -10%;
+    right: -5%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(
+      circle,
+      rgba(227, 28, 37, 0.03) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2xl);
+    align-items: center;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(227, 28, 37, 0.1);
+    color: var(--color-primary);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: var(--space-md);
+    color: var(--color-secondary);
+  }
+
+  .section-desc {
+    color: var(--color-text-light);
+    font-size: 1.1rem;
+    margin-bottom: var(--space-lg);
+    max-width: 90%;
+  }
+
+  .contact-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  /* Location & Email Card Styles */
+  .location-card,
+  .email-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    background: var(--color-white);
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .location-card:hover,
+  .email-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(227, 28, 37, 0.2);
+  }
+
+  .icon-box {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    background: rgba(227, 28, 37, 0.1);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all var(--transition-normal);
+  }
+
+  .icon-box.secondary {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--color-text);
+  }
+
+  .location-card:hover .icon-box {
+    background: var(--color-primary);
+    color: var(--color-white);
+    transform: rotate(-5deg);
+  }
+
+  .email-card:hover .icon-box.secondary {
+    background: var(--color-secondary);
+    color: var(--color-white);
+  }
+
+  .text-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--color-text-light);
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .title {
+    font-weight: 700;
+    color: var(--color-text);
+    font-size: 1.1rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+  }
+
+  .arrow-icon {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.03);
+    color: var(--color-primary);
+    font-weight: bold;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all var(--transition-normal);
+  }
+
+  .location-card:hover .arrow-icon {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* Form Side */
+  .contact-form-wrapper {
+    background: var(--color-white);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .form-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .form-header h3 {
+    font-size: 1.25rem;
+    color: var(--color-secondary);
+  }
+
+  .icon-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(227, 28, 37, 0.1);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .form-input {
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--color-cream);
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all var(--transition-fast);
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: var(--color-white);
+    box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+  }
+
+  @media (max-width: 968px) {
+    .contact-grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+    }
+
+    .contact-info {
+      text-align: center;
+    }
+
+    .contact-cards {
+      align-items: center; /* Center cards on mobile if column */
+    }
+
+    .location-card,
+    .email-card {
+      width: 100%;
+      max-width: 400px;
+      text-align: left;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .contact-form-wrapper {
+      padding: var(--space-lg) var(--space-md);
+    }
+
+    .section-title {
+      font-size: 2rem;
+    }
+
+    .icon-box {
+      width: 48px;
+      height: 48px;
+    }
+
+    .text-content .title {
+      font-size: 1rem;
+    }
+  }
+</style>

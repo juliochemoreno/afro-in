@@ -1,0 +1,283 @@
+<section class="documentary" id="documental">
+  <div class="container relative z-10">
+    <div
+      class="doc-header text-center animate-fade-in-up"
+      style="animation-delay: 0.1s"
+    >
+      <span class="doc-badge">Impacto Social</span>
+      <h2 class="doc-title">Nuestra Historia en Movimiento</h2>
+      <p class="doc-subtitle">
+        Un recorrido por 10 años de gestión cultural independiente que hoy busca
+        unir a <span class="highlight">1 Millón de Corazones</span>.
+      </p>
+    </div>
+
+    <div
+      class="video-card-wrapper animate-fade-in-up"
+      style="animation-delay: 0.3s"
+    >
+      <div class="video-card-frame">
+        <a
+          href="https://www.youtube.com/watch?v=vWgm4qWTN_Y"
+          target="_blank"
+          class="video-card-anchor"
+          rel="noopener noreferrer"
+        >
+          <div class="video-card-overlay">
+            <div class="play-btn-pulse">
+              <div class="pulse-ring"></div>
+              <div class="play-btn-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="glass-label">
+              <span>Reproducir en YouTube</span>
+            </div>
+          </div>
+          <img
+            src="https://img.youtube.com/vi/vWgm4qWTN_Y/maxresdefault.jpg"
+            alt="AFRO IN Documental"
+            class="video-card-img"
+          />
+        </a>
+      </div>
+    </div>
+
+    <div
+      class="doc-footer text-center animate-fade-in-up"
+      style="animation-delay: 0.5s"
+    >
+      <p class="quote">
+        "AFRO IN es la prueba de que el arte independiente puede transformar
+        territorios si trabajamos juntos."
+      </p>
+    </div>
+  </div>
+  <div class="bg-glow"></div>
+</section>
+
+<style>
+  .documentary {
+    background: #0a0a0a;
+    padding: 100px 0;
+    position: relative;
+    overflow: hidden;
+    color: white;
+  }
+
+  .bg-glow {
+    position: absolute;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 60%;
+    background: radial-gradient(
+      circle,
+      rgba(227, 28, 37, 0.1) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .doc-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(227, 28, 37, 0.15);
+    border: 1px solid rgba(227, 28, 37, 0.3);
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #ff3e47;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+    box-shadow: 0 0 20px rgba(227, 28, 37, 0.1);
+  }
+
+  .doc-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 800;
+    margin-bottom: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .doc-subtitle {
+    font-size: 1.25rem;
+    color: #a0a0a0;
+    max-width: 650px;
+    margin: 0 auto 60px;
+    line-height: 1.6;
+  }
+
+  .highlight {
+    color: white;
+    font-weight: 600;
+  }
+
+  .video-card-wrapper {
+    max-width: 1100px;
+    margin: 0 auto 60px;
+    position: relative;
+    padding: 0 20px;
+  }
+
+  .video-card-frame {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #151515;
+    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .video-card-anchor {
+    display: block;
+    aspect-ratio: 16/9;
+    position: relative;
+  }
+
+  .video-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .video-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at center,
+      rgba(0, 0, 0, 0.2) 0%,
+      rgba(0, 0, 0, 0.6) 100%
+    );
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: background 0.4s ease;
+  }
+
+  /* Pulse Animation & Play Button */
+  .play-btn-pulse {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+
+  .pulse-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #e31c25;
+    border-radius: 50%;
+    opacity: 0.4;
+    animation: pulse 2s infinite ease-out;
+  }
+
+  .play-btn-icon {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    background: #e31c25;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 10px 30px rgba(227, 28, 37, 0.5);
+    transition: all 0.3s ease;
+    padding-left: 6px;
+  }
+
+  .play-btn-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .glass-label {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 24px;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+  }
+
+  /* Hover Effects */
+  .video-card-anchor:hover .video-card-img {
+    transform: scale(1.04);
+  }
+
+  .video-card-anchor:hover .video-card-overlay {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .video-card-anchor:hover .play-btn-icon {
+    transform: scale(1.1);
+    background: #ff2d38;
+  }
+
+  .video-card-anchor:hover .glass-label {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .quote {
+    font-size: 1.25rem;
+    color: #888;
+    font-style: italic;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(1.8);
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .documentary {
+      padding: 60px 0;
+    }
+    .doc-title {
+      font-size: 2.25rem;
+    }
+    .play-btn-pulse {
+      width: 80px;
+      height: 80px;
+    }
+    .play-btn-icon {
+      width: 64px;
+      height: 64px;
+    }
+    .play-btn-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+</style>

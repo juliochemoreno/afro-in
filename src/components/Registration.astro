@@ -1,0 +1,754 @@
+---
+import { countries } from "../data/countries";
+
+interface Props {
+  currentCount?: number;
+}
+
+const { currentCount = 12847 } = Astro.props;
+---
+
+<section class="registration section" id="unirse">
+  <link
+    href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css"
+    rel="stylesheet"
+  />
+  <div class="container">
+    <div class="registration-wrapper">
+      <div
+        class="registration-content animate-fade-in-up"
+        style="animation-delay: 0.1s"
+      >
+        <span class="section-badge">Únete al Movimiento</span>
+        <h2 class="section-title">
+          Sé Parte del<br /><span class="title-highlight"
+            >Millón de Corazones</span
+          >
+        </h2>
+
+        <div class="counter-badge">
+          <span class="counter-number" id="live-counter">...</span>
+          <span class="counter-label">ya se han unido 💛</span>
+        </div>
+
+        <p class="registration-description">
+          Con solo <strong>$5 USD (20,000 COP)</strong> te conviertes en parte de
+          nuestra comunidad y apoyas directamente el arte afro independiente.
+        </p>
+
+        <ul class="benefits-list">
+          <li>✅ Acceso a contenido exclusivo</li>
+          <li>✅ Noticias y eventos de AFRO IN</li>
+          <li>✅ Descuentos en la tienda</li>
+          <li>✅ Tu nombre en nuestra comunidad</li>
+          <li>✅ Certificado digital de apoyo</li>
+        </ul>
+      </div>
+
+      <div class="registration-form-wrapper">
+        <div class="form-card">
+          <form class="registration-form" id="registrationForm">
+            <!-- STEP 1: CONTACT INFO -->
+            <div class="form-step active" id="step1">
+              <div class="step-header">
+                <span class="step-indicator">Paso 1 de 2</span>
+                <h3>Tus Datos</h3>
+              </div>
+
+              <div class="form-group">
+                <label for="name">Nombre Completo</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  placeholder="Tu nombre"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="phone">Teléfono</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  placeholder="+57 300 000 0000"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="country">País</label>
+                <select id="country" name="country" autocomplete="off">
+                  <option value="">Selecciona tu país</option>
+                  {
+                    countries.map((c) => (
+                      <option value={c.code}>
+                        {c.emoji} {c.name}
+                      </option>
+                    ))
+                  }
+                </select>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-primary btn-block"
+                id="btnNext"
+              >
+                Continuar con mi Aporte →
+              </button>
+            </div>
+
+            <!-- STEP 2: DONATION -->
+            <div class="form-step" id="step2">
+              <div class="step-header">
+                <button type="button" class="btn-back" id="btnBack"
+                  >← Volver</button
+                >
+                <span class="step-indicator">Paso 2 de 2</span>
+                <h3>Tu Aporte</h3>
+              </div>
+
+              <div class="form-donation">
+                <div class="donation-options">
+                  <label class="donation-option">
+                    <input type="radio" name="amount" value="5" checked />
+                    <span class="option-content">
+                      <span class="option-amount">$5 USD</span>
+                      <span class="option-desc">~20,000 COP</span>
+                    </span>
+                  </label>
+                  <label class="donation-option">
+                    <input type="radio" name="amount" value="10" />
+                    <span class="option-content">
+                      <span class="option-amount">$10 USD</span>
+                      <span class="option-desc">~40,000 COP</span>
+                    </span>
+                  </label>
+                  <label class="donation-option">
+                    <input type="radio" name="amount" value="25" />
+                    <span class="option-content">
+                      <span class="option-amount">$25 USD</span>
+                      <span class="option-desc">~100,000 COP</span>
+                    </span>
+                  </label>
+                  <label class="donation-option custom">
+                    <input type="radio" name="amount" value="custom" />
+                    <span class="option-content">
+                      <span class="option-amount">Otro</span>
+                      <input
+                        type="number"
+                        class="custom-amount"
+                        placeholder="$"
+                        min="1"
+                      />
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-submit">
+                <span>Unirme a la Comunidad 💛</span>
+              </button>
+
+              <p class="form-note">🔒 Pago seguro procesado por Stripe</p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .registration {
+        background: var(--color-cream);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .registration::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 100%;
+        background: var(--gradient-dark);
+        border-radius: 100px 0 0 100px;
+      }
+
+      .registration-wrapper {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-xl);
+        align-items: center;
+      }
+
+      .section-badge {
+        display: inline-block;
+        padding: var(--space-xs) var(--space-md);
+        background: rgba(227, 28, 37, 0.1);
+        border-radius: var(--radius-full);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: var(--space-md);
+      }
+
+      .section-title {
+        font-size: clamp(2rem, 5vw, 3rem);
+        color: var(--color-secondary);
+        margin-bottom: var(--space-md);
+      }
+
+      .title-highlight {
+        background: var(--gradient-gold);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .registration-description {
+        font-size: 1.1rem;
+        color: var(--color-text-light);
+        margin-bottom: var(--space-lg);
+      }
+
+      .registration-description strong {
+        color: var(--color-primary);
+      }
+
+      .benefits-list {
+        list-style: none;
+      }
+
+      .benefits-list li {
+        padding: var(--space-sm) 0;
+        font-size: 1.05rem;
+        color: var(--color-text);
+      }
+
+      .counter-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        background: var(--color-white);
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-lg);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .counter-badge .counter-number {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--color-primary);
+      }
+
+      .counter-badge .counter-label {
+        font-size: 0.9rem;
+        color: var(--color-text);
+        font-weight: 500;
+      }
+
+      .form-card {
+        background: var(--color-white);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-lg);
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+      }
+
+      .registration-form {
+        width: 100%;
+      }
+
+      .form-step {
+        display: none;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+
+      .form-step.active {
+        display: block;
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-lg);
+        border-bottom: 1px solid var(--color-cream-dark);
+        padding-bottom: var(--space-sm);
+      }
+
+      .step-indicator {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-text-light);
+      }
+
+      .step-header h3 {
+        font-size: 1.2rem;
+        color: var(--color-secondary);
+        margin: 0;
+      }
+
+      /* ... Keep existing form-group ... */
+
+      .form-group {
+        margin-bottom: var(--space-md);
+      }
+
+      /* ... Keep existing inputs ... */
+
+      .btn-block {
+        width: 100%;
+        margin-top: var(--space-md);
+      }
+
+      .btn-back {
+        background: none;
+        border: none;
+        color: var(--color-text-light);
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: underline;
+      }
+
+      .btn-back:hover {
+        color: var(--color-primary);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: var(--space-xs);
+        color: var(--color-text);
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid var(--color-cream-dark);
+        border-radius: var(--radius-md);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all var(--transition-fast);
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+      }
+
+      .form-donation {
+        margin: var(--space-lg) 0;
+      }
+
+      .donation-label {
+        font-weight: 500;
+        margin-bottom: var(--space-sm);
+      }
+
+      .donation-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+      }
+
+      .donation-option {
+        cursor: pointer;
+      }
+
+      .donation-option input[type="radio"] {
+        display: none;
+      }
+
+      .option-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center; /* Center content vertically */
+        padding: var(--space-md);
+        border: 2px solid var(--color-cream-dark);
+        border-radius: var(--radius-md);
+        transition: all var(--transition-fast);
+        height: 100%; /* Ensure full height of grid cell */
+        min-height: 100px; /* Minimum visual size */
+      }
+
+      .donation-option input:checked + .option-content {
+        border-color: var(--color-primary);
+        background: rgba(227, 28, 37, 0.05);
+      }
+
+      .option-amount {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--color-secondary);
+      }
+
+      .option-desc {
+        font-size: 0.8rem;
+        color: var(--color-text-light);
+      }
+
+      .custom-amount {
+        width: 80px;
+        margin-top: var(--space-xs);
+        padding: var(--space-xs);
+        border: 1px solid var(--color-cream-dark);
+        border-radius: var(--radius-sm);
+        text-align: center;
+      }
+
+      .btn-submit {
+        width: 100%;
+        padding: var(--space-md);
+        font-size: 1.1rem;
+        margin-top: var(--space-md);
+      }
+
+      .form-note {
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--color-text-light);
+        margin-top: var(--space-md);
+      }
+
+      @media (max-width: 968px) {
+        .registration::before {
+          display: none;
+        }
+
+        .registration-wrapper {
+          grid-template-columns: 1fr;
+        }
+
+        .registration-content {
+          text-align: center;
+        }
+
+        .benefits-list {
+          display: inline-block;
+          text-align: left;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .form-card {
+          padding: var(--space-lg) var(--space-md);
+        }
+
+        .donation-options {
+          grid-template-columns: 1fr;
+        }
+
+        .btn-block,
+        .btn-submit {
+          padding-top: var(--space-md);
+          padding-bottom: var(--space-md);
+          margin-bottom: var(
+            --space-lg
+          ); /* Clearance for floating buttons if near bottom */
+        }
+      }
+    </style>
+
+    <!-- Tom Select JS -->
+    <script
+      is:inline
+      src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"
+    ></script>
+
+    <style is:global>
+      /* Tom Select Custom Styling */
+      .ts-wrapper.single .ts-control {
+        padding: 0.8rem 1rem !important; /* Matches other inputs */
+        border: 1px solid var(--color-cream-dark) !important;
+        border-radius: var(--radius-md) !important;
+        font-family: var(--font-body) !important;
+        font-size: 1rem !important;
+        background: var(--color-white) !important;
+        box-shadow: none !important;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+      }
+
+      .ts-wrapper.single.focus .ts-control {
+        border-color: var(--color-primary) !important;
+        box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1) !important;
+      }
+
+      .ts-dropdown {
+        border-radius: var(--radius-md) !important;
+        border: 1px solid var(--color-cream-dark) !important;
+        box-shadow: var(--shadow-lg) !important;
+        margin-top: 5px !important;
+        z-index: 1000 !important;
+      }
+
+      .ts-dropdown .option.active {
+        background-color: rgba(227, 28, 37, 0.1) !important;
+        color: var(--color-primary) !important;
+      }
+
+      .ts-dropdown .option {
+        padding: 10px 15px !important;
+      }
+
+      .ts-wrapper .ts-control input::placeholder {
+        color: var(--color-text-light) !important;
+        opacity: 0.7;
+      }
+    </style>
+
+    <script>
+      import { showToast } from "../lib/cart";
+
+      declare global {
+        interface Window {
+          TomSelect: any;
+        }
+      }
+
+      document.addEventListener("astro:page-load", () => {
+        // Live counter functionality
+        const liveCounter = document.getElementById("live-counter");
+
+        async function updateCounter() {
+          if (!liveCounter) return;
+          try {
+            const response = await fetch("/api/contador");
+            if (response.ok) {
+              const data = (await response.json()) as { total: number };
+              liveCounter.textContent = data.total.toLocaleString();
+            }
+          } catch (error) {
+            console.warn("Could not fetch counter:", error);
+          }
+        }
+
+        // Initial load
+        updateCounter();
+
+        // Update every 30 seconds
+        setInterval(updateCounter, 30000);
+
+        const form = document.getElementById(
+          "registrationForm"
+        ) as HTMLFormElement;
+        const step1 = document.getElementById("step1");
+        const step2 = document.getElementById("step2");
+        const btnNext = document.getElementById("btnNext");
+        const btnBack = document.getElementById("btnBack");
+
+        let ts: any;
+
+        // Initialize Tom Select
+        const countrySelect = document.getElementById(
+          "country"
+        ) as unknown as HTMLSelectElement;
+
+        // @ts-ignore
+        if (
+          countrySelect &&
+          !countrySelect.classList.contains("tomselected") &&
+          window.TomSelect
+        ) {
+          // @ts-ignore
+          ts = new window.TomSelect(countrySelect, {
+            create: false,
+            sortField: {
+              field: "text",
+              direction: "asc",
+            },
+            render: {
+              no_results: function (data: any, escape: any) {
+                return '<div class="no-results">País no encontrado...</div>';
+              },
+            },
+          });
+
+          // Set default while detecting
+          ts.setValue("CO");
+
+          // Try to detect user's country by IP
+          fetch("https://ipapi.co/json/")
+            .then((res) => res.json())
+            .then((data) => {
+              const countryData = data as { country_code?: string };
+              if (countryData.country_code && ts) {
+                ts.setValue(countryData.country_code);
+              }
+            })
+            .catch((err) => {
+              console.warn("Country detection failed, falling back to CO", err);
+            });
+        }
+
+        btnNext?.addEventListener("click", () => {
+          // Simple validation for Step 1
+          const nameInput = document.getElementById("name") as HTMLInputElement;
+          const emailInput = document.getElementById(
+            "email"
+          ) as HTMLInputElement;
+
+          // Get value from Tom Select instance if it exists
+          const countryValue = ts
+            ? ts.getValue()
+            : (countrySelect as HTMLSelectElement).value;
+
+          if (!nameInput.value || !emailInput.value || !countryValue) {
+            showToast(
+              "Por favor completa los campos obligatorios (Nombre, Email, País)",
+              "error"
+            );
+            return;
+          }
+
+          step1?.classList.remove("active");
+          step2?.classList.add("active");
+        });
+
+        btnBack?.addEventListener("click", () => {
+          step2?.classList.remove("active");
+          step1?.classList.add("active");
+        });
+
+        form?.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          // Get selected amount
+          const selectedAmountEl = form.querySelector(
+            'input[name="amount"]:checked'
+          ) as HTMLInputElement;
+          let amount = selectedAmountEl?.value;
+
+          if (amount === "custom") {
+            const customInputEl = document.querySelector(
+              ".custom-amount"
+            ) as HTMLInputElement;
+            const customVal = customInputEl?.value;
+            if (!customVal || parseFloat(customVal) <= 0) {
+              showToast("Por favor ingresa un monto válido", "error");
+              customInputEl?.focus();
+              return;
+            }
+            amount = customVal;
+          }
+
+          // Get donor data from step 1
+          const nameInput = document.getElementById("name") as HTMLInputElement;
+          const emailInput = document.getElementById(
+            "email"
+          ) as HTMLInputElement;
+          const phoneInput = document.getElementById(
+            "phone"
+          ) as HTMLInputElement;
+          const countryValue = ts
+            ? ts.getValue()
+            : (countrySelect as HTMLSelectElement).value;
+
+          // Register donor in database
+          try {
+            showToast("Registrando tu información... 💛");
+
+            const response = await fetch("/api/donante", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: nameInput.value,
+                email: emailInput.value,
+                phone: phoneInput.value || null,
+                country: countryValue || null,
+                amount: parseFloat(amount),
+              }),
+            });
+
+            if (response.ok) {
+              const data = (await response.json()) as { id: number };
+              // Save donor ID to confirm later
+              sessionStorage.setItem("donor_id", String(data.id));
+            }
+          } catch (error) {
+            console.warn("Could not register in database:", error);
+            // Continue with PayPal even if registration fails
+          }
+
+          const paypalEmail = "afroinsantamarta@gmail.com";
+          const donationName = encodeURIComponent(
+            "Aporte al Movimiento AFRO IN"
+          );
+          const returnUrl = encodeURIComponent(
+            `${window.location.origin}/gracias`
+          );
+          const cancelUrl = encodeURIComponent(
+            `${window.location.origin}/#unirse`
+          );
+
+          // Dynamic PayPal link with amount, email and callbacks
+          const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=${paypalEmail}&item_name=${donationName}&amount=${amount}&currency_code=USD&return=${returnUrl}&cancel_return=${cancelUrl}&rm=1`;
+
+          showToast("Redirigiendo a PayPal para completar tu aporte... 💛");
+
+          // Open PayPal in a new tab after a small delay
+          setTimeout(() => {
+            window.open(paypalUrl, "_blank");
+          }, 1500);
+        });
+
+        // Auto-select "Other" radio when focusing custom input
+        const customInput = document.querySelector(
+          ".custom-amount"
+        ) as HTMLInputElement;
+        const customRadio = document.querySelector(
+          'input[value="custom"]'
+        ) as HTMLInputElement;
+
+        customInput?.addEventListener("focus", () => {
+          if (customRadio) (customRadio as HTMLInputElement).checked = true;
+        });
+      });
+    </script>
+  </div>
+</section>

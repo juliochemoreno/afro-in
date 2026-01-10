@@ -1,7 +1,10 @@
 {
   "name": "afro-in",
+  "account_id": "5d061cd2e8e41dd336d678070802ffaf",
   "compatibility_date": "2025-10-08",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "main": "./dist/_worker.js/index.js",
   "assets": {
     "directory": "./dist",
@@ -10,5 +13,12 @@
   "observability": {
     "enabled": true
   },
-  "upload_source_maps": true
+  "upload_source_maps": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "afroin",
+      "database_id": "1a752558-2271-40d7-8553-28f7a622eb20"
+    }
+  ]
 }

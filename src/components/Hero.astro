@@ -1,0 +1,475 @@
+---
+import { ArrowRight } from "lucide-astro";
+import { Image } from "astro:assets";
+import heroMain from "../assets/img/hero-main.jpg";
+
+interface Props {
+  targetCount?: number;
+}
+
+const { targetCount = 12847 } = Astro.props;
+---
+
+<section
+  class="hero relative min-h-screen flex items-center overflow-hidden"
+  id="inicio"
+>
+  <div class="hero-bg absolute inset-0 z-0">
+    <div class="hero-pattern"></div>
+    <div class="hero-gradient"></div>
+  </div>
+
+  <div
+    class="container hero-content relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-center lg:text-left"
+  >
+    <div class="hero-text">
+      <span class="hero-badge animate-fade-in-up"
+        >🎭 Cultura Afro Independiente</span
+      >
+
+      <h1 class="hero-title animate-fade-in-up">
+        <span class="title-number">1 Millón</span>
+        <span class="title-de">de</span>
+        <span class="title-hearts">Corazones</span>
+      </h1>
+
+      <p class="hero-description animate-fade-in-up">
+        Únete a la comunidad que apoya el arte, la danza y la cultura
+        afro-colombiana. Con solo <strong>$5 USD</strong> haces parte de un movimiento
+        que transforma vidas.
+      </p>
+
+      <div class="hero-counter animate-fade-in-up">
+        <div class="counter-box">
+          <span class="counter-number" data-target={targetCount}
+            >{targetCount.toLocaleString()}</span
+          >
+          <span class="counter-label">Corazones unidos</span>
+        </div>
+        <div class="counter-progress">
+          <div
+            class="progress-bar"
+            style={`width: ${(targetCount / 1000000) * 100}%`}
+          >
+          </div>
+        </div>
+        <span class="counter-goal">Meta: 1,000,000</span>
+      </div>
+
+      <div
+        class="hero-cta animate-fade-in-up flex gap-4 justify-center lg:justify-start flex-wrap lg:flex-nowrap origin-bottom"
+      >
+        <a
+          href="#unirse"
+          class="btn btn-primary px-8 py-4 text-lg flex items-center gap-2"
+        >
+          <span>Únete Ahora</span>
+          <ArrowRight size={20} />
+        </a>
+        <a href="#sobre" class="btn btn-secondary px-8 py-4 text-lg"
+          >Conoce Más</a
+        >
+      </div>
+    </div>
+
+    <div class="hero-visual animate-fade-in-up">
+      <div class="hero-image-wrapper">
+        <Image
+          src={heroMain}
+          alt="Festival AFRO IN - Celebrando la cultura afro-colombiana"
+          class="hero-image"
+          loading="eager"
+        />
+        <div class="hero-float-card card-1">
+          <span class="float-emoji">🎵</span>
+          <span class="float-text">Música</span>
+        </div>
+        <div class="hero-float-card card-2">
+          <span class="float-emoji">🎭</span>
+          <span class="float-text">Cultura</span>
+        </div>
+        <div class="hero-float-card card-3">
+          <span class="float-emoji">👗</span>
+          <span class="float-text">Moda</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="hero-scroll-indicator absolute bottom-8 left-1/2 -translate-x-1/2 hidden lg:flex flex-col items-center gap-2 text-(--color-text-light) text-xs uppercase tracking-widest"
+  >
+    <span>Scroll</span>
+    <div
+      class="scroll-line w-px h-10 bg-linear-to-b from-(--color-primary) to-transparent animate-[scrollPulse_2s_ease-in-out_infinite]"
+    >
+    </div>
+  </div>
+  <script>
+    const counterElement = document.querySelector(".counter-number");
+    const progressBar = document.querySelector(".progress-bar") as HTMLElement;
+
+    if (counterElement) {
+      // Función para animar el contador
+      const animateCounter = (target: number) => {
+        const duration = 2000; // 2 seconds
+        const startTime = performance.now();
+
+        function updateCounter(currentTime: number) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+
+          // Easing function (easeOutExpo)
+          const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+
+          const current = Math.floor(ease * target);
+          if (counterElement) {
+            counterElement.textContent = current.toLocaleString();
+          }
+
+          if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+          }
+        }
+
+        requestAnimationFrame(updateCounter);
+      };
+
+      // Fetch del valor real
+      fetch("/api/contador")
+        .then((res) => res.json())
+        .then((data) => {
+          const total = data.total || 0;
+
+          // Actualizar atributo para referencia
+          counterElement.setAttribute("data-target", total.toString());
+
+          // Actualizar barra de progreso
+          if (progressBar) {
+            const percentage = Math.min((total / 1000000) * 100, 100);
+            progressBar.style.width = `${percentage}%`;
+          }
+
+          // Iniciar animación
+          animateCounter(total);
+        })
+        .catch((err) => {
+          console.error("Error fetching counter:", err);
+          // Fallback al valor por defecto si falla
+          const fallbackTarget = parseInt(
+            counterElement.getAttribute("data-target") || "0"
+          );
+          animateCounter(fallbackTarget);
+        });
+    }
+  </script>
+</section>
+
+<style>
+  /* .hero {
+     Migrated to Tailwind: relative min-h-screen flex items-center pt-20 overflow-hidden
+  } */
+
+  /* .hero-bg {
+     Migrated to Tailwind: absolute inset-0 z-0
+  } */
+
+  .hero-pattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(
+        circle at 20% 80%,
+        rgba(227, 28, 37, 0.1) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 20%,
+        rgba(232, 93, 4, 0.08) 0%,
+        transparent 50%
+      );
+  }
+
+  .hero-gradient {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: linear-gradient(to top, var(--color-cream), transparent);
+  }
+
+  /* .hero-content {
+     Migrated to Tailwind: container relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-center lg:text-left
+  } */
+
+  @keyframes scrollPulse {
+    0%,
+    100% {
+      opacity: 1;
+      height: 40px;
+    }
+    50% {
+      opacity: 0.5;
+      height: 30px;
+    }
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(227, 28, 37, 0.1);
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-earth);
+    margin-bottom: var(--space-lg);
+    animation-delay: 0.1s;
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 1.1;
+    margin-bottom: var(--space-md);
+    animation-delay: 0.2s;
+  }
+
+  .title-number {
+    display: block;
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .title-de {
+    display: block;
+    font-size: 0.4em;
+    font-weight: 400;
+    color: var(--color-text-light);
+    margin: var(--space-xs) 0;
+  }
+
+  .title-hearts {
+    display: block;
+    color: var(--color-secondary);
+  }
+
+  .hero-description {
+    font-size: 1.2rem;
+    color: var(--color-text-light);
+    max-width: 500px;
+    margin-bottom: var(--space-lg);
+    animation-delay: 0.3s;
+  }
+
+  .hero-description strong {
+    color: var(--color-primary);
+  }
+
+  .hero-counter {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(227, 28, 37, 0.1);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px -5px rgba(227, 28, 37, 0.15);
+    margin-bottom: var(--space-lg);
+    animation-delay: 0.4s;
+    transition: all 0.3s ease;
+  }
+
+  .hero-counter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px -5px rgba(227, 28, 37, 0.25);
+    border-color: rgba(227, 28, 37, 0.2);
+  }
+
+  .counter-box {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+
+  .counter-number {
+    font-family: var(--font-heading);
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 4px rgba(227, 28, 37, 0.2));
+  }
+
+  .counter-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: var(--color-text-light);
+  }
+
+  .counter-progress {
+    height: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-full);
+    overflow: visible;
+    margin-bottom: var(--space-sm);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--gradient-gold);
+    border-radius: var(--radius-full);
+    transition: width 1.5s ease-out;
+    position: relative;
+    box-shadow: 0 0 10px rgba(227, 28, 37, 0.4);
+  }
+
+  .progress-bar::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate(50%, -50%);
+    width: 16px;
+    height: 16px;
+    background: var(--color-white);
+    border: 3px solid var(--color-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(227, 28, 37, 0.5);
+  }
+
+  .counter-goal {
+    display: block;
+    text-align: right;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-light);
+    opacity: 0.8;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: var(--space-md);
+    animation-delay: 0.5s;
+  }
+
+  .hero-visual {
+    position: relative;
+    animation-delay: 0.3s;
+  }
+
+  .hero-image-wrapper {
+    position: relative;
+    aspect-ratio: 4/5;
+    max-width: 450px;
+    margin: 0 auto;
+  }
+
+  .hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .hero-float-card {
+    position: absolute;
+    background: var(--color-white);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .card-1 {
+    top: 10%;
+    left: -20%;
+    animation-delay: 0s;
+  }
+
+  .card-2 {
+    top: 50%;
+    right: -15%;
+    animation-delay: 1s;
+  }
+
+  .card-3 {
+    bottom: 15%;
+    left: -10%;
+    animation-delay: 2s;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .float-emoji {
+    font-size: 1.5rem;
+  }
+
+  .float-text {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-secondary);
+  }
+
+  @media (max-width: 968px) {
+    .hero-content {
+      /* Reverting mobile styles for content alignment since Tailwind container handles grid but not text-align centered */
+      text-align: center;
+    }
+
+    .hero-description {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-cta {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero-visual {
+      order: -1;
+    }
+
+    .hero-image-wrapper {
+      max-width: 300px;
+    }
+
+    .hero-float-card {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-title {
+      font-size: 2.5rem; /* Ensure it doesn't stay too large */
+    }
+
+    .counter-number {
+      font-size: 2.5rem;
+    }
+
+    .hero-image-wrapper {
+      max-width: 100%; /* Let it take full width of container minus padding */
+    }
+  }
+</style>
