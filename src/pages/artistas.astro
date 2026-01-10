@@ -80,10 +80,13 @@ const getTypeIcon = (type: string) => {
     default:
       return Sparkles;
   }
-};
+const descriptionText = "Conoce a los DJs, maestros y artistas que forman parte del AFRO IN Tour 2026. Una selección internacional de talento afro.";
 ---
 
-<Layout title="Artistas - AFRO IN Tour 2026">
+<Layout 
+  title="Artistas - AFRO IN Tour 2026"
+  description={descriptionText}
+>
   <Header navLinks={navLinks} ctaLink={ctaLink} />
 
   <main class="artists-page">
