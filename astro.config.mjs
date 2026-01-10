@@ -19,6 +19,10 @@ export default defineConfig({
     defaultStrategy: "hover",
   },
 
+  build: {
+    inlineStylesheets: "always",
+  },
+
   server: {
     host: true,
     port: 4321,
