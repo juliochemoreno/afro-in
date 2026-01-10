@@ -1,5 +1,6 @@
 ---
 import { Image } from "astro:assets";
+import { Instagram, Facebook, Youtube } from "lucide-astro";
 
 // Import real images from assets - Historical and Location focus
 import img2 from "@/assets/img/palenque/palenque-1.jpg";
@@ -78,27 +79,30 @@ const categories = [
 
     <div class="gallery-cta text-center">
       <p>¿Quieres ver más? Síguenos en nuestras redes sociales.</p>
-      <div class="gallery-social">
+      <div class="gallery-social flex justify-center gap-4">
         <a
           href="https://instagram.com/afroin"
-          class="btn btn-secondary"
+          class="social-icon-link"
           target="_blank"
+          aria-label="Instagram"
         >
-          📸 Instagram
+          <Instagram size={24} />
         </a>
         <a
           href="https://facebook.com/afroin"
-          class="btn btn-secondary"
+          class="social-icon-link"
           target="_blank"
+          aria-label="Facebook"
         >
-          📘 Facebook
+          <Facebook size={24} />
         </a>
         <a
           href="https://www.youtube.com/@afroin5816"
-          class="btn btn-secondary"
+          class="social-icon-link"
           target="_blank"
+          aria-label="YouTube"
         >
-          🎬 YouTube
+          <Youtube size={24} />
         </a>
       </div>
     </div>
@@ -108,6 +112,29 @@ const categories = [
 <style>
   .gallery {
     background: var(--color-cream);
+  }
+
+  /* ... Estilos anteriores ... */
+
+  .social-icon-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--color-white);
+    color: var(--color-primary);
+    border: 1px solid rgba(227, 28, 37, 0.2);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  .social-icon-link:hover {
+    background: var(--color-primary);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(227, 28, 37, 0.2);
   }
 
   .section-badge {
@@ -226,16 +253,15 @@ const categories = [
     }
 
     .gallery-social {
-      flex-direction: column;
+      /* flex-direction: column; removido para mantener fila horizontal */
       align-items: center;
     }
   }
 </style>
 
 <script>
-  const filterBtns =
-    document.querySelectorAll<HTMLButtonElement>(".filter-btn");
-  const galleryItems = document.querySelectorAll<HTMLElement>(".gallery-item");
+  const filterBtns = document.querySelectorAll(".filter-btn");
+  const galleryItems = document.querySelectorAll(".gallery-item");
 
   filterBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -244,12 +270,15 @@ const categories = [
       btn.classList.add("active");
 
       // Filter items
-      const filter = btn.dataset.filter;
+      const filter = (btn as HTMLElement).dataset.filter;
       galleryItems.forEach((item) => {
-        if (filter === "todos" || item.dataset.category === filter) {
-          item.style.display = "block";
+        if (
+          filter === "todos" ||
+          (item as HTMLElement).dataset.category === filter
+        ) {
+          (item as HTMLElement).style.display = "block";
         } else {
-          item.style.display = "none";
+          (item as HTMLElement).style.display = "none";
         }
       });
     });

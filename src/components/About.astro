@@ -340,30 +340,49 @@ const stats = [
     }
 
     .about-stats {
-      grid-template-columns: 1fr;
-      gap: var(--space-xl);
+      grid-template-columns: repeat(2, 1fr); /* 2 columnas en movil */
+      gap: var(--space-lg) var(--space-md); /* Menos gap horizontal */
+      padding: var(--space-lg) var(--space-md);
     }
 
-    /* Remove all vertical borders on mobile */
+    /* Manejo de bordes para Grid 2x2 */
     .stat-item::after {
       display: none !important;
     }
 
-    /* Add horizontal borders between items */
-    .stat-item:not(:last-child) {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: var(--space-lg);
-      margin-bottom: var(--space-lg);
+    /* Reset borders previos */
+    .stat-item {
+      border: none !important;
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
     }
 
-    /* Reduce padding for stats container on mobile */
-    .about-stats {
-      padding: var(--space-lg) var(--space-md);
-      gap: var(--space-lg);
+    /* Borde a la derecha para elementos impares (1 y 3) */
+    .stat-item:nth-child(odd)::after {
+      display: block !important;
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 10%;
+      height: 80%;
+      width: 1px;
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      );
+    }
+
+    /* Borde abajo para los dos primeros elementos (1 y 2) */
+    .stat-item:nth-child(-n + 2) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+      padding-bottom: var(--space-lg) !important;
+      margin-bottom: var(--space-lg) !important;
     }
 
     .stat-number {
-      font-size: 2.25rem;
+      font-size: 2rem; /* Un poco mas pequeño para que quepa bien */
     }
   }
 </style>
