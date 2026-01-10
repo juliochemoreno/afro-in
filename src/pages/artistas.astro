@@ -18,7 +18,10 @@ const destinations = await getCollection("tour2026");
 
 // Helper to extract unique artists for a specific destination slug
 const getArtistsForDestination = (slug: string) => {
-  const dest = destinations.find((d) => d.slug === slug);
+  // Use id as fallback for slug if types are strict
+  const dest = destinations.find(
+    (d) => d.id === slug || (d as any).slug === slug
+  );
   if (!dest) return [];
 
   const artistsMap = new Map();
@@ -64,7 +67,7 @@ const navLinks = [
   { href: "/artistas", label: "Artistas" },
   { href: "/#contacto", label: "Contacto" },
 ];
-const ctaLink = { href: "/#unirse", label: "Únete al Tour" };
+const ctaLink = { href: "/#unirse", label: "Únete" };
 
 const getTypeIcon = (type: string) => {
   switch (type) {

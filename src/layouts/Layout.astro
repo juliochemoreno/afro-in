@@ -107,7 +107,7 @@ import { ClientRouter } from "astro:transitions";
               }
             });
           },
-          { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+          { threshold: 0.05, rootMargin: "50px" }
         );
 
         animatedElements.forEach((el) => observer.observe(el));
@@ -369,8 +369,8 @@ import { ClientRouter } from "astro:transitions";
     opacity: 0;
     transform: translateY(30px);
     transition:
-      opacity 0.8s ease-out,
-      transform 0.8s ease-out;
+      opacity 0.6s ease-out,
+      transform 0.6s ease-out;
   }
 
   .animate-fade-in-up.visible {
