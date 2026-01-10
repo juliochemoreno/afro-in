@@ -9,10 +9,6 @@ const { currentCount = 12847 } = Astro.props;
 ---
 
 <section class="registration section" id="unirse">
-  <link
-    href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css"
-    rel="stylesheet"
-  />
   <div class="container">
     <div class="registration-wrapper">
       <div
@@ -197,6 +193,7 @@ const { currentCount = 12847 } = Astro.props;
         align-items: center;
       }
 
+      /* Logo dimensions optimization */
       .section-badge {
         display: inline-block;
         padding: var(--space-xs) var(--space-md);
@@ -312,13 +309,9 @@ const { currentCount = 12847 } = Astro.props;
         margin: 0;
       }
 
-      /* ... Keep existing form-group ... */
-
       .form-group {
         margin-bottom: var(--space-md);
       }
-
-      /* ... Keep existing inputs ... */
 
       .btn-block {
         width: 100%;
@@ -379,19 +372,10 @@ const { currentCount = 12847 } = Astro.props;
         margin: var(--space-lg) 0;
       }
 
-      .donation-label {
-        font-weight: 500;
-        margin-bottom: var(--space-sm);
-      }
-
       .donation-options {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-sm);
-      }
-
-      .donation-option {
-        cursor: pointer;
       }
 
       .donation-option input[type="radio"] {
@@ -402,13 +386,13 @@ const { currentCount = 12847 } = Astro.props;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center; /* Center content vertically */
+        justify-content: center;
         padding: var(--space-md);
         border: 2px solid var(--color-cream-dark);
         border-radius: var(--radius-md);
         transition: all var(--transition-fast);
-        height: 100%; /* Ensure full height of grid cell */
-        min-height: 100px; /* Minimum visual size */
+        height: 100%;
+        min-height: 100px;
       }
 
       .donation-option input:checked + .option-content {
@@ -455,22 +439,15 @@ const { currentCount = 12847 } = Astro.props;
         .registration::before {
           display: none;
         }
-
         .registration-wrapper {
           grid-template-columns: 1fr;
         }
-
         .registration-content {
           text-align: center;
         }
-
         .benefits-list {
           display: inline-block;
           text-align: left;
-        }
-
-        .form-grid {
-          grid-template-columns: 1fr;
         }
       }
 
@@ -478,32 +455,16 @@ const { currentCount = 12847 } = Astro.props;
         .form-card {
           padding: var(--space-lg) var(--space-md);
         }
-
         .donation-options {
           grid-template-columns: 1fr;
-        }
-
-        .btn-block,
-        .btn-submit {
-          padding-top: var(--space-md);
-          padding-bottom: var(--space-md);
-          margin-bottom: var(
-            --space-lg
-          ); /* Clearance for floating buttons if near bottom */
         }
       }
     </style>
 
-    <!-- Tom Select JS -->
-    <script
-      is:inline
-      src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"
-    ></script>
-
     <style is:global>
-      /* Tom Select Custom Styling */
+      /* Tom Select Custom Styling - Loaded in head but needs global styles here */
       .ts-wrapper.single .ts-control {
-        padding: 0.8rem 1rem !important; /* Matches other inputs */
+        padding: 0.8rem 1rem !important;
         border: 1px solid var(--color-cream-dark) !important;
         border-radius: var(--radius-md) !important;
         font-family: var(--font-body) !important;
@@ -514,12 +475,10 @@ const { currentCount = 12847 } = Astro.props;
         display: flex;
         align-items: center;
       }
-
       .ts-wrapper.single.focus .ts-control {
         border-color: var(--color-primary) !important;
         box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1) !important;
       }
-
       .ts-dropdown {
         border-radius: var(--radius-md) !important;
         border: 1px solid var(--color-cream-dark) !important;
@@ -527,19 +486,9 @@ const { currentCount = 12847 } = Astro.props;
         margin-top: 5px !important;
         z-index: 1000 !important;
       }
-
       .ts-dropdown .option.active {
         background-color: rgba(227, 28, 37, 0.1) !important;
         color: var(--color-primary) !important;
-      }
-
-      .ts-dropdown .option {
-        padding: 10px 15px !important;
-      }
-
-      .ts-wrapper .ts-control input::placeholder {
-        color: var(--color-text-light) !important;
-        opacity: 0.7;
       }
     </style>
 
@@ -553,9 +502,8 @@ const { currentCount = 12847 } = Astro.props;
       }
 
       document.addEventListener("astro:page-load", () => {
-        // Live counter functionality
+        // --- Live Counter ---
         const liveCounter = document.getElementById("live-counter");
-
         async function updateCounter() {
           if (!liveCounter) return;
           try {
@@ -564,17 +512,12 @@ const { currentCount = 12847 } = Astro.props;
               const data = (await response.json()) as { total: number };
               liveCounter.textContent = data.total.toLocaleString();
             }
-          } catch (error) {
-            console.warn("Could not fetch counter:", error);
-          }
+          } catch (error) {}
         }
-
-        // Initial load
         updateCounter();
-
-        // Update every 30 seconds
         setInterval(updateCounter, 30000);
 
+        // --- Form Controls ---
         const form = document.getElementById(
           "registrationForm"
         ) as HTMLFormElement;
@@ -582,71 +525,87 @@ const { currentCount = 12847 } = Astro.props;
         const step2 = document.getElementById("step2");
         const btnNext = document.getElementById("btnNext");
         const btnBack = document.getElementById("btnBack");
-
-        let ts: any;
-
-        // Initialize Tom Select
         const countrySelect = document.getElementById(
           "country"
-        ) as unknown as HTMLSelectElement;
+        ) as HTMLSelectElement;
+        let tsInstance: any = null;
 
-        // @ts-ignore
-        if (
-          countrySelect &&
-          !countrySelect.classList.contains("tomselected") &&
-          window.TomSelect
-        ) {
-          // @ts-ignore
-          ts = new window.TomSelect(countrySelect, {
-            create: false,
-            sortField: {
-              field: "text",
-              direction: "asc",
-            },
-            render: {
-              no_results: function (data: any, escape: any) {
-                return '<div class="no-results">País no encontrado...</div>';
-              },
-            },
-          });
+        // --- Lazy TomSelect ---
+        const loadTomSelect = async () => {
+          if (window.TomSelect || tsInstance) return;
 
-          // Set default while detecting
-          ts.setValue("CO");
+          // Load CSS and JS dynamically
+          if (!document.getElementById("tom-select-css")) {
+            const link = document.createElement("link");
+            link.id = "tom-select-css";
+            link.rel = "stylesheet";
+            link.href =
+              "https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css";
+            document.head.appendChild(link);
+          }
 
-          // Try to detect user's country by IP
-          fetch("https://ipapi.co/json/")
-            .then((res) => res.json())
-            .then((data) => {
-              const countryData = data as { country_code?: string };
-              if (countryData.country_code && ts) {
-                ts.setValue(countryData.country_code);
-              }
-            })
-            .catch((err) => {
-              console.warn("Country detection failed, falling back to CO", err);
+          if (!window.TomSelect) {
+            await new Promise((resolve) => {
+              const script = document.createElement("script");
+              script.src =
+                "https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js";
+              script.onload = resolve;
+              document.body.appendChild(script);
             });
-        }
+          }
 
+          if (countrySelect && window.TomSelect && !tsInstance) {
+            tsInstance = new window.TomSelect(countrySelect, {
+              create: false,
+              sortField: { field: "text", direction: "asc" },
+              render: {
+                no_results: () =>
+                  '<div class="no-results">País no encontrado...</div>',
+              },
+            });
+            tsInstance.setValue("CO");
+            fetch("https://ipapi.co/json/")
+              .then((r) => r.json())
+              .then((d) => {
+                if (d.country_code && tsInstance)
+                  tsInstance.setValue(d.country_code);
+              })
+              .catch(() => {});
+          }
+        };
+
+        const initLazy = () => {
+          loadTomSelect();
+          countrySelect?.removeEventListener("focus", initLazy);
+        };
+        countrySelect?.addEventListener("focus", initLazy);
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            if (entries[0].isIntersecting) {
+              loadTomSelect();
+              observer.disconnect();
+            }
+          },
+          { rootMargin: "200px" }
+        );
+        const section = document.getElementById("unirse");
+        if (section) observer.observe(section);
+
+        // --- Navigation ---
         btnNext?.addEventListener("click", () => {
-          // Simple validation for Step 1
           const nameInput = document.getElementById("name") as HTMLInputElement;
           const emailInput = document.getElementById(
             "email"
           ) as HTMLInputElement;
-
-          // Get value from Tom Select instance if it exists
-          const countryValue = ts
-            ? ts.getValue()
-            : (countrySelect as HTMLSelectElement).value;
+          const countryValue = tsInstance
+            ? tsInstance.getValue()
+            : countrySelect.value;
 
           if (!nameInput.value || !emailInput.value || !countryValue) {
-            showToast(
-              "Por favor completa los campos obligatorios (Nombre, Email, País)",
-              "error"
-            );
+            showToast("Por favor completa los campos obligatorios", "error");
             return;
           }
-
           step1?.classList.remove("active");
           step2?.classList.add("active");
         });
@@ -658,8 +617,6 @@ const { currentCount = 12847 } = Astro.props;
 
         form?.addEventListener("submit", async (e) => {
           e.preventDefault();
-
-          // Get selected amount
           const selectedAmountEl = form.querySelector(
             'input[name="amount"]:checked'
           ) as HTMLInputElement;
@@ -669,16 +626,13 @@ const { currentCount = 12847 } = Astro.props;
             const customInputEl = document.querySelector(
               ".custom-amount"
             ) as HTMLInputElement;
-            const customVal = customInputEl?.value;
-            if (!customVal || parseFloat(customVal) < 1) {
-              showToast("El monto mínimo para donar es de $1 USD", "error");
-              customInputEl?.focus();
+            if (!customInputEl?.value || parseFloat(customInputEl.value) < 1) {
+              showToast("El monto mínimo es $1 USD", "error");
               return;
             }
-            amount = customVal;
+            amount = customInputEl.value;
           }
 
-          // Get donor data from step 1
           const nameInput = document.getElementById("name") as HTMLInputElement;
           const emailInput = document.getElementById(
             "email"
@@ -686,14 +640,12 @@ const { currentCount = 12847 } = Astro.props;
           const phoneInput = document.getElementById(
             "phone"
           ) as HTMLInputElement;
-          const countryValue = ts
-            ? ts.getValue()
-            : (countrySelect as HTMLSelectElement).value;
+          const countryValue = tsInstance
+            ? tsInstance.getValue()
+            : countrySelect.value;
 
-          // Register donor in database
           try {
-            showToast("Registrando tu información... 💛");
-
+            showToast("Registrando... 💛");
             const response = await fetch("/api/donante", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -705,49 +657,27 @@ const { currentCount = 12847 } = Astro.props;
                 amount: parseFloat(amount),
               }),
             });
-
             if (response.ok) {
-              const data = (await response.json()) as { id: number };
-              // Save donor ID to confirm later
+              const data = await response.json();
               sessionStorage.setItem("donor_id", String(data.id));
             }
-          } catch (error) {
-            console.warn("Could not register in database:", error);
-            // Continue with PayPal even if registration fails
-          }
+          } catch (error) {}
 
-          const paypalEmail = "afroinsantamarta@gmail.com";
-          const donationName = encodeURIComponent(
-            "Aporte al Movimiento AFRO IN"
-          );
-          const returnUrl = encodeURIComponent(
-            `${window.location.origin}/gracias`
-          );
-          const cancelUrl = encodeURIComponent(
-            `${window.location.origin}/#unirse`
-          );
-
-          // Dynamic PayPal link with amount, email and callbacks
-          const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=${paypalEmail}&item_name=${donationName}&amount=${amount}&currency_code=USD&return=${returnUrl}&cancel_return=${cancelUrl}&rm=1`;
-
-          showToast("Redirigiendo a PayPal para completar tu aporte... 💛");
-
-          // Redirect in same tab
+          const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=afroinsantamarta@gmail.com&item_name=${encodeURIComponent("Aporte AFRO IN")}&amount=${amount}&currency_code=USD&return=${encodeURIComponent(window.location.origin + "/gracias")}&cancel_return=${encodeURIComponent(window.location.origin + "/#unirse")}&rm=1`;
+          showToast("Redirigiendo a PayPal... 💛");
           setTimeout(() => {
             window.location.href = paypalUrl;
           }, 1500);
         });
 
-        // Auto-select "Other" radio when focusing custom input
         const customInput = document.querySelector(
           ".custom-amount"
         ) as HTMLInputElement;
-        const customRadio = document.querySelector(
-          'input[value="custom"]'
-        ) as HTMLInputElement;
-
         customInput?.addEventListener("focus", () => {
-          if (customRadio) (customRadio as HTMLInputElement).checked = true;
+          const radio = document.querySelector(
+            'input[value="custom"]'
+          ) as HTMLInputElement;
+          if (radio) radio.checked = true;
         });
       });
     </script>
