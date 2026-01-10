@@ -3,21 +3,22 @@
 
 // Import product images
 import camiseta1 from "@/assets/img/store/camiseta-1.webp";
-import turbante from "@/assets/img/store/turbante.webp";
-import collar from "@/assets/img/store/collar.webp";
-import camiseta3 from "@/assets/img/store/camiseta-3.webp";
-import gorra from "@/assets/img/store/gorra.webp";
-import pulsera from "@/assets/img/store/pulsera.webp";
-import bolso from "@/assets/img/store/bolso.webp";
+// import turbante from "@/assets/img/store/turbante.webp"; // Eliminado
+// import collar from "@/assets/img/store/collar.webp"; // Eliminado
+// import camiseta3 from "@/assets/img/store/camiseta-3.webp"; // Eliminado
+// import gorra from "@/assets/img/store/gorra.webp"; // Eliminado
+// import pulsera from "@/assets/img/store/pulsera.webp"; // Eliminado
+// import bolso from "@/assets/img/store/bolso.webp"; // Eliminado
 import visera from "@/assets/img/store/visera.webp";
 import camiseta2 from "@/assets/img/store/camiseta-2.webp";
 import camiseta4 from "@/assets/img/store/camiseta-4.webp";
 
-import camiseta5 from "@/assets/img/store/camiseta-5.png";
-import camiseta6 from "@/assets/img/store/camiseta-6.png";
+// import camiseta5 from "@/assets/img/store/camiseta-5.png"; // Eliminado
+// import camiseta6 from "@/assets/img/store/camiseta-6.png"; // Eliminado
 import gorraCafe from "@/assets/img/store/gorra-cafe.jpeg";
 import gorraNegra from "@/assets/img/store/gorra-negra.jpeg";
 import vaso from "@/assets/img/store/vaso.jpeg";
+import mug from "@/assets/img/store/mug.jpeg";
 
 import type { ImageMetadata } from "astro";
 
@@ -41,238 +42,124 @@ export interface Product {
 export const products: Product[] = [
   {
     id: 1,
-    slug: "camiseta-palenque-negra",
-    sku: "AFR-ROP-CPN-01",
-    name: "Camiseta Palenque Negra",
+    slug: "camiseta-palenque-2020",
+    sku: "AFR-ROP-CP20-01",
+    name: "Camiseta Palenque 2020",
     description:
-      "Camiseta 100% algodón con diseño exclusivo de Palenque. Celebra la cultura afro-colombiana con estilo. Estampado de alta calidad que no se destiñe.",
-    price: 45000,
-    priceUSD: 12,
+      "Camiseta edición especial Palenque 2020. Un diseño icónico que celebra la historia y la resistencia cultural.",
+    price: 119900,
+    priceUSD: 30,
     images: [camiseta1],
     category: "ropa",
-    badge: "Popular",
+    badge: "Premium",
     sizes: ["S", "M", "L", "XL"],
-    colors: ["Negro"],
     inStock: true,
     featured: true,
-  },
-  {
-    id: 2,
-    slug: "turbante-palenquero",
-    sku: "AFR-ACC-TUP-02",
-    name: "Turbante Palenquero",
-    description:
-      "Turbante tradicional palenquero hecho a mano. Tela de alta calidad con colores vibrantes. Perfecto para cualquier ocasión.",
-    price: 35000,
-    priceUSD: 9,
-    images: [turbante],
-    category: "accesorios",
-    badge: "Popular",
-    inStock: true,
-    featured: true,
-  },
-  {
-    id: 3,
-    slug: "collar-africano",
-    sku: "AFR-JOY-COA-03",
-    name: "Collar Africano",
-    description:
-      "Collar artesanal con cuentas tradicionales africanas. Cada pieza es única y hecha a mano por artesanos locales.",
-    price: 55000,
-    priceUSD: 14,
-    images: [collar],
-    category: "joyeria",
-    badge: "Nuevo",
-    inStock: true,
-    featured: true,
-  },
-  {
-    id: 4,
-    slug: "camiseta-festival-afro",
-    sku: "AFR-ROP-CFA-04",
-    name: "Camiseta Festival Afro",
-    description:
-      "Edición especial del Festival AFRO IN. Diseño exclusivo que celebra la música y el baile afro-colombiano.",
-    price: 45000,
-    priceUSD: 12,
-    images: [camiseta3],
-    category: "ropa",
-    badge: "Nuevo",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Blanco"],
-    inStock: true,
-    featured: true,
-  },
-  {
-    id: 5,
-    slug: "gorra-afroin",
-    sku: "AFR-ACC-GOR-05",
-    name: "Gorra AFRO IN",
-    description:
-      "Gorra bordada con el logo de AFRO IN. Ajustable para todos los tamaños. Material resistente y cómodo.",
-    price: 35000,
-    priceUSD: 9,
-    images: [gorra],
-    category: "accesorios",
-    badge: null,
-    inStock: true,
-    featured: false,
-  },
-  {
-    id: 6,
-    slug: "pulseras-africanas-set",
-    sku: "AFR-JOY-PUL-06",
-    name: "Pulseras Africanas Set",
-    description:
-      "Set de pulseras artesanales con diseños africanos. Incluye 3 pulseras de diferentes estilos. Ajustables.",
-    price: 40000,
-    priceUSD: 10,
-    images: [pulsera],
-    category: "joyeria",
-    badge: null,
-    inStock: true,
-    featured: false,
-  },
-  {
-    id: 7,
-    slug: "bolso-artesanal",
-    sku: "AFR-ACC-BOL-07",
-    name: "Bolso Artesanal",
-    description:
-      "Bolso tejido a mano por artesanas de Palenque. Diseño único con colores tradicionales. Espacioso y resistente.",
-    price: 85000,
-    priceUSD: 22,
-    images: [bolso],
-    category: "accesorios",
-    badge: null,
-    inStock: true,
-    featured: false,
-  },
-  {
-    id: 8,
-    slug: "visera-afroin",
-    sku: "AFR-ACC-VIS-08",
-    name: "Visera AFRO IN",
-    description:
-      "Visera deportiva con el logo de AFRO IN. Perfecta para días soleados. Material transpirable.",
-    price: 30000,
-    priceUSD: 8,
-    images: [visera],
-    category: "accesorios",
-    badge: null,
-    inStock: true,
-    featured: false,
-  },
-  {
-    id: 9,
-    slug: "camiseta-palenque-2010",
-    sku: "AFR-ROP-CP2-09",
-    name: "Camiseta Palenque 2010",
-    description:
-      "Edición conmemorativa del festival 2010. Diseño vintage con gráficos originales de la época.",
-    price: 45000,
-    priceUSD: 12,
-    images: [camiseta2],
-    category: "ropa",
-    badge: null,
-    sizes: ["M", "L", "XL"],
-    colors: ["Negro"],
-    inStock: true,
-    featured: false,
   },
   {
     id: 10,
     slug: "camiseta-afroin-classic",
     sku: "AFR-ROP-CAC-10",
-    name: "Camiseta AFRO IN Classic",
+    name: "Camiseta Clásica AFRO IN",
     description:
-      "Camiseta clásica con el logo de AFRO IN. Algodón premium, corte moderno. Un básico esencial.",
-    price: 45000,
-    priceUSD: 12,
+      "Nuestra camiseta insignia. Diseño limpio y moderno con el logo AFRO IN. Calidad premium para uso diario.",
+    price: 89900,
+    priceUSD: 23,
     images: [camiseta4],
+    category: "ropa",
+    badge: "Bestseller",
+    sizes: ["S", "M", "L", "XL"],
+    inStock: true,
+    featured: true,
+  },
+  {
+    id: 9,
+    slug: "camiseta-negra-basica",
+    sku: "AFR-ROP-CNB-09",
+    name: "Camiseta Negra AFRO IN",
+    description:
+      "Camiseta negra esencial. Cómoda, duradera y con el estilo inconfundible de AFRO IN.",
+    price: 69900,
+    priceUSD: 18,
+    images: [camiseta2],
     category: "ropa",
     badge: null,
     sizes: ["S", "M", "L", "XL"],
-    colors: ["Negro", "Blanco"],
     inStock: true,
     featured: false,
   },
   {
-    id: 11,
-    slug: "camiseta-palenque-blanca",
-    sku: "AFR-ROP-CPB-11",
-    name: "Camiseta Palenque Blanca",
+    id: 8,
+    slug: "gorra-sencilla",
+    sku: "AFR-ACC-GSE-08",
+    name: "Gorra Sencilla",
     description:
-      "Camiseta blanca con diseño tradicional de Palenque. Patrones africanos vibrantes con texto AFRO IN en rojo y dorado. Algodón 100% premium.",
-    price: 48000,
-    priceUSD: 13,
-    images: [camiseta5],
-    category: "ropa",
-    badge: "Nuevo",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Blanco"],
+      "Visera deportiva ligera y cómoda. Perfecta para protegerte del sol con estilo.",
+    price: 59900,
+    priceUSD: 15,
+    images: [visera],
+    category: "gorras",
+    badge: null,
     inStock: true,
-    featured: true,
-  },
-  {
-    id: 12,
-    slug: "camiseta-afro-roots",
-    sku: "AFR-ROP-CAR-12",
-    name: "Camiseta Afro Roots",
-    description:
-      "Camiseta edición limitada 'Afro Roots Colombia'. Diseño con tambor africano y silueta de palenquera. Celebra tus raíces con orgullo.",
-    price: 50000,
-    priceUSD: 13,
-    images: [camiseta6],
-    category: "ropa",
-    badge: "Nuevo",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Negro"],
-    inStock: true,
-    featured: true,
+    featured: false,
   },
   {
     id: 13,
-    slug: "gorra-afroin-cafe",
+    slug: "gorra-cafe",
     sku: "AFR-ACC-GRC-13",
-    name: "Gorra AFRO IN Café",
+    name: "Gorra Café",
     description:
-      "Gorra bordada de alta calidad en color café. Diseño elegante con el logo de AFRO IN. Ajustable y cómoda para el uso diario.",
-    price: 38000,
-    priceUSD: 10,
+      "Gorra de alta calidad en tono café. Bordado premium y ajuste perfecto.",
+    price: 99999,
+    priceUSD: 25,
     images: [gorraCafe],
-    category: "accesorios",
+    category: "gorras",
     badge: "Nuevo",
     inStock: true,
     featured: true,
   },
   {
     id: 14,
-    slug: "gorra-afroin-negra",
+    slug: "gorra-negra",
     sku: "AFR-ACC-GRN-14",
-    name: "Gorra AFRO IN Negra",
+    name: "Gorra Negra",
     description:
-      "Nuestra clásica gorra AFRO IN en color negro. Estilo versátil y duradero. Bordado frontal de alta definición.",
-    price: 38000,
-    priceUSD: 10,
+      "La gorra negra definitiva de AFRO IN. Elegante, versátil y con acabados de primera.",
+    price: 89999,
+    priceUSD: 23,
     images: [gorraNegra],
+    category: "gorras",
+    badge: "Popular",
+    inStock: true,
+    featured: true,
+  },
+  {
+    id: 15,
+    slug: "termo-afroin",
+    sku: "AFR-ACC-TER-15",
+    name: "Termo AFRO IN 90",
+    description:
+      "Mantén tus bebidas a la temperatura perfecta con nuestro termo exclusivo AFRO IN.",
+    price: 89999,
+    priceUSD: 23,
+    images: [vaso],
     category: "accesorios",
     badge: "Nuevo",
     inStock: true,
     featured: true,
   },
   {
-    id: 15,
-    slug: "vaso-afroin",
-    sku: "AFR-ACC-VAS-15",
-    name: "Vaso AFRO IN",
+    id: 16,
+    slug: "mug-afroin",
+    sku: "AFR-ACC-MUG-16",
+    name: "Mug AFRO IN",
     description:
-      "Vaso coleccionable con diseño exclusivo de AFRO IN. Perfecto para tus bebidas favoritas y para mostrar tu apoyo a la cultura afro.",
-    price: 25000,
-    priceUSD: 7,
-    images: [vaso],
+      "Disfruta de tu café con estilo. Mug de cerámica de alta calidad con diseño AFRO IN.",
+    price: 55000,
+    priceUSD: 14,
+    images: [mug],
     category: "accesorios",
-    badge: "Nuevo",
+    badge: null,
     inStock: true,
     featured: true,
   },
@@ -307,7 +194,8 @@ export function formatPrice(price: number): string {
     style: "currency",
     currency: "COP",
     minimumFractionDigits: 0,
-  }).format(price);
+    maximumFractionDigits: 0,
+  }).format(price).replace(/\s/g, ''); // Eliminar espacios raros si los hay
 }
 
 export function getFeaturedProducts(): Product[] {
