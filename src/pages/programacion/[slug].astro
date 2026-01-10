@@ -66,10 +66,41 @@ const getGoogleCalendarUrl = (day: any) => {
   const details = encodeURIComponent(`Programación en ${day.venue}:\n\n${activitiesList}\n\nConsulta más en afroin.org`);
   const location = encodeURIComponent(day.venueSubtitle || day.venue);
   return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
-};
+const descriptionTitle = `Únete al AFRO IN Tour 2026 en ${data.name}. ${totalDays} días de inmersión cultural, ${totalActivities} actividades y los mejores artistas afro.`;
 ---
 
-<Layout title={`${data.name} - AFRO IN Tour 2026`}>
+<Layout 
+  title={`${data.name} - AFRO IN Tour 2026`}
+  description={descriptionTitle}
+  image={data.heroImage?.src}
+>
+  <!-- Schema.org Event Data -->
+  <script type="application/ld+json" is:inline define:vars={{ data, totalDays, totalActivities }}>
+    {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      "name": `AFRO IN Tour 2026 - ${data.name}`,
+      "description": `Experiencia cultural de ${totalDays} días con ${totalActivities} actividades en ${data.name}, Colombia.`,
+      "startDate": "2026-01-01", 
+      "endDate": "2026-01-31",
+      "location": {
+        "@type": "Place",
+        "name": data.name,
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": data.name,
+          "addressCountry": "CO"
+        }
+      },
+      "image": data.heroImage?.src,
+      "organizer": {
+        "@type": "Organization",
+        "name": "AFRO IN",
+        "url": "https://afroin.com"
+      }
+    }
+  </script>
+
   <Header navLinks={programNavLinks} ctaLink={programCta} />
 
   <main class="destination-page">
