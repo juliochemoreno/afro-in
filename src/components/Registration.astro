@@ -155,11 +155,10 @@ const { currentCount = 12847 } = Astro.props;
                 </div>
               </div>
 
-              <button type="submit" class="btn btn-primary btn-submit">
-                <span>Unirme a la Comunidad 💛</span>
-              </button>
+              <!-- PayPal Donate Button Container -->
+              <div id="paypal-donate-container"></div>
 
-              <p class="form-note">🔒 Pago seguro procesado por Stripe</p>
+              <p class="form-note">🔒 Pago seguro procesado por PayPal</p>
             </div>
           </form>
         </div>
@@ -421,11 +420,28 @@ const { currentCount = 12847 } = Astro.props;
         text-align: center;
       }
 
-      .btn-submit {
+      #paypal-donate-container {
         width: 100%;
-        padding: var(--space-md);
-        font-size: 1.1rem;
+        min-height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         margin-top: var(--space-md);
+        margin-bottom: var(--space-sm);
+      }
+
+      #paypal-donate-container img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+        transition:
+          transform var(--transition-fast),
+          opacity var(--transition-fast);
+      }
+
+      #paypal-donate-container img:hover {
+        transform: scale(1.02);
+        opacity: 0.9;
       }
 
       .form-note {
@@ -498,6 +514,7 @@ const { currentCount = 12847 } = Astro.props;
       declare global {
         interface Window {
           TomSelect: any;
+          PayPal: any;
         }
       }
 
@@ -529,6 +546,7 @@ const { currentCount = 12847 } = Astro.props;
           "country"
         ) as any as HTMLSelectElement;
         let tsInstance: any = null;
+        let paypalButtonRendered = false;
 
         // --- Lazy TomSelect ---
         const loadTomSelect = async () => {
@@ -592,8 +610,117 @@ const { currentCount = 12847 } = Astro.props;
         const section = document.getElementById("unirse");
         if (section) observer.observe(section);
 
+        // --- Load PayPal Donate SDK ---
+        const loadPayPalSDK = async (): Promise<void> => {
+          if (window.PayPal) return;
+
+          return new Promise((resolve) => {
+            const script = document.createElement("script");
+            script.src =
+              "https://www.paypalobjects.com/donate/sdk/donate-sdk.js";
+            script.charset = "UTF-8";
+            script.onload = () => resolve();
+            document.body.appendChild(script);
+          });
+        };
+
+        // --- Render PayPal Button ---
+        const renderPayPalButton = async () => {
+          if (paypalButtonRendered) return;
+
+          await loadPayPalSDK();
+
+          const container = document.getElementById("paypal-donate-container");
+          if (!container || !window.PayPal) return;
+
+          // Get form data
+          const nameInput = document.getElementById("name") as HTMLInputElement;
+          const emailInput = document.getElementById(
+            "email"
+          ) as HTMLInputElement;
+          const phoneInput = document.getElementById(
+            "phone"
+          ) as HTMLInputElement;
+          const countryValue = tsInstance
+            ? tsInstance.getValue()
+            : countrySelect.value;
+
+          // Get selected amount
+          const selectedAmountEl = form.querySelector(
+            'input[name="amount"]:checked'
+          ) as HTMLInputElement;
+          let amount = selectedAmountEl?.value || "5";
+
+          if (amount === "custom") {
+            const customInputEl = document.querySelector(
+              ".custom-amount"
+            ) as HTMLInputElement;
+            amount = customInputEl?.value || "5";
+          }
+
+          // Clear container and render button
+          container.innerHTML = "";
+
+          window.PayPal.Donation.Button({
+            env: "production",
+            // Use business email instead of hosted_button_id for dynamic amount control
+            business: "afroinsantamarta@gmail.com",
+            // Pre-fill amount from form selection
+            amount: amount,
+            currency_code: "USD",
+            item_name: "Aporte AFRO IN - Millón de Corazones",
+            image: {
+              src: "https://www.paypalobjects.com/es_ES/ES/i/btn/btn_donateCC_LG.gif",
+              title: "PayPal - Donar de forma segura",
+              alt: "Donar con PayPal",
+            },
+            onComplete: async function (params: {
+              tx: string;
+              st: string;
+              amt: string;
+              cc: string;
+              cm: string;
+              item_number: string;
+              item_name: string;
+            }) {
+              console.log("PayPal donation completed:", params);
+
+              // Register donor with transaction info
+              try {
+                const response = await fetch("/api/donante", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    name: nameInput.value,
+                    email: emailInput.value,
+                    phone: phoneInput.value || null,
+                    country: countryValue || null,
+                    amount: parseFloat(params.amt || amount),
+                    paypal_tx: params.tx,
+                    paypal_status: params.st,
+                  }),
+                });
+                if (response.ok) {
+                  const data = (await response.json()) as { id: number };
+                  sessionStorage.setItem("donor_id", String(data.id));
+                }
+              } catch (error) {
+                console.error("Error registering donor:", error);
+              }
+
+              // Redirect to thank you page
+              showToast("¡Gracias por tu donación! 💛");
+              setTimeout(() => {
+                window.location.href = `/gracias?tx=${params.tx}&amt=${params.amt}`;
+              }, 1000);
+            },
+          }).render("#paypal-donate-container");
+
+          paypalButtonRendered = true;
+        };
+
         // --- Navigation ---
-        btnNext?.addEventListener("click", () => {
+        btnNext?.addEventListener("click", async () => {
           const nameInput = document.getElementById("name") as HTMLInputElement;
           const emailInput = document.getElementById(
             "email"
@@ -608,6 +735,9 @@ const { currentCount = 12847 } = Astro.props;
           }
           step1?.classList.remove("active");
           step2?.classList.add("active");
+
+          // Render PayPal button when entering step 2
+          await renderPayPalButton();
         });
 
         btnBack?.addEventListener("click", () => {
@@ -615,59 +745,15 @@ const { currentCount = 12847 } = Astro.props;
           step1?.classList.add("active");
         });
 
-        form?.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const selectedAmountEl = form.querySelector(
-            'input[name="amount"]:checked'
-          ) as HTMLInputElement;
-          let amount = selectedAmountEl?.value;
-
-          if (amount === "custom") {
-            const customInputEl = document.querySelector(
-              ".custom-amount"
-            ) as HTMLInputElement;
-            if (!customInputEl?.value || parseFloat(customInputEl.value) < 1) {
-              showToast("El monto mínimo es $1 USD", "error");
-              return;
+        // Update PayPal button when amount changes
+        const amountInputs = document.querySelectorAll('input[name="amount"]');
+        amountInputs.forEach((input) => {
+          input.addEventListener("change", () => {
+            if (paypalButtonRendered) {
+              paypalButtonRendered = false;
+              renderPayPalButton();
             }
-            amount = customInputEl.value;
-          }
-
-          const nameInput = document.getElementById("name") as HTMLInputElement;
-          const emailInput = document.getElementById(
-            "email"
-          ) as HTMLInputElement;
-          const phoneInput = document.getElementById(
-            "phone"
-          ) as HTMLInputElement;
-          const countryValue = tsInstance
-            ? tsInstance.getValue()
-            : countrySelect.value;
-
-          try {
-            showToast("Registrando... 💛");
-            const response = await fetch("/api/donante", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                name: nameInput.value,
-                email: emailInput.value,
-                phone: phoneInput.value || null,
-                country: countryValue || null,
-                amount: parseFloat(amount),
-              }),
-            });
-            if (response.ok) {
-              const data = (await response.json()) as { id: number };
-              sessionStorage.setItem("donor_id", String(data.id));
-            }
-          } catch (error) {}
-
-          const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=afroinsantamarta@gmail.com&item_name=${encodeURIComponent("Aporte AFRO IN")}&amount=${amount}&currency_code=USD&return=${encodeURIComponent(window.location.origin + "/gracias")}&cancel_return=${encodeURIComponent(window.location.origin + "/#unirse")}&rm=1`;
-          showToast("Redirigiendo a PayPal... 💛");
-          setTimeout(() => {
-            window.location.href = paypalUrl;
-          }, 1500);
+          });
         });
 
         const customInput = document.querySelector(
@@ -678,6 +764,13 @@ const { currentCount = 12847 } = Astro.props;
             'input[value="custom"]'
           ) as HTMLInputElement;
           if (radio) radio.checked = true;
+        });
+
+        customInput?.addEventListener("blur", () => {
+          if (paypalButtonRendered) {
+            paypalButtonRendered = false;
+            renderPayPalButton();
+          }
         });
       });
     </script>
