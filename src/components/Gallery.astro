@@ -80,7 +80,14 @@ const categories = [
       {
         galleryItems.map((item) => (
           <div class="gallery-item">
-            <Image src={item.image} alt={item.title} class="gallery-img" />
+            <Image
+              src={item.image}
+              alt={item.title}
+              class="gallery-img"
+              width={800}
+              height={600}
+              format="webp"
+            />
           </div>
         ))
       }
