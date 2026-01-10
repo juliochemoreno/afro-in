@@ -36,6 +36,7 @@ export default defineConfig({
   integrations: [mdx(), sitemap(), react()],
 
   adapter: cloudflare({
+    imageService: "compile",
     platformProxy: {
       enabled: true,
     },
