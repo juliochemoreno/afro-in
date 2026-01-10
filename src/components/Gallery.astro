@@ -283,26 +283,28 @@ const categories = [
 </style>
 
 <script>
-  const filterBtns = document.querySelectorAll(".filter-btn");
-  const galleryItems = document.querySelectorAll(".gallery-item");
+  document.addEventListener("astro:page-load", () => {
+    const filterBtns = document.querySelectorAll(".filter-btn");
+    const galleryItems = document.querySelectorAll(".gallery-item");
 
-  filterBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      // Update active button
-      filterBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
+    filterBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        // Update active button
+        filterBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
 
-      // Filter items
-      const filter = (btn as HTMLElement).dataset.filter;
-      galleryItems.forEach((item) => {
-        if (
-          filter === "todos" ||
-          (item as HTMLElement).dataset.category === filter
-        ) {
-          (item as HTMLElement).style.display = "block";
-        } else {
-          (item as HTMLElement).style.display = "none";
-        }
+        // Filter items
+        const filter = (btn as HTMLElement).dataset.filter;
+        galleryItems.forEach((item) => {
+          if (
+            filter === "todos" ||
+            (item as HTMLElement).dataset.category === filter
+          ) {
+            (item as HTMLElement).style.display = "block";
+          } else {
+            (item as HTMLElement).style.display = "none";
+          }
+        });
       });
     });
   });
