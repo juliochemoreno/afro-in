@@ -13,6 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // https://astro.build/config
 export default defineConfig({
   site: "https://afroin.org",
+  output: "hybrid",
 
   prefetch: {
     prefetchAll: true,
