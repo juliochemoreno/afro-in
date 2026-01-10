@@ -1,6 +1,6 @@
 ---
-import { Image } from "astro:assets";
-import { products, formatPrice } from "@/data/products";
+import { products } from "@/data/products";
+import ProductCard from "./ProductCard.astro";
 ---
 
 <section class="store section" id="tienda">
@@ -23,28 +23,7 @@ import { products, formatPrice } from "@/data/products";
           .sort((a, b) => b.id - a.id)
           .slice(0, 8)
           .map((product) => (
-            <a href={`/tienda/${product.slug}`} class="product-card card">
-              {product.badge && (
-                <span class={`product-badge ${product.badge.toLowerCase()}`}>
-                  {product.badge}
-                </span>
-              )}
-              <div class="product-image">
-                <Image
-                  src={product.images[0]}
-                  alt={product.name}
-                  class="product-img"
-                />
-              </div>
-              <div class="product-info">
-                <h4 class="product-name">{product.name}</h4>
-                <div class="product-prices">
-                  <span class="price-cop">{formatPrice(product.price)}</span>
-                  <span class="price-usd">~${product.priceUSD} USD</span>
-                </div>
-                <span class="btn btn-primary product-btn">Ver Producto</span>
-              </div>
-            </a>
+            <ProductCard product={product} showQuickAdd={false} />
           ))
       }
     </div>
@@ -100,84 +79,16 @@ import { products, formatPrice } from "@/data/products";
     margin-bottom: var(--space-lg);
   }
 
-  .product-card {
-    position: relative;
-    text-align: center;
-  }
-
+  .product-image,
+  .product-img,
+  .product-name,
+  .product-prices,
+  .price-cop,
+  .price-usd,
+  .product-btn,
   .product-badge {
-    position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  .product-badge.popular {
-    background: var(--color-primary);
-    color: var(--color-white);
-  }
-
-  .product-badge.nuevo {
-    background: var(--color-success);
-    color: var(--color-white);
-  }
-
-  .product-image {
-    aspect-ratio: 1;
-    background: var(--color-cream);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: var(--space-sm);
-    transition: transform var(--transition-normal);
-  }
-
-  .product-card:hover .product-image {
-    transform: scale(1.02);
-  }
-
-  .product-placeholder {
-    font-size: 4rem;
-  }
-
-  .product-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: var(--space-sm);
-  }
-
-  .product-name {
-    font-size: 1rem;
-    color: var(--color-secondary);
-    margin-bottom: var(--space-sm);
-  }
-
-  .product-prices {
-    margin-bottom: var(--space-sm);
-  }
-
-  .price-cop {
-    display: block;
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary);
-  }
-
-  .price-usd {
-    font-size: 0.85rem;
-    color: var(--color-text-light);
-  }
-
-  .product-btn {
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
+    /* Styles moved to ProductCard component */
+    display: none; /* Just to be safe if any old HTML remains, though it shouldn't */
   }
 
   .store-note {
@@ -185,6 +96,7 @@ import { products, formatPrice } from "@/data/products";
     margin: 0 auto;
   }
 
+  /* ... rest of note-card styles ... */
   .note-card {
     display: flex;
     align-items: flex-start;
@@ -226,42 +138,6 @@ import { products, formatPrice } from "@/data/products";
     .note-card {
       flex-direction: column;
       text-align: center;
-    }
-
-    .price-cop {
-      font-size: 1rem;
-    }
-
-    /* Compact Mobile Card Styles */
-    .product-card {
-      padding: var(--space-xs); /* Less padding around card */
-    }
-
-    .product-image {
-      margin-bottom: var(--space-sm);
-    }
-
-    .product-name {
-      font-size: 0.9rem; /* Smaller title */
-      margin-bottom: var(--space-xs);
-      height: 2.4em; /* Limit to roughly 2 lines */
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-
-    .product-badge {
-      font-size: 0.65rem;
-      padding: 0.15rem 0.4rem;
-      top: 0.5rem;
-      right: 0.5rem;
-    }
-
-    .product-btn {
-      padding: 0.4rem 0.5rem; /* Smaller button */
-      font-size: 0.8rem;
-      white-space: nowrap; /* Try to keep on one line */
     }
   }
 </style>

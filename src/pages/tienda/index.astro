@@ -4,6 +4,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import { Image } from "astro:assets";
 import { products, formatPrice } from "@/data/products";
+import ProductCard from "@/components/ProductCard.astro";
 
 // Sort products by ID descending (newest first)
 const sortedProducts = [...products].sort((a, b) => b.id - a.id);
@@ -60,50 +61,7 @@ const storeCta = { href: "/#unirse", label: "Únete" };
       <div class="products-grid">
         {
           sortedProducts.map((product) => (
-            <div class="product-card" data-category={product.category}>
-              {product.badge && (
-                <span class={`product-badge ${product.badge.toLowerCase()}`}>
-                  {product.badge}
-                </span>
-              )}
-              <a href={`/tienda/${product.slug}`} class="product-link">
-                <div class="product-image">
-                  <Image
-                    src={product.images[0]}
-                    alt={product.name}
-                    class="product-img"
-                  />
-                </div>
-                <h3 class="product-name">{product.name}</h3>
-              </a>
-              <div class="product-info">
-                <div class="product-prices">
-                  <span class="price-cop">{formatPrice(product.price)}</span>
-                  <span class="price-usd">~${product.priceUSD} USD</span>
-                </div>
-                <div class="product-actions">
-                  {product.sizes && product.sizes.length > 0 ? (
-                    <a
-                      href={`/tienda/${product.slug}`}
-                      class="btn btn-primary product-btn"
-                    >
-                      Ver Opciones
-                    </a>
-                  ) : (
-                    <button
-                      class="btn btn-primary product-btn quick-add"
-                      data-id={product.slug}
-                      data-sku={product.sku}
-                      data-name={product.name}
-                      data-price={product.price}
-                      data-image={product.images[0].src}
-                    >
-                      Agregar
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+            <ProductCard product={product} showQuickAdd={true} />
           ))
         }
       </div>
@@ -198,113 +156,7 @@ const storeCta = { href: "/#unirse", label: "Únete" };
     margin-bottom: var(--space-xl);
   }
 
-  .product-card {
-    position: relative;
-    text-align: center;
-    background: var(--color-white);
-    border-radius: var(--radius-lg);
-    padding: var(--space-md);
-    transition:
-      transform var(--transition-fast),
-      box-shadow var(--transition-fast);
-  }
-
-  .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-  }
-
-  .product-card.hidden {
-    display: none;
-  }
-
-  .product-badge {
-    position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    z-index: 1;
-  }
-
-  .product-badge.popular {
-    background: var(--color-primary);
-    color: var(--color-white);
-  }
-
-  .product-badge.nuevo {
-    background: var(--color-success);
-    color: var(--color-white);
-  }
-
-  .product-image {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: var(--space-sm);
-  }
-
-  .product-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  .product-info {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-  .product-name {
-    font-size: 1rem;
-    color: var(--color-secondary);
-  }
-
-  .product-prices {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .price-cop {
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary);
-  }
-
-  .price-usd {
-    font-size: 0.85rem;
-    color: var(--color-text-light);
-  }
-
-  .product-btn {
-    margin-top: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    font-size: 0.9rem;
-  }
-
-  .product-link {
-    display: block;
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .product-actions {
-    margin-top: var(--space-sm);
-  }
-
-  .product-actions .btn {
-    width: 100%;
-    display: block;
-  }
-
-  /* Store Note */
+  /* Styles moved to ProductCard component */
   .store-note {
     max-width: 600px;
     margin: 0 auto;
