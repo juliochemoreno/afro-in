@@ -12,11 +12,18 @@ import img8 from "@/assets/img/palenque/palenque-4.jpg";
 import img9 from "@/assets/img/2014/2014-afroin-img-9.jpg";
 import img11 from "@/assets/img/2014/2014-afroin-img-11.jpg";
 import img12 from "@/assets/img/palenque/palenque-6.jpg";
+// @ts-ignore
+import plk1 from "@/assets/img/afro-in-palenque-1/DSC_0274.JPG";
+// @ts-ignore
+import plk2 from "@/assets/img/afro-in-palenque-1/DSC_0542.JPG";
+// @ts-ignore
+import plk3 from "@/assets/img/afro-in-palenque-1/DSC_0518.JPG";
 
 const galleryItems = [
   { id: 2, title: "Palenque Ancestral", category: "lugar", image: img2 },
   { id: 3, title: "Inicios del Tour", category: "historico", image: img3 },
   { id: 4, title: "Cultura en las Calles", category: "lugar", image: img4 },
+  { id: 13, title: "Palenque Vivo", category: "comunidad", image: plk1 },
   {
     id: 5,
     title: "Edición 2014 - Santa Marta",
@@ -25,9 +32,11 @@ const galleryItems = [
   },
   { id: 6, title: "Tierra de Libertad", category: "lugar", image: img6 },
   { id: 8, title: "Esencia de San Basilio", category: "lugar", image: img8 },
+  { id: 14, title: "Tradición Cultural", category: "danza", image: plk2 },
   { id: 9, title: "Cultura Viva 2014", category: "historico", image: img9 },
   { id: 11, title: "Legado Afro In", category: "historico", image: img11 },
   { id: 12, title: "Pueblo Patrimonio", category: "lugar", image: img12 },
+  { id: 15, title: "Alegría del Pueblo", category: "comunidad", image: plk3 },
 ];
 
 const categories = [
@@ -198,6 +207,12 @@ const categories = [
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-lg);
     margin-bottom: var(--space-xl);
+  }
+
+  @media (min-width: 1024px) {
+    .gallery-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
   }
 
   .gallery-item {
