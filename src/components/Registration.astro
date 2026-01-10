@@ -527,7 +527,7 @@ const { currentCount = 12847 } = Astro.props;
         const btnBack = document.getElementById("btnBack");
         const countrySelect = document.getElementById(
           "country"
-        ) as HTMLSelectElement;
+        ) as any as HTMLSelectElement;
         let tsInstance: any = null;
 
         // --- Lazy TomSelect ---
@@ -566,7 +566,7 @@ const { currentCount = 12847 } = Astro.props;
             tsInstance.setValue("CO");
             fetch("https://ipapi.co/json/")
               .then((r) => r.json())
-              .then((d) => {
+              .then((d: any) => {
                 if (d.country_code && tsInstance)
                   tsInstance.setValue(d.country_code);
               })
@@ -658,7 +658,7 @@ const { currentCount = 12847 } = Astro.props;
               }),
             });
             if (response.ok) {
-              const data = await response.json();
+              const data = (await response.json()) as { id: number };
               sessionStorage.setItem("donor_id", String(data.id));
             }
           } catch (error) {}
