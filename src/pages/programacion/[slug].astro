@@ -65,7 +65,8 @@ const getGoogleCalendarUrl = (day: any) => {
     
   const details = encodeURIComponent(`Programación en ${day.venue}:\n\n${activitiesList}\n\nConsulta más en afroin.org`);
   const location = encodeURIComponent(day.venueSubtitle || day.venue);
-  };
+  return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+};
 
 const descriptionTitle = `Únete al AFRO IN Tour 2026 en ${data.name}. ${totalDays} días de inmersión cultural, ${totalActivities} actividades y los mejores artistas afro.`;
 
