@@ -152,6 +152,7 @@ const { currentCount = 12847 } = Astro.props;
                         class="custom-amount"
                         placeholder="$"
                         min="1"
+                        step="0.01"
                       />
                     </span>
                   </label>
@@ -669,8 +670,8 @@ const { currentCount = 12847 } = Astro.props;
               ".custom-amount"
             ) as HTMLInputElement;
             const customVal = customInputEl?.value;
-            if (!customVal || parseFloat(customVal) <= 0) {
-              showToast("Por favor ingresa un monto válido", "error");
+            if (!customVal || parseFloat(customVal) < 1) {
+              showToast("El monto mínimo para donar es de $1 USD", "error");
               customInputEl?.focus();
               return;
             }
@@ -731,9 +732,9 @@ const { currentCount = 12847 } = Astro.props;
 
           showToast("Redirigiendo a PayPal para completar tu aporte... 💛");
 
-          // Open PayPal in a new tab after a small delay
+          // Redirect in same tab
           setTimeout(() => {
-            window.open(paypalUrl, "_blank");
+            window.location.href = paypalUrl;
           }, 1500);
         });
 

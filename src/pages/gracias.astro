@@ -2,6 +2,13 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import { Image } from "astro:assets";
+
+// Images for visual gratitude
+// @ts-ignore
+import img1 from "@/assets/img/afro-in-palenque-1/DSC_0518.JPG"; // Happy community
+import img2 from "@/assets/img/2016/2016-afroin-img-13.jpg"; // Group
+import img3 from "@/assets/img/2019/2019-afroin-img-10.jpg"; // Event energy
 
 // Simple navigation for the thanks page
 const navLinks = [
@@ -14,103 +21,135 @@ const navLinks = [
 <Layout title="¡Gracias por tu apoyo! | AFRO IN">
   <Header navLinks={navLinks} />
 
-  <main class="thanks-page">
-    <div class="container">
-      <div class="thanks-card">
-        <div class="icon-wrapper">
-          <span class="heart-icon">❤️</span>
-        </div>
+  <main class="thanks-container">
+    <!-- Hero Section -->
+    <section class="thanks-hero">
+      <div class="container">
+        <div class="hero-content animate-fade-in-up">
+          <div class="heart-badge">❤️</div>
+          <span class="section-badge">Movimiento un Millón de Corazones</span>
+          <h1>¡Gracias por tu aporte!</h1>
+          <p class="hero-text">
+            Tu contribución es fundamental para seguir fortaleciendo la cultura
+            afro y apoyar a nuestras comunidades. Juntos estamos construyendo un
+            legado que late con fuerza.
+          </p>
 
-        <span class="section-badge">Movimiento un Millón de Corazones</span>
-        <h1>¡Gracias por tu aporte!</h1>
-        <p class="thanks-message">
-          Tu contribución es fundamental para seguir fortaleciendo la cultura
-          afro y apoyar a nuestras comunidades. Juntos estamos construyendo un
-          legado que late con fuerza.
-        </p>
-
-        <div class="next-steps">
-          <h3>¿Qué sigue?</h3>
-          <ul>
-            <li>
-              <span class="check">✓</span> Recibirás un correo de confirmación de
-              PayPal.
-            </li>
-            <li>
-              <span class="check">✓</span> Te mantendremos informado sobre el impacto
-              de tu donación.
-            </li>
-            <li>
-              <span class="check">✓</span> ¡Pasa la voz! Comparte el tour con tus
-              amigos.
-            </li>
-          </ul>
-        </div>
-
-        <div class="actions">
-          <a href="/" class="btn btn-primary">Volver al Inicio</a>
-          <a href="/tienda" class="btn btn-outline">Ver la Tienda</a>
-        </div>
-
-        <div class="share-section">
-          <p>Síguenos para ver el tour en vivo:</p>
-          <div class="social-links">
-            <a
-              href="https://instagram.com/afro_in_"
-              target="_blank"
-              rel="noopener">Instagram</a
-            >
-            <a
-              href="https://facebook.com/afroincolombia"
-              target="_blank"
-              rel="noopener">Facebook</a
-            >
+          <div class="hero-actions">
+            <a href="/" class="btn btn-primary">Volver al Inicio</a>
+            <a href="/tienda" class="btn btn-outline">Ir a la Tienda</a>
           </div>
         </div>
+      </div>
+    </section>
 
-        <div class="counter-section">
-          <p>Corazones unidos hasta ahora:</p>
-          <span class="counter-number" id="donantes-counter">...</span>
+    <!-- Visual Gallery Section -->
+    <section class="gratitude-gallery container">
+      <div class="gallery-grid">
+        <div class="gallery-item item-main">
+          <Image src={img3} alt="Energía del Evento" class="gallery-img" />
+          <div class="item-overlay"></div>
+        </div>
+        <div class="gallery-item">
+          <Image src={img1} alt="Comunidad" class="gallery-img" />
+          <div class="item-overlay"></div>
+        </div>
+        <div class="gallery-item">
+          <Image src={img2} alt="Alegría" class="gallery-img" />
+          <div class="item-overlay"></div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Counter Section -->
+    <section class="live-impact container">
+      <div class="impact-card">
+        <div class="impact-info">
+          <h2>Impacto en Vivo</h2>
+          <p>Ya somos muchos corazones latiendo en una sola dirección.</p>
+        </div>
+        <div class="impact-stat">
+          <span class="stat-number" id="donantes-counter">...</span>
+          <span class="stat-label">donantes activos</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Next Steps Section -->
+    <section class="next-steps container">
+      <h2 class="section-subtitle">¿Qué sigue ahora?</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-icon-box">📩</div>
+          <h3>Revisa tu correo</h3>
+          <p>
+            PayPal te enviará un comprobante de tu donación en unos minutos.
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-icon-box">📢</div>
+          <h3>Mantente al tanto</h3>
+          <p>
+            Te enviaremos actualizaciones sobre cómo tu aporte está cambiando
+            vidas.
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-icon-box">🗣️</div>
+          <h3>¡Pasa la voz!</h3>
+          <p>
+            Comparte nuestra iniciativa con amigos y familiares. ¡Creciendo
+            juntos!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social Section -->
+    <section class="final-cta container">
+      <div class="social-links-gratitude">
+        <span>Síguenos para ver el tour en vivo:</span>
+        <div class="links-row">
+          <a
+            href="https://instagram.com/afro_in_"
+            target="_blank"
+            rel="noopener">Instagram</a
+          >
+          <a
+            href="https://facebook.com/afroincolombia"
+            target="_blank"
+            rel="noopener">Facebook</a
+          >
+        </div>
+      </div>
+    </section>
   </main>
 
   <Footer />
 </Layout>
 
 <style>
-  .thanks-page {
-    padding: var(--space-2xl) 0;
-    padding-top: 140px;
-    min-height: calc(100vh - 400px);
-    background: var(--color-cream);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .thanks-card {
-    max-width: 600px;
-    margin: 0 auto;
+  .thanks-container {
+    padding-top: 100px;
     background: var(--color-white);
-    padding: var(--space-2xl) var(--space-xl);
-    border-radius: var(--radius-2xl);
-    text-align: center;
-    box-shadow: var(--shadow-xl);
-    border: 1px solid var(--color-cream-dark);
   }
 
-  .icon-wrapper {
-    width: 100px;
-    height: 100px;
-    background: rgba(227, 28, 37, 0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto var(--space-lg);
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg);
+  }
+
+  /* Hero Section */
+  .thanks-hero {
+    padding: var(--space-2xl) 0;
+    text-align: center;
+    background: var(--color-cream);
+  }
+
+  .heart-badge {
     font-size: 3rem;
+    margin-bottom: var(--space-md);
     animation: pulse 2s infinite;
   }
 
@@ -129,123 +168,235 @@ const navLinks = [
   .section-badge {
     display: inline-block;
     padding: var(--space-xs) var(--space-md);
-    background: var(--color-primary);
-    color: var(--color-white);
+    background: rgba(227, 28, 37, 0.1);
+    color: var(--color-primary);
     border-radius: var(--radius-full);
-    font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-size: 0.85rem;
     margin-bottom: var(--space-md);
+    letter-spacing: 0.05em;
   }
 
   h1 {
-    font-size: clamp(2rem, 5vw, 3rem);
+    font-size: clamp(2.5rem, 6vw, 4rem);
     color: var(--color-secondary);
     margin-bottom: var(--space-md);
+    line-height: 1.1;
   }
 
-  .thanks-message {
-    font-size: 1.15rem;
-    line-height: 1.6;
+  .hero-text {
+    font-size: 1.25rem;
     color: var(--color-text-light);
-    margin-bottom: var(--space-xl);
+    max-width: 700px;
+    margin: 0 auto var(--space-xl);
+    line-height: 1.6;
   }
 
-  .next-steps {
-    text-align: left;
-    background: var(--color-cream);
-    padding: var(--space-lg);
-    border-radius: var(--radius-lg);
-    margin-bottom: var(--space-xl);
-  }
-
-  .next-steps h3 {
-    font-size: 1.1rem;
-    color: var(--color-secondary);
-    margin-bottom: var(--space-md);
-  }
-
-  .next-steps ul {
-    list-style: none;
-    padding: 0;
-  }
-
-  .next-steps li {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-sm);
-    color: var(--color-text);
-  }
-
-  .check {
-    color: var(--color-primary);
-    font-weight: bold;
-  }
-
-  .actions {
+  .hero-actions {
     display: flex;
     gap: var(--space-md);
     justify-content: center;
-    margin-bottom: var(--space-xl);
   }
 
-  .share-section {
-    border-top: 1px solid var(--color-cream-dark);
-    padding-top: var(--space-lg);
+  /* Gallery Section */
+  .gratitude-gallery {
+    margin: -40px auto var(--space-2xl);
+    position: relative;
+    z-index: 5;
   }
 
-  .share-section p {
-    font-size: 0.9rem;
-    color: var(--color-text-light);
-    margin-bottom: var(--space-sm);
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
   }
 
-  .social-links {
-    display: flex;
-    gap: var(--space-lg);
-    justify-content: center;
-  }
-
-  .social-links a {
-    color: var(--color-primary);
-    font-weight: 600;
-    text-decoration: none;
-    transition: opacity 0.2s;
-  }
-
-  .social-links a:hover {
-    opacity: 0.7;
-  }
-
-  @media (max-width: 600px) {
-    .actions {
-      flex-direction: column;
-    }
-    .thanks-card {
-      padding: var(--space-xl) var(--space-md);
+  @media (min-width: 768px) {
+    .gallery-grid {
+      grid-template-columns: 2fr 1fr 1fr;
+      height: 400px;
     }
   }
 
-  .counter-section {
-    margin-top: var(--space-lg);
-    padding: var(--space-md);
-    background: linear-gradient(135deg, var(--color-primary), #ff6b6b);
+  .gallery-item {
+    position: relative;
     border-radius: var(--radius-lg);
-    color: white;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    background: #000;
   }
 
-  .counter-section p {
-    font-size: 0.9rem;
-    margin-bottom: var(--space-xs);
+  .gallery-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
     opacity: 0.9;
   }
 
-  .counter-number {
+  .item-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.4));
+    pointer-events: none;
+  }
+
+  .gallery-item:hover .gallery-img {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+
+  /* Impact Section */
+  .live-impact {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .impact-card {
+    background: var(--gradient-dark);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
+    color: white;
+    gap: var(--space-xl);
+  }
+
+  .impact-info h2 {
+    color: white;
+    margin-bottom: var(--space-xs);
+  }
+
+  .impact-info p {
+    opacity: 0.8;
+    margin: 0;
+  }
+
+  .impact-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-width: 200px;
+  }
+
+  .stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-primary);
     font-family: var(--font-heading);
-    font-size: 2.5rem;
-    font-weight: bold;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.9;
+  }
+
+  /* Next Steps */
+  .section-subtitle {
+    text-align: center;
+    font-size: 2rem;
+    color: var(--color-secondary);
+    margin-bottom: var(--space-xl);
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-2xl);
+  }
+
+  .step-card {
+    background: var(--color-white);
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    border: 1px solid var(--color-cream-dark);
+    transition: all 0.3s ease;
+  }
+
+  .step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+  }
+
+  .step-icon-box {
+    width: 60px;
+    height: 60px;
+    background: var(--color-cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    margin: 0 auto var(--space-md);
+  }
+
+  .step-card h3 {
+    font-size: 1.25rem;
+    color: var(--color-secondary);
+    margin-bottom: var(--space-sm);
+  }
+
+  .step-card p {
+    font-size: 1rem;
+    color: var(--color-text-light);
+    margin: 0;
+  }
+
+  /* Final Social */
+  .final-cta {
+    padding-bottom: var(--space-2xl);
+    text-align: center;
+  }
+
+  .social-links-gratitude {
+    border-top: 1px solid var(--color-cream-dark);
+    padding-top: var(--space-xl);
+  }
+
+  .social-links-gratitude span {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--color-text-light);
+    margin-bottom: var(--space-md);
+  }
+
+  .links-row {
+    display: flex;
+    gap: var(--space-xl);
+    justify-content: center;
+  }
+
+  .links-row a {
+    color: var(--color-primary);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+
+  .links-row a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .impact-card {
+      flex-direction: column;
+      text-align: center;
+    }
+    .hero-actions {
+      flex-direction: column;
+    }
   }
 </style>
 
