@@ -1,0 +1,416 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { Image } from "astro:assets";
+import { products, formatPrice } from "@/data/products";
+
+// Sort products by ID descending (newest first)
+const sortedProducts = [...products].sort((a, b) => b.id - a.id);
+
+// Get unique categories
+const categories = [...new Set(products.map((p) => p.category))];
+
+// Store-specific navigation
+const storeNavLinks = [
+  { href: "/", label: "Inicio" },
+  { href: "/tienda", label: "Tienda" },
+  {
+    href: "/programacion",
+    label: "AFRO IN Tour",
+    children: [
+      { href: "/programacion", label: "Programación" },
+      { href: "/programacion/santa-marta", label: "Santa Marta" },
+      { href: "/programacion/palenque", label: "Palenque" },
+      { href: "/artistas", label: "Artistas" },
+    ],
+  },
+  { href: "/#contacto", label: "Contacto" },
+];
+const storeCta = { href: "/#unirse", label: "Únete" };
+---
+
+<Layout title="Tienda | AFRO IN">
+  <Header navLinks={storeNavLinks} ctaLink={storeCta} />
+  <main class="store-page">
+    <div class="container">
+      <!-- Hero -->
+      <div class="store-hero">
+        <span class="section-badge">Apoya con Estilo</span>
+        <h1>Tienda AFRO IN</h1>
+        <p>
+          Cada compra apoya directamente a artistas y comunidades
+          afro-colombianas.
+        </p>
+      </div>
+
+      <!-- Filters -->
+      <div class="store-filters">
+        <button class="filter-btn active" data-category="all">Todos</button>
+        {
+          categories.map((cat) => (
+            <button class="filter-btn" data-category={cat}>
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </button>
+          ))
+        }
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid">
+        {
+          sortedProducts.map((product) => (
+            <div class="product-card" data-category={product.category}>
+              {product.badge && (
+                <span class={`product-badge ${product.badge.toLowerCase()}`}>
+                  {product.badge}
+                </span>
+              )}
+              <a href={`/tienda/${product.slug}`} class="product-link">
+                <div class="product-image">
+                  <Image
+                    src={product.images[0]}
+                    alt={product.name}
+                    class="product-img"
+                  />
+                </div>
+                <h3 class="product-name">{product.name}</h3>
+              </a>
+              <div class="product-info">
+                <div class="product-prices">
+                  <span class="price-cop">{formatPrice(product.price)}</span>
+                  <span class="price-usd">~${product.priceUSD} USD</span>
+                </div>
+                <div class="product-actions">
+                  {product.sizes && product.sizes.length > 0 ? (
+                    <a
+                      href={`/tienda/${product.slug}`}
+                      class="btn btn-primary product-btn"
+                    >
+                      Ver Opciones
+                    </a>
+                  ) : (
+                    <button
+                      class="btn btn-primary product-btn quick-add"
+                      data-id={product.slug}
+                      data-sku={product.sku}
+                      data-name={product.name}
+                      data-price={product.price}
+                      data-image={product.images[0].src}
+                    >
+                      Agregar
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      <!-- Store Note -->
+      <div class="store-note">
+        <div class="note-card">
+          <span class="note-icon">💡</span>
+          <p>
+            <strong>¿Quieres vender tus productos afro aquí?</strong><br />
+            Estamos buscando artesanos y diseñadores para nuestra tienda.
+            <a href="/#contacto">Contáctanos</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .store-page {
+    padding: var(--space-xl) 0;
+    padding-top: 120px;
+    min-height: 100vh;
+    background: var(--color-cream);
+  }
+
+  .store-hero {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .section-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(227, 28, 37, 0.1);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+  }
+
+  .store-hero h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .store-hero p {
+    font-size: 1.2rem;
+    color: var(--color-text-light);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Filters */
+  .store-filters {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--color-cream-dark);
+    border-radius: var(--radius-full);
+    background: var(--color-white);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    text-transform: capitalize;
+  }
+
+  .filter-btn:hover,
+  .filter-btn.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: var(--color-white);
+  }
+
+  /* Products Grid */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+  }
+
+  .product-card {
+    position: relative;
+    text-align: center;
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    transition:
+      transform var(--transition-fast),
+      box-shadow var(--transition-fast);
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .product-card.hidden {
+    display: none;
+  }
+
+  .product-badge {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    z-index: 1;
+  }
+
+  .product-badge.popular {
+    background: var(--color-primary);
+    color: var(--color-white);
+  }
+
+  .product-badge.nuevo {
+    background: var(--color-success);
+    color: var(--color-white);
+  }
+
+  .product-image {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-sm);
+  }
+
+  .product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .product-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .product-name {
+    font-size: 1rem;
+    color: var(--color-secondary);
+  }
+
+  .product-prices {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .price-cop {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+
+  .price-usd {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+  }
+
+  .product-btn {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+  }
+
+  .product-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .product-actions {
+    margin-top: var(--space-sm);
+  }
+
+  .product-actions .btn {
+    width: 100%;
+    display: block;
+  }
+
+  /* Store Note */
+  .store-note {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .note-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    text-align: left;
+    background: var(--color-white);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+  }
+
+  .note-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  .note-card p {
+    color: var(--color-text-light);
+    font-size: 0.95rem;
+  }
+
+  .note-card a {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .note-card a:hover {
+    text-decoration: underline;
+  }
+
+  /* Responsive */
+  @media (max-width: 968px) {
+    .products-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .products-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-sm);
+    }
+
+    .product-card {
+      padding: var(--space-sm);
+    }
+
+    .note-card {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+</style>
+
+<script>
+  import { addToCart, showToast, openCart } from "@/lib/cart";
+
+  document.addEventListener("astro:page-load", () => {
+    const filterBtns = document.querySelectorAll(".filter-btn");
+    const productCards = document.querySelectorAll(".product-card");
+
+    filterBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        // Update active button
+        filterBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const category = btn.getAttribute("data-category");
+
+        // Filter products
+        productCards.forEach((card) => {
+          if (
+            category === "all" ||
+            card.getAttribute("data-category") === category
+          ) {
+            card.classList.remove("hidden");
+          } else {
+            card.classList.add("hidden");
+          }
+        });
+      });
+    });
+
+    // Quick add to cart buttons
+    document.querySelectorAll(".quick-add").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const button = e.currentTarget as HTMLButtonElement;
+        const id = button.dataset.id || "";
+        const sku = button.dataset.sku || "";
+        const name = button.dataset.name || "";
+        const price = parseInt(button.dataset.price || "0");
+        const image = button.dataset.image || "";
+
+        addToCart({ id, sku, name, price, image });
+        showToast(`${name} agregado al carrito`);
+
+        // Open cart after a short delay
+        setTimeout(() => openCart(), 300);
+      });
+    });
+  });
+</script>

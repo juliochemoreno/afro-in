@@ -1,0 +1,257 @@
+---
+import { Image } from "astro:assets";
+
+// Import real images from assets - Historical and Location focus
+import img2 from "@/assets/img/palenque/palenque-1.jpg";
+import img3 from "@/assets/img/2014/2014-afroin-img-3.jpg";
+import img4 from "@/assets/img/palenque/palenque-2.jpg";
+import img5 from "@/assets/img/2014/2014-afroin-img-5.jpg";
+import img6 from "@/assets/img/palenque/palenque-3.jpg";
+import img8 from "@/assets/img/palenque/palenque-4.jpg";
+import img9 from "@/assets/img/2014/2014-afroin-img-9.jpg";
+import img11 from "@/assets/img/2014/2014-afroin-img-11.jpg";
+import img12 from "@/assets/img/palenque/palenque-6.jpg";
+
+const galleryItems = [
+  { id: 2, title: "Palenque Ancestral", category: "lugar", image: img2 },
+  { id: 3, title: "Inicios del Tour", category: "historico", image: img3 },
+  { id: 4, title: "Cultura en las Calles", category: "lugar", image: img4 },
+  {
+    id: 5,
+    title: "Edición 2014 - Santa Marta",
+    category: "historico",
+    image: img5,
+  },
+  { id: 6, title: "Tierra de Libertad", category: "lugar", image: img6 },
+  { id: 8, title: "Esencia de San Basilio", category: "lugar", image: img8 },
+  { id: 9, title: "Cultura Viva 2014", category: "historico", image: img9 },
+  { id: 11, title: "Legado Afro In", category: "historico", image: img11 },
+  { id: 12, title: "Pueblo Patrimonio", category: "lugar", image: img12 },
+];
+
+const categories = [
+  "todos",
+  "festival",
+  "danza",
+  "artistas",
+  "moda",
+  "musica",
+  "comunidad",
+];
+---
+
+<section class="gallery section" id="galeria">
+  <div class="container">
+    <div
+      class="gallery-header text-center animate-fade-in-up"
+      style="animation-delay: 0.1s"
+    >
+      <span class="section-badge">Nuestras Ediciones</span>
+      <h2 class="section-title">Galería AFRO IN</h2>
+      <p class="section-subtitle">
+        10 años celebrando la cultura afro-colombiana en Santa Marta y Palenque.
+      </p>
+    </div>
+
+    <div class="gallery-filters">
+      {
+        categories.map((cat, index) => (
+          <button
+            class={`filter-btn ${index === 0 ? "active" : ""}`}
+            data-filter={cat}
+          >
+            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="gallery-grid animate-fade-in-up" style="animation-delay: 0.3s">
+      {
+        galleryItems.map((item) => (
+          <div class="gallery-item">
+            <Image src={item.image} alt={item.title} class="gallery-img" />
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="gallery-cta text-center">
+      <p>¿Quieres ver más? Síguenos en nuestras redes sociales.</p>
+      <div class="gallery-social">
+        <a
+          href="https://instagram.com/afroin"
+          class="btn btn-secondary"
+          target="_blank"
+        >
+          📸 Instagram
+        </a>
+        <a
+          href="https://facebook.com/afroin"
+          class="btn btn-secondary"
+          target="_blank"
+        >
+          📘 Facebook
+        </a>
+        <a
+          href="https://www.youtube.com/@afroin5816"
+          class="btn btn-secondary"
+          target="_blank"
+        >
+          🎬 YouTube
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .gallery {
+    background: var(--color-cream);
+  }
+
+  .section-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(227, 28, 37, 0.1);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .section-subtitle {
+    font-size: 1.2rem;
+    color: var(--color-text-light);
+    max-width: 600px;
+    margin: 0 auto var(--space-xl);
+  }
+
+  .gallery-filters {
+    display: none;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+  }
+
+  .filter-btn {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-full);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    background: var(--color-white);
+    border: 1px solid transparent;
+    transition: all var(--transition-normal);
+  }
+
+  .filter-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .filter-btn.active {
+    background: var(--color-primary);
+    color: var(--color-white);
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+
+  .gallery-item {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .gallery-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .gallery-cta {
+    padding-top: var(--space-xl);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .gallery-cta p {
+    color: var(--color-text-light);
+    margin-bottom: var(--space-md);
+  }
+
+  .gallery-social {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+  }
+
+  @media (max-width: 968px) {
+    .gallery-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .gallery-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+
+    .gallery-item {
+      border-radius: 0;
+      aspect-ratio: 1;
+    }
+
+    /* Adjust placeholder size for smaller boxes */
+    .gallery-placeholder {
+      font-size: 2rem;
+    }
+
+    .gallery-social {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+</style>
+
+<script>
+  const filterBtns =
+    document.querySelectorAll<HTMLButtonElement>(".filter-btn");
+  const galleryItems = document.querySelectorAll<HTMLElement>(".gallery-item");
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      // Update active button
+      filterBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Filter items
+      const filter = btn.dataset.filter;
+      galleryItems.forEach((item) => {
+        if (filter === "todos" || item.dataset.category === filter) {
+          item.style.display = "block";
+        } else {
+          item.style.display = "none";
+        }
+      });
+    });
+  });
+</script>

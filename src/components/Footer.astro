@@ -1,62 +1,275 @@
 ---
-const today = new Date();
+import { Instagram, Facebook, Youtube } from "lucide-astro";
+import { Image } from "astro:assets";
+import afroinLogo from "../assets/img/logos/afroin.png";
+
+const currentYear = new Date().getFullYear();
+
+const quickLinks = [
+  { href: "#sobre", label: "Sobre AFRO IN" },
+  { href: "#galeria", label: "Galería" },
+  { href: "#tienda", label: "Tienda" },
+  { href: "#afrotour", label: "AFRO IN Tour" },
+  { href: "#aliados", label: "Aliados" },
+];
 ---
 
-<footer>
-	&copy; {today.getFullYear()} Your name here. All rights reserved.
-	<div class="social-links">
-		<a href="https://m.webtoo.ls/@astro" target="_blank">
-			<span class="sr-only">Follow Astro on Mastodon</span>
-			<svg
-				viewBox="0 0 16 16"
-				aria-hidden="true"
-				width="32"
-				height="32"
-				astro-icon="social/mastodon"
-				><path
-					fill="currentColor"
-					d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"
-				></path></svg
-			>
-		</a>
-		<a href="https://twitter.com/astrodotbuild" target="_blank">
-			<span class="sr-only">Follow Astro on Twitter</span>
-			<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/twitter"
-				><path
-					fill="currentColor"
-					d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"
-				></path></svg
-			>
-		</a>
-		<a href="https://github.com/withastro/astro" target="_blank">
-			<span class="sr-only">Go to Astro's GitHub repo</span>
-			<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/github"
-				><path
-					fill="currentColor"
-					d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-				></path></svg
-			>
-		</a>
-	</div>
+<footer class="footer py-16 text-white">
+  <div class="container">
+    <div
+      class="footer-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-12 items-start"
+    >
+      <!-- Brand Column -->
+      <div class="footer-brand">
+        <Image
+          src={afroinLogo}
+          alt="AFRO IN"
+          class="footer-logo h-16 w-auto brightness-0 invert"
+        />
+        <p class="footer-tagline mt-4 text-white/70 leading-relaxed max-w-sm">
+          1 Millón de Corazones apoyando el arte afro independiente. Únete a
+          nuestra comunidad global.
+        </p>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer-links flex flex-col items-center md:items-start">
+        <h4 class="text-lg mb-6 text-(--color-primary)">Enlaces Rápidos</h4>
+        <ul class="list-none space-y-2">
+          {
+            quickLinks.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  class="text-white/70 hover:text-(--color-primary) transition-colors"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <!-- Social Networks -->
+      <div class="footer-social">
+        <h4 class="text-lg mb-6 text-(--color-primary)">Síguenos</h4>
+        <p class="text-white/70 mb-6 text-sm">
+          Conecta con nosotros en nuestras redes sociales.
+        </p>
+        <div class="social-links flex gap-4">
+          <a
+            href="https://www.instagram.com/afro_in/"
+            class="social-link w-11 h-11 rounded-full flex items-center justify-center bg-white/10 text-white transition-all duration-300 hover:bg-(--color-primary) hover:-translate-y-0.5"
+            aria-label="Instagram"
+            target="_blank"
+            rel="noopener"
+          >
+            <Instagram size={20} />
+          </a>
+          <a
+            href="https://www.facebook.com/afroin/"
+            class="social-link w-11 h-11 rounded-full flex items-center justify-center bg-white/10 text-white transition-all duration-300 hover:bg-(--color-primary) hover:-translate-y-0.5"
+            aria-label="Facebook"
+            target="_blank"
+            rel="noopener"
+          >
+            <Facebook size={20} />
+          </a>
+          <a
+            href="https://www.youtube.com/@afroin5816"
+            class="social-link w-11 h-11 rounded-full flex items-center justify-center bg-white/10 text-white transition-all duration-300 hover:bg-(--color-primary) hover:-translate-y-0.5"
+            aria-label="YouTube"
+            target="_blank"
+            rel="noopener"
+          >
+            <Youtube size={20} />
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="footer-bottom w-full flex flex-col md:flex-row justify-between items-center border-t border-white/10 text-white/40 text-sm gap-8 md:gap-4"
+      style="padding-top: 4rem;"
+    >
+      <!-- Developer Column (Left on Desktop, Bottom on Mobile) -->
+      <div
+        class="developer-section flex flex-col items-center md:items-start text-center md:text-left gap-2 order-2 md:order-1"
+      >
+        <span class="text-[10px] text-white/50 font-light tracking-wide"
+          >Diseñado y Desarrollado with love by:</span
+        >
+        <a
+          href="https://tayrosoft.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:opacity-80 transition-opacity"
+          aria-label="Tayrosoft"
+        >
+          <img
+            src="/img/tayrosoft-logo-white.svg"
+            alt="Tayrosoft"
+            width="120"
+            height="24"
+            class="w-32 h-auto opacity-90"
+          />
+        </a>
+      </div>
+
+      <!-- Legal Column (Right on Desktop, Top on Mobile) -->
+      <div
+        class="legal-section flex flex-col items-center md:items-end text-center md:text-right gap-1 order-1 md:order-2"
+      >
+        <div class="legal-links mb-1">
+          <span class="text-white/60">Documentos</span>
+          <span class="mx-2 text-white/30">|</span>
+          <span class="text-white/60">Política de Privacidad y Cookies.</span>
+        </div>
+        <p class="text-[10px] text-white/40">
+          Tayrosoft &copy; {currentYear}. Todos los derechos reservados.
+        </p>
+      </div>
+    </div>
+  </div>
 </footer>
+
 <style>
-	footer {
-		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
-		text-align: center;
-	}
-	.social-links {
-		display: flex;
-		justify-content: center;
-		gap: 1em;
-		margin-top: 1em;
-	}
-	.social-links a {
-		text-decoration: none;
-		color: rgb(var(--gray));
-	}
-	.social-links a:hover {
-		color: rgb(var(--gray-dark));
-	}
+  .footer {
+    background: var(--gradient-dark);
+    color: var(--color-white);
+    padding: var(--space-xl) 0 var(--space-lg);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xl);
+    padding: 0 var(--space-md);
+    margin-bottom: var(--space-xl);
+  }
+
+  /* Brand Column */
+  .footer-brand .footer-logo {
+    height: 60px;
+    width: auto;
+    filter: brightness(0) invert(1);
+  }
+
+  .footer-tagline {
+    margin-top: var(--space-md);
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+  }
+
+  .social-links {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+  }
+
+  .social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-white);
+    transition: all var(--transition-normal);
+  }
+
+  .social-link:hover {
+    background: var(--color-primary);
+    transform: translateY(-2px);
+  }
+
+  /* Links */
+  .footer-links h4 {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-lg);
+    color: var(--color-primary);
+  }
+
+  .footer-links ul {
+    list-style: none;
+  }
+
+  .footer-links li {
+    margin-bottom: var(--space-sm);
+  }
+
+  .footer-links a {
+    color: rgba(255, 255, 255, 0.7);
+    transition: color var(--transition-fast);
+  }
+
+  .footer-links a:hover {
+    color: var(--color-primary);
+  }
+
+  /* Newsletter */
+  .footer-newsletter h4 {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-lg);
+    color: var(--color-primary);
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-white);
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: all var(--transition-fast);
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .form-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  /* Responsive */
+  @media (max-width: 968px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+
+    .social-links {
+      justify-content: center;
+    }
+
+    .newsletter-form {
+      flex-direction: column;
+    }
+
+    .footer-bottom {
+      flex-direction: column-reverse; /* Developer section on bottom, Legal on top */
+      gap: var(--space-xl);
+      padding-bottom: 90px;
+    }
+
+    .developer-section,
+    .legal-section {
+      width: 100%;
+      align-items: center;
+      text-align: center;
+    }
+  }
 </style>

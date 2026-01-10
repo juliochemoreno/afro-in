@@ -1,0 +1,431 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
+import {
+  Mic2,
+  Disc,
+  GraduationCap,
+  Sparkles,
+  Instagram,
+  Facebook,
+  Globe,
+} from "lucide-astro";
+
+const destinations = await getCollection("tour2026");
+
+// Helper to extract unique artists for a specific destination slug
+const getArtistsForDestination = (slug: string) => {
+  const dest = destinations.find((d) => d.slug === slug);
+  if (!dest) return [];
+
+  const artistsMap = new Map();
+
+  dest.data.schedule.forEach((day) => {
+    day.activities.forEach((activity) => {
+      if (activity.artist && activity.artistImage) {
+        const artistKey = activity.artist.trim().toLowerCase();
+
+        // Context now only needs role/type since we know the venue
+        const context = {
+          type: activity.activityType || "general",
+          role: activity.title,
+        };
+
+        if (artistsMap.has(artistKey)) {
+          artistsMap.get(artistKey).contexts.push(context);
+        } else {
+          artistsMap.set(artistKey, {
+            name: activity.artist,
+            image: activity.artistImage,
+            contexts: [context],
+          });
+        }
+      }
+    });
+  });
+
+  return Array.from(artistsMap.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+};
+
+const santaMartaArtists = getArtistsForDestination("santa-marta");
+const palenqueArtists = getArtistsForDestination("palenque");
+
+const navLinks = [
+  { href: "/", label: "Inicio" },
+  { href: "/tienda", label: "Tienda" },
+  { href: "/programacion", label: "Programación" },
+  { href: "/programacion/santa-marta", label: "Santa Marta" },
+  { href: "/programacion/palenque", label: "Palenque" },
+  { href: "/artistas", label: "Artistas" },
+  { href: "/#contacto", label: "Contacto" },
+];
+const ctaLink = { href: "/#unirse", label: "Únete al Tour" };
+
+const getTypeIcon = (type: string) => {
+  switch (type) {
+    case "dj":
+      return Disc;
+    case "workshop":
+      return GraduationCap;
+    case "concierto":
+      return Mic2;
+    default:
+      return Sparkles;
+  }
+};
+---
+
+<Layout title="Artistas - AFRO IN Tour 2026">
+  <Header navLinks={navLinks} ctaLink={ctaLink} />
+
+  <main class="artists-page">
+    <section class="artists-hero">
+      <div class="container">
+        <div class="hero-content animate-fade-in-up">
+          <span class="hero-badge">Lineup Oficial 2026</span>
+          <h1 class="hero-title">
+            Talento <span class="highlight">Afro In</span>
+          </h1>
+          <p class="hero-subtitle">
+            DJs internacionales, maestros de danza y artistas en vivo reunidos
+            para crear una experiencia inolvidable.
+          </p>
+        </div>
+      </div>
+      <div class="hero-pattern"></div>
+    </section>
+
+    <!-- Santa Marta Section -->
+    <section class="city-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="city-title">Santa Marta</h2>
+          <p class="city-subtitle">Artistas en esta parada</p>
+        </div>
+
+        <div class="artists-grid">
+          {
+            santaMartaArtists.map((artist, index) => (
+              <div
+                class="artist-card animate-fade-in-up"
+                style={`animation-delay: ${index * 0.05}s`}
+              >
+                <div class="image-wrapper">
+                  <Image
+                    src={artist.image}
+                    alt={artist.name}
+                    class="artist-img"
+                  />
+                </div>
+                <div class="card-content">
+                  <h3 class="artist-name">{artist.name}</h3>
+
+                  <div class="social-links">
+                    <a href="#" class="social-icon" aria-label="Instagram">
+                      <Instagram size={20} />
+                    </a>
+                    <a href="#" class="social-icon" aria-label="Facebook">
+                      <Facebook size={20} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+        {
+          santaMartaArtists.length === 0 && (
+            <div class="empty-state">
+              <p>Pronto anunciaremos los artistas para Santa Marta.</p>
+            </div>
+          )
+        }
+      </div>
+    </section>
+
+    <!-- Palenque Section -->
+    <section class="city-section palenque-bg">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="city-title">San Basilio de Palenque</h2>
+          <p class="city-subtitle">Artistas en esta parada</p>
+        </div>
+
+        <div class="artists-grid">
+          {
+            palenqueArtists.map((artist, index) => (
+              <div
+                class="artist-card animate-fade-in-up"
+                style={`animation-delay: ${index * 0.05}s`}
+              >
+                <div class="image-wrapper">
+                  <Image
+                    src={artist.image}
+                    alt={artist.name}
+                    class="artist-img"
+                  />
+                </div>
+                <div class="card-content">
+                  <h3 class="artist-name">{artist.name}</h3>
+
+                  <div class="social-links">
+                    <a href="#" class="social-icon" aria-label="Instagram">
+                      <Instagram size={20} />
+                    </a>
+                    <a href="#" class="social-icon" aria-label="Facebook">
+                      <Facebook size={20} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+        {
+          palenqueArtists.length === 0 && (
+            <div class="empty-state">
+              <p>Pronto anunciaremos los artistas para Palenque.</p>
+            </div>
+          )
+        }
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .artists-page {
+    background: var(--color-cream);
+    min-height: 100vh;
+    padding-top: 80px;
+  }
+
+  /* Hero Section */
+  .artists-hero {
+    padding: 4rem 0 3rem;
+    text-align: center;
+    position: relative;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    color: var(--color-white);
+    margin-bottom: 0;
+    overflow: hidden;
+  }
+
+  @media (min-width: 768px) {
+    .artists-hero {
+      padding: 6rem 0 4rem;
+    }
+  }
+
+  .hero-pattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.1;
+    background-image:
+      radial-gradient(
+        circle at 20% 50%,
+        var(--color-primary) 0%,
+        transparent 25%
+      ),
+      radial-gradient(circle at 80% 20%, #ff8c00 0%, transparent 25%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(227, 28, 37, 0.2);
+    color: var(--color-primary);
+    border: 1px solid rgba(227, 28, 37, 0.3);
+    border-radius: 9999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    margin-bottom: 1.5rem;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .highlight {
+    color: var(--color-primary);
+    position: relative;
+    display: inline-block;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    color: #a1a1aa;
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* City Sections */
+  .city-section {
+    padding: 3rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  @media (min-width: 768px) {
+    .city-section {
+      padding: 5rem 0;
+    }
+  }
+
+  .palenque-bg {
+    background: #fffbf0;
+  }
+
+  .picos-bg {
+    background: #f0f4ff;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .city-title {
+    font-size: 1.75rem;
+    color: var(--color-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+
+  @media (min-width: 768px) {
+    .city-title {
+      font-size: 2.5rem;
+    }
+  }
+
+  .city-subtitle {
+    font-size: 1.1rem;
+    color: var(--color-primary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Grid */
+  .artists-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .artists-grid {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 2rem;
+    }
+  }
+
+  .artist-card {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .artist-card:hover {
+    transform: translateY(-8px);
+    box-shadow: none;
+  }
+
+  .image-wrapper {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    background: #f3f4f6;
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .artist-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    transition: transform 0.7s ease;
+  }
+
+  .artist-card:hover .artist-img {
+    transform: scale(1.1);
+  }
+
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0 1rem 1.5rem;
+    width: 100%;
+  }
+
+  .artist-name {
+    font-size: 1.25rem;
+    color: var(--color-secondary);
+    margin: 0;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .social-links {
+    display: none;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .social-icon {
+    color: #666;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .social-icon:hover {
+    color: var(--color-primary);
+    transform: scale(1.1);
+    background: rgba(227, 28, 37, 0.1);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 1rem;
+    grid-column: 1 / -1;
+  }
+</style>
