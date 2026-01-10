@@ -388,53 +388,55 @@ const stats = [
 </style>
 
 <script>
-  const statsSection = document.querySelector(".about-stats");
-  const statNumbers = document.querySelectorAll(".stat-number");
+  document.addEventListener("astro:page-load", () => {
+    const statsSection = document.querySelector(".about-stats");
+    const statNumbers = document.querySelectorAll(".stat-number");
 
-  const formatNumber = (num: number): string => {
-    if (num >= 1000) {
-      return (num / 1000).toFixed(0) + "K";
-    }
-    return num.toString();
-  };
-
-  const animateCounter = (element: Element) => {
-    const target = parseInt(element.getAttribute("data-target") || "0");
-    const suffix = element.getAttribute("data-suffix") || "";
-    const duration = 2000;
-    const startTime = performance.now();
-
-    function updateCounter(currentTime: number) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easeOutExpo = 1 - Math.pow(2, -10 * progress);
-      const current = Math.round(target * easeOutExpo);
-
-      element.textContent = formatNumber(current) + suffix;
-
-      if (progress < 1) {
-        requestAnimationFrame(updateCounter);
-      } else {
-        element.textContent = formatNumber(target) + suffix;
+    const formatNumber = (num: number): string => {
+      if (num >= 1000) {
+        return (num / 1000).toFixed(0) + "K";
       }
-    }
+      return num.toString();
+    };
 
-    requestAnimationFrame(updateCounter);
-  };
+    const animateCounter = (element: Element) => {
+      const target = parseInt(element.getAttribute("data-target") || "0");
+      const suffix = element.getAttribute("data-suffix") || "";
+      const duration = 2000;
+      const startTime = performance.now();
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          statNumbers.forEach((el) => animateCounter(el));
-          observer.disconnect();
+      function updateCounter(currentTime: number) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOutExpo = 1 - Math.pow(2, -10 * progress);
+        const current = Math.round(target * easeOutExpo);
+
+        element.textContent = formatNumber(current) + suffix;
+
+        if (progress < 1) {
+          requestAnimationFrame(updateCounter);
+        } else {
+          element.textContent = formatNumber(target) + suffix;
         }
-      });
-    },
-    { threshold: 0.5 }
-  );
+      }
 
-  if (statsSection) {
-    observer.observe(statsSection);
-  }
+      requestAnimationFrame(updateCounter);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            statNumbers.forEach((el) => animateCounter(el));
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    if (statsSection) {
+      observer.observe(statsSection);
+    }
+  });
 </script>

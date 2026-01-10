@@ -488,45 +488,53 @@ function isActive(href: string): boolean {
 </style>
 
 <script>
-  const menuToggle = document.querySelector(".menu-toggle");
-  const navLinks = document.querySelector(".nav-links");
-  const header = document.querySelector(".header");
+  document.addEventListener("astro:page-load", () => {
+    const menuToggle = document.querySelector(".menu-toggle");
+    const navLinks = document.querySelector(".nav-links");
+    const header = document.querySelector(".header");
 
-  menuToggle?.addEventListener("click", () => {
-    const isOpen = menuToggle.getAttribute("aria-expanded") === "true";
-    menuToggle.setAttribute("aria-expanded", (!isOpen).toString());
-    navLinks?.classList.toggle("open");
-  });
-
-  // Handle dropdown toggles on mobile
-  document.querySelectorAll(".mobile-dropdown-toggle").forEach((toggle) => {
-    toggle.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const parent = toggle.closest(".has-dropdown");
-      parent?.classList.toggle("mobile-open");
+    menuToggle?.addEventListener("click", () => {
+      const isOpen = menuToggle.getAttribute("aria-expanded") === "true";
+      menuToggle.setAttribute("aria-expanded", (!isOpen).toString());
+      navLinks?.classList.toggle("open");
     });
-  });
 
-  // Close menu when clicking ANY link
-  document.querySelectorAll(".nav-link, .dropdown-link").forEach((link) => {
-    link.addEventListener("click", () => {
-      if (window.innerWidth <= 768) {
-        menuToggle?.setAttribute("aria-expanded", "false");
-        navLinks?.classList.remove("open");
-        document
-          .querySelectorAll(".has-dropdown")
-          .forEach((el) => el.classList.remove("mobile-open"));
+    // Handle dropdown toggles on mobile
+    document.querySelectorAll(".mobile-dropdown-toggle").forEach((toggle) => {
+      toggle.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const parent = toggle.closest(".has-dropdown");
+        parent?.classList.toggle("mobile-open");
+      });
+    });
+
+    // Close menu when clicking ANY link
+    document.querySelectorAll(".nav-link, .dropdown-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (window.innerWidth <= 768) {
+          menuToggle?.setAttribute("aria-expanded", "false");
+          navLinks?.classList.remove("open");
+          document
+            .querySelectorAll(".has-dropdown")
+            .forEach((el) => el.classList.remove("mobile-open"));
+        }
+      });
+    });
+
+    // Header scroll effect
+    const scrollHandler = () => {
+      if (window.scrollY > 50) {
+        header?.classList.add("scrolled");
+      } else {
+        header?.classList.remove("scrolled");
       }
-    });
-  });
+    };
 
-  // Header scroll effect
-  window.addEventListener("scroll", () => {
-    if (window.scrollY > 50) {
-      header?.classList.add("scrolled");
-    } else {
-      header?.classList.remove("scrolled");
-    }
+    // Apply immediately on page load
+    scrollHandler();
+
+    // Listen for future scrolls
+    window.addEventListener("scroll", scrollHandler);
   });
 </script>
