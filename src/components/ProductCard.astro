@@ -1,0 +1,194 @@
+---
+import { Image } from "astro:assets";
+import { formatPrice, type Product } from "@/data/products";
+
+interface Props {
+  product: Product;
+  showQuickAdd?: boolean; // If true, shows "Agregar" btn. If false, shows "Ver Producto" or simplified.
+}
+
+const { product, showQuickAdd = true } = Astro.props;
+---
+
+<div class="product-card" data-category={product.category}>
+  {
+    product.badge && (
+      <span class={`product-badge ${product.badge.toLowerCase()}`}>
+        {product.badge}
+      </span>
+    )
+  }
+  <a href={`/tienda/${product.slug}`} class="product-link">
+    <div class="product-image">
+      <Image src={product.images[0]} alt={product.name} class="product-img" />
+    </div>
+    <h3 class="product-name">{product.name}</h3>
+  </a>
+  <div class="product-info">
+    <div class="product-prices">
+      <span class="price-cop">{formatPrice(product.price)}</span>
+      <span class="price-usd">~${product.priceUSD} USD</span>
+    </div>
+    <div class="product-actions">
+      {
+        product.sizes && product.sizes.length > 0 ? (
+          <a
+            href={`/tienda/${product.slug}`}
+            class="btn btn-primary product-btn"
+          >
+            Ver Opciones
+          </a>
+        ) : showQuickAdd ? (
+          <button
+            class="btn btn-primary product-btn quick-add"
+            data-id={product.slug}
+            data-sku={product.sku}
+            data-name={product.name}
+            data-price={product.price}
+            data-image={product.images[0].src}
+          >
+            Agregar
+          </button>
+        ) : (
+          <a
+            href={`/tienda/${product.slug}`}
+            class="btn btn-primary product-btn"
+          >
+            Ver Detalles
+          </a>
+        )
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  .product-card {
+    position: relative;
+    text-align: center;
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    transition:
+      transform var(--transition-fast),
+      box-shadow var(--transition-fast);
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .product-card.hidden {
+    display: none;
+  }
+
+  .product-badge {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    z-index: 1;
+  }
+
+  .product-badge.popular {
+    background: var(--color-primary);
+    color: var(--color-white);
+  }
+
+  .product-badge.nuevo {
+    background: var(--color-success);
+    color: var(--color-white);
+  }
+
+  .product-image {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-sm);
+  }
+
+  .product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .product-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .product-name {
+    font-size: 1rem;
+    color: var(--color-secondary);
+    min-height: 2.4em; /* Ensure consistent height for titles */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .product-prices {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .price-cop {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+
+  .price-usd {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+  }
+
+  .product-btn {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+    width: 100%;
+    display: block;
+  }
+
+  .product-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .product-actions {
+    margin-top: var(--space-sm);
+  }
+
+  @media (max-width: 600px) {
+    .product-card {
+      padding: var(--space-sm);
+    }
+
+    .price-cop {
+      font-size: 1rem;
+    }
+
+    .product-name {
+      font-size: 0.9rem;
+    }
+
+    .product-badge {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.4rem;
+      top: 0.5rem;
+      right: 0.5rem;
+    }
+  }
+</style>
