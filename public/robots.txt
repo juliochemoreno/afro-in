@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://afroin.com/sitemap-index.xml
+Sitemap: https://afroin.org/sitemap-index.xml
