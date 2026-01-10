@@ -243,6 +243,15 @@ const getGoogleCalendarUrl = (day: any) => {
         </div>
       </div>
     </section>
+    <!-- Hidden preload of day flyers to define their optimized paths for JS access -->
+    <div style="display: none;" id="flyer-data">
+        {data.schedule.map((day: any) => (
+             day.image ? 
+             <div class="flyer-path" data-day={day.day}>
+                <Image src={day.image} alt={`Flyer ${day.day}`} class="processed-flyer" />
+             </div> : null
+        ))}
+    </div>
   </main>
 
   <Footer />
@@ -926,108 +935,135 @@ const getGoogleCalendarUrl = (day: any) => {
 </style>
 
 <script>
-  // Scroll spy for day navigation
-  document.addEventListener('DOMContentLoaded', () => {
+  // Main Script Bundle
+  document.addEventListener('astro:page-load', () => {
+    // 1. SCROLL SPY & DAY NAVIGATION
     const dayNav = document.getElementById('dayNav');
     const navItems = document.querySelectorAll('.day-nav-item');
     const daySections = document.querySelectorAll('.day-section');
 
-    if (!dayNav || navItems.length === 0 || daySections.length === 0) return;
+    if (dayNav && navItems.length > 0 && daySections.length > 0) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const dayId = entry.target.id;
+            const dayNumber = dayId.replace('day-', '');
+            
+            navItems.forEach(item => {
+              item.classList.remove('active');
+              if (item.getAttribute('data-day') === dayNumber) {
+                item.classList.add('active');
+              }
+            });
+          }
+        });
+      }, { rootMargin: '-100px 0px -50% 0px' });
 
-    const observerOptions = {
-      root: null,
-      rootMargin: '-100px 0px -50% 0px',
-      threshold: 0
-    };
+      daySections.forEach(section => observer.observe(section));
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const dayId = entry.target.id;
-          const dayNumber = dayId.replace('day-', '');
+      // 2. HERO SLIDER & FLYER LOGIC
+      const slider = document.getElementById('heroSlider');
+      if (slider) {
+        const slides = slider.querySelectorAll('.slide');
+        const indicators = slider.querySelectorAll('.indicator');
+        const mainHeroImg = slider.querySelector('.slide:first-child .hero-img') as HTMLImageElement;
+        
+        let currentSlide = 0;
+        let autoplayInterval: ReturnType<typeof setInterval> | undefined;
+
+        const goToSlide = (index: number) => {
+          slides.forEach(slide => slide.classList.remove('active'));
+          indicators.forEach(ind => ind.classList.remove('active'));
           
-          navItems.forEach(item => {
-            item.classList.remove('active');
-            if (item.getAttribute('data-day') === dayNumber) {
-              item.classList.add('active');
+          currentSlide = index;
+          if (slides[currentSlide]) slides[currentSlide].classList.add('active');
+          if (indicators[currentSlide]) indicators[currentSlide].classList.add('active');
+        };
+
+        const nextSlide = () => {
+          if (slides.length <= 1) return;
+          const next = (currentSlide + 1) % slides.length;
+          goToSlide(next);
+        };
+
+        const startAutoplay = () => {
+          if (slides.length > 1) {
+            stopAutoplay();
+            autoplayInterval = setInterval(nextSlide, 5000);
+          }
+        };
+
+        const stopAutoplay = () => {
+          if (autoplayInterval) clearInterval(autoplayInterval);
+        };
+
+        // Indicator Clicks
+        indicators.forEach((indicator, index) => {
+          indicator.addEventListener('click', () => {
+            stopAutoplay();
+            goToSlide(index);
+            startAutoplay();
+          });
+        });
+
+        // Hover Pause
+        slider.addEventListener('mouseenter', stopAutoplay);
+        slider.addEventListener('mouseleave', startAutoplay);
+
+        // --- FLYER UPDATE LOGIC ---
+        // When clicking a day nav item, update the main slide image with the day's flyer
+        navItems.forEach(item => {
+          item.addEventListener('click', (e) => {
+            // Allow default anchor scroll behavior
+            // e.preventDefault(); (Removed to allow scroll to section)
+            
+            const day = item.getAttribute('data-day');
+            
+            // Find corresponding processed flyer in hidden DOM
+            const flyerContainer = document.querySelector(`.flyer-path[data-day="${day}"]`);
+            const flyerImg = flyerContainer?.querySelector('img');
+            
+            if (flyerImg && mainHeroImg) {
+               // Update the image source of the FIRST slide (usually the "main" one or current playing)
+               // Ideally we target the currently active slide, or force jump to slide 0 and update it.
+               
+               // Strategy: Update Slide 0's image and jump to Slide 0.
+               // This makes "Slide 0" the dynamic flyer container.
+               const slideZeroImg = slider.querySelector('.slide:first-child img') as HTMLImageElement;
+               if (slideZeroImg) {
+                   slideZeroImg.src = flyerImg.src;
+                   if (flyerImg.srcset) slideZeroImg.srcset = flyerImg.srcset;
+                   
+                   stopAutoplay(); // Stop rotating so user can see it
+                   goToSlide(0);   // Show the updated slide
+               }
             }
           });
-        }
-      });
-    }, observerOptions);
+        });
 
-    daySections.forEach(section => observer.observe(section));
-
-    // Smooth scroll on click
-    navItems.forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetId = item.getAttribute('href');
-        if (!targetId) return;
-        const target = document.querySelector(targetId);
-        if (target) {
-          const headerOffset = 150;
-          const elementPosition = target.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth'
-          });
-        }
-      });
-    });
-  });
-
-  // Hero Image Slider
-  (() => {
-    const slider = document.getElementById('heroSlider');
-    if (!slider) return;
-
-    const slides = slider.querySelectorAll('.slide');
-    const indicators = slider.querySelectorAll('.indicator');
-    
-    if (slides.length <= 1) return;
-
-    let currentSlide = 0;
-    let autoplayInterval: ReturnType<typeof setInterval> | undefined;
-
-    const goToSlide = (index: number) => {
-      slides.forEach(slide => slide.classList.remove('active'));
-      indicators.forEach(ind => ind.classList.remove('active'));
-      
-      currentSlide = index;
-      slides[currentSlide]?.classList.add('active');
-      indicators[currentSlide]?.classList.add('active');
-    };
-
-    const nextSlide = () => {
-      const next = (currentSlide + 1) % slides.length;
-      goToSlide(next);
-    };
-
-    const startAutoplay = () => {
-      autoplayInterval = setInterval(nextSlide, 5000);
-    };
-
-    const stopAutoplay = () => {
-      if (autoplayInterval) clearInterval(autoplayInterval);
-    };
-
-    // Click on indicators
-    indicators.forEach((indicator, index) => {
-      indicator.addEventListener('click', () => {
-        stopAutoplay();
-        goToSlide(index);
+        // Start initial autoplay
         startAutoplay();
+      }
+
+      // Smooth Scroll for Nav Items (Manual override for offset)
+      navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = item.getAttribute('href');
+            if (!targetId) return;
+            const target = document.querySelector(targetId);
+            if (target) {
+                const headerOffset = 150;
+                const elementPosition = target.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
       });
-    });
-
-    // Pause on hover
-    slider.addEventListener('mouseenter', stopAutoplay);
-    slider.addEventListener('mouseleave', startAutoplay);
-
-    // Start autoplay
-    startAutoplay();
-  })();
+    }
+  });
 </script>
