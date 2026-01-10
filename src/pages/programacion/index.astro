@@ -27,27 +27,26 @@ import palenqueImg6 from "../../assets/img/palenque/palenque-6.jpg";
 import palenqueImg7 from "../../assets/img/palenque/palenque-7.jpg";
 import palenqueImg8 from "../../assets/img/palenque/palenque-8.jpg";
 
+// New User Selected Images
+import smHero1 from "../../assets/img/2019/2019-afroin-img-10.jpg";
+import smHero2 from "../../assets/img/2018/2018-afroin-img-3.jpg";
+import plkHero1 from "../../assets/img/afro-in-palenque-1/DSC_0274.JPG";
+import plkHero2 from "../../assets/img/afro-in-palenque-1/DSC_0542.JPG";
+// Note: Skipping paths with spaces for static imports to avoid potential bundler issues, relying on safe paths above.
+
 
 const heroImages = [
+  smHero1, // New Main Hero
+  plkHero1,
   heroImg1,
+  plkHero2,
   heroImg2,
+  smHero2,
   heroImg3,
-  heroImg4,
-  heroImg5,
-  heroImg6,
-  heroImg7,
-  heroImg8,
-  heroImg9,
-  heroImg10,
-  palenqueImg0,
+  heroImg6, // Crowd shot
   palenqueImg1,
-  palenqueImg2,
-  palenqueImg3,
+  heroImg10,
   palenqueImg4,
-  palenqueImg5,
-  palenqueImg6,
-  palenqueImg7,
-  palenqueImg8,
 ];
 
 const destinations = await getCollection("tour2026");
@@ -190,11 +189,17 @@ const allArtists = getAllArtists().sort((a, b) => a.name.localeCompare(b.name));
                   return (
                     <>
                       <div class="carousel" data-carousel={`carousel-${index}`}>
-                        {galleryImages.map((img, i) => (
-                          <div class={`carousel-slide ${i === 0 ? 'active' : ''}`}>
-                            <Image src={img!} alt={destination.data.name} class="carousel-img" />
-                          </div>
-                        ))}
+                        {galleryImages.map((img, i) => {
+                          if (!img) return null;
+                          const src = typeof img === 'string' ? img : img.src;
+                          // Extract filename for matching
+                          const filename = src.split('/').pop()?.split('?')[0];
+                          return (
+                            <div class={`carousel-slide ${i === 0 ? 'active' : ''}`} data-filename={filename}>
+                              <Image src={img} alt={destination.data.name} class="carousel-img" />
+                            </div>
+                          );
+                        })}
                       </div>
                       <div class="carousel-dots">
                         {galleryImages.map((_, i) => (
@@ -219,8 +224,15 @@ const allArtists = getAllArtists().sort((a, b) => a.name.localeCompare(b.name));
                 
                 <h3 class="events-heading">Programación</h3>
                 <div class="events-grid">
-                  {destination.data.schedule.map((event) => (
-                    <div class="event-card">
+                  {destination.data.schedule.map((event) => {
+                     // Get filename from event image if exists
+                     let filename = '';
+                     if (event.image) {
+                        const src = typeof event.image === 'string' ? event.image : event.image.src;
+                        filename = src.split('/').pop()?.split('?')[0] || '';
+                     }
+                     return (
+                    <div class="event-card actionable" data-filename={filename}>
                       <div class="event-date">
                         <span class="day">{event.day}</span>
                         <span class="month">{event.month}</span>
@@ -230,7 +242,7 @@ const allArtists = getAllArtists().sort((a, b) => a.name.localeCompare(b.name));
                         <span class="event-venue">{event.venueSubtitle || event.weekday}</span>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
                 <a
                   href={`/programacion/${destination.id.replace(/\.md$/, "")}`}
@@ -289,41 +301,87 @@ const allArtists = getAllArtists().sort((a, b) => a.name.localeCompare(b.name));
     </section>
 
     <script>
+      let artistInterval: any;
+
       function randomizeArtists() {
         const sourceContainer = document.getElementById("all-artists-source");
-        const targetContainer = document.getElementById(
-          "random-artists-container"
-        );
+        const targetContainer = document.getElementById("random-artists-container");
 
         if (!sourceContainer || !targetContainer) return;
 
-        // Create an array of all artist cards
-        const cards = Array.from(sourceContainer.children) as HTMLElement[];
-
-        // Shuffle array (Fisher-Yates)
-        for (let i = cards.length - 1; i > 0; i--) {
+        const allCards = Array.from(sourceContainer.children).map(node => node.cloneNode(true) as HTMLElement);
+        for (let i = allCards.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
-          [cards[i], cards[j]] = [cards[j], cards[i]];
+          [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
         }
+        const selectedCards = allCards.slice(0, 4);
 
-        // Take first 4
-        const selectedCards = cards.slice(0, 4);
+        if (targetContainer.children.length > 0) {
+            targetContainer.style.opacity = '0';
+            setTimeout(() => {
+                targetContainer.innerHTML = "";
+                selectedCards.forEach((card) => targetContainer.appendChild(card));
+                targetContainer.style.opacity = '1';
+            }, 300);
+        } else {
+            targetContainer.innerHTML = "";
+            selectedCards.forEach((card) => targetContainer.appendChild(card));
+        }
+      }
 
-        // Clear target and append selected clones
-        targetContainer.innerHTML = "";
-        selectedCards.forEach((card) => {
-          // Clone the node to keep the original source intact (optional, but cleaner)
-          // Actually, since we only show 4, moving them is fine too.
-          // Cloning ensures if we re-run logic it works from full set if we didn't destroy source.
-          const clone = card.cloneNode(true) as HTMLElement;
-          targetContainer.appendChild(clone);
+      function startArtistRotation() {
+        if (artistInterval) clearInterval(artistInterval);
+        const targetContainer = document.getElementById("random-artists-container");
+        if (targetContainer) targetContainer.style.transition = 'opacity 0.3s ease-in-out';
+        randomizeArtists();
+        artistInterval = setInterval(randomizeArtists, 5000);
+      }
+
+      // Initialize all interactive elements (Artists + Event Cards)
+      function initInteractivity() {
+        startArtistRotation();
+
+        // Logic for Event Card Click -> Update Carousel
+        const eventCards = document.querySelectorAll('.event-card[data-filename]');
+        eventCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const filename = card.getAttribute('data-filename');
+                if (!filename) return;
+
+                // Find parent section to scope the search
+                const section = card.closest('.destination-layout');
+                if (!section) return;
+
+                // Find carousel slides in this section
+                const slides = section.querySelectorAll('.carousel-slide');
+                const dots = section.querySelectorAll('.dot');
+                
+                let foundIndex = -1;
+
+                // Remove active classes first? No, only when we find the target
+                slides.forEach((slide, index) => {
+                    if (slide.getAttribute('data-filename') === filename) {
+                        foundIndex = index;
+                    }
+                });
+
+                if (foundIndex !== -1) {
+                    // Update Active State
+                    slides.forEach(s => s.classList.remove('active'));
+                    dots.forEach(d => d.classList.remove('active'));
+
+                    slides[foundIndex].classList.add('active');
+                    if (dots[foundIndex]) dots[foundIndex].classList.add('active');
+                }
+            });
         });
       }
 
-      // Run on load
-      document.addEventListener("astro:page-load", randomizeArtists);
-      // Also run immediately in case view transitions aren't used or for initial load
-      randomizeArtists();
+      document.addEventListener("astro:page-load", initInteractivity);
+      
+      document.addEventListener("astro:before-swap", () => {
+        if (artistInterval) clearInterval(artistInterval);
+      });
     </script>
   </main>
   <Footer />
