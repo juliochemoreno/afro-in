@@ -138,7 +138,7 @@ const { targetCount = 12847 } = Astro.props;
       // Fetch del valor real
       fetch("/api/contador")
         .then((res) => res.json())
-        .then((data) => {
+        .then((data: any) => {
           const total = data.total || 0;
 
           // Actualizar atributo para referencia
