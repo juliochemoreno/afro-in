@@ -130,6 +130,7 @@ const allArtists = getAllArtists().sort((a, b) => a.name.localeCompare(b.name));
               alt={`AFRO IN Tour ${i + 1}`}
               class="hero-img"
               loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "low"}
             />
           </div>
         ))}
