@@ -72,6 +72,8 @@ function isActive(href: string): boolean {
         alt="AFRO IN"
         class="logo-img h-8 sm:h-12 w-auto"
         loading="eager"
+        fetchpriority="high"
+        decoding="sync"
         width={160}
         height={75}
         quality={80}
@@ -87,7 +89,7 @@ function isActive(href: string): boolean {
             <div class="nav-item-wrapper">
               <a
                 href={link.href}
-                class={`nav-link font-medium relative transition-colors duration-150 ${isActive(link.href) ? "active" : ""}`}
+                class={`nav-link font-medium relative transition-colors duration-150 py-3 ${isActive(link.href) ? "active" : ""}`}
                 aria-current={isActive(link.href) ? "page" : undefined}
               >
                 <span>{link.label}</span>
@@ -110,7 +112,7 @@ function isActive(href: string): boolean {
               </a>
               {link.children && (
                 <button
-                  class="mobile-dropdown-toggle bg-transparent border-none p-2 cursor-pointer md:hidden"
+                  class="mobile-dropdown-toggle bg-transparent border-none p-3 cursor-pointer md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center"
                   aria-label="Expandir submenú"
                 >
                   <svg
