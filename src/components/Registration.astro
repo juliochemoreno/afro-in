@@ -6,6 +6,10 @@ interface Props {
 }
 
 const { currentCount = 12847 } = Astro.props;
+
+// PayPal Client ID from environment variables
+const paypalClientId = import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || "";
+const isDev = import.meta.env.PUBLIC_ENV === "development";
 ---
 
 <section class="registration section" id="unirse">
@@ -514,7 +518,7 @@ const { currentCount = 12847 } = Astro.props;
       declare global {
         interface Window {
           TomSelect: any;
-          PayPal: any;
+          paypal: any;
         }
       }
 
@@ -610,28 +614,38 @@ const { currentCount = 12847 } = Astro.props;
         const section = document.getElementById("unirse");
         if (section) observer.observe(section);
 
-        // --- Load PayPal Donate SDK ---
+        // --- Load PayPal JavaScript SDK ---
         const loadPayPalSDK = async (): Promise<void> => {
-          if (window.PayPal) return;
+          if (window.paypal) return;
 
-          return new Promise((resolve) => {
+          return new Promise((resolve, reject) => {
+            const clientId = document.body.getAttribute(
+              "data-paypal-client-id"
+            );
+            if (!clientId) {
+              reject(new Error("PayPal Client ID not configured"));
+              return;
+            }
+
             const script = document.createElement("script");
-            script.src =
-              "https://www.paypalobjects.com/donate/sdk/donate-sdk.js";
-            script.charset = "UTF-8";
+            // Use JavaScript SDK with client-id for Smart Payment Buttons
+            // enable-funding=card enables the "Pay with Card" option (Guest Checkout)
+            script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&intent=capture&enable-funding=card`;
             script.onload = () => resolve();
+            script.onerror = () =>
+              reject(new Error("Failed to load PayPal SDK"));
             document.body.appendChild(script);
           });
         };
 
-        // --- Render PayPal Button ---
+        // --- Render PayPal Smart Payment Buttons ---
         const renderPayPalButton = async () => {
           if (paypalButtonRendered) return;
 
           await loadPayPalSDK();
 
           const container = document.getElementById("paypal-donate-container");
-          if (!container || !window.PayPal) return;
+          if (!container || !window.paypal) return;
 
           // Get form data
           const nameInput = document.getElementById("name") as HTMLInputElement;
@@ -646,75 +660,126 @@ const { currentCount = 12847 } = Astro.props;
             : countrySelect.value;
 
           // Get selected amount
-          const selectedAmountEl = form.querySelector(
-            'input[name="amount"]:checked'
-          ) as HTMLInputElement;
-          let amount = selectedAmountEl?.value || "5";
-
-          if (amount === "custom") {
-            const customInputEl = document.querySelector(
-              ".custom-amount"
+          const getSelectedAmount = (): string => {
+            const selectedAmountEl = form.querySelector(
+              'input[name="amount"]:checked'
             ) as HTMLInputElement;
-            amount = customInputEl?.value || "5";
-          }
+            let amount = selectedAmountEl?.value || "5";
 
-          // Clear container and render button
+            if (amount === "custom") {
+              const customInputEl = document.querySelector(
+                ".custom-amount"
+              ) as HTMLInputElement;
+              amount = customInputEl?.value || "5";
+            }
+            return amount;
+          };
+
+          // Clear container
           container.innerHTML = "";
 
-          window.PayPal.Donation.Button({
-            env: "production",
-            // Use business email instead of hosted_button_id for dynamic amount control
-            business: "afroinsantamarta@gmail.com",
-            // Pre-fill amount from form selection
-            amount: amount,
-            currency_code: "USD",
-            item_name: "Aporte AFRO IN - Millón de Corazones",
-            image: {
-              src: "https://www.paypalobjects.com/es_ES/ES/i/btn/btn_donateCC_LG.gif",
-              title: "PayPal - Donar de forma segura",
-              alt: "Donar con PayPal",
-            },
-            onComplete: async function (params: {
-              tx: string;
-              st: string;
-              amt: string;
-              cc: string;
-              cm: string;
-              item_number: string;
-              item_name: string;
-            }) {
-              console.log("PayPal donation completed:", params);
+          // Render PayPal Smart Payment Buttons
+          window.paypal
+            .Buttons({
+              // Style the buttons
+              style: {
+                layout: "vertical",
+                color: "gold",
+                shape: "rect",
+                label: "donate",
+                tagline: false,
+              },
 
-              // Register donor with transaction info
-              try {
-                const response = await fetch("/api/donante", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    name: nameInput.value,
-                    email: emailInput.value,
-                    phone: phoneInput.value || null,
-                    country: countryValue || null,
-                    amount: parseFloat(params.amt || amount),
-                    paypal_tx: params.tx,
-                    paypal_status: params.st,
-                  }),
+              // Create order when button is clicked
+              createOrder: function (data: any, actions: any) {
+                const amount = getSelectedAmount();
+                return actions.order.create({
+                  purchase_units: [
+                    {
+                      description: "Aporte AFRO IN - Millón de Corazones",
+                      amount: {
+                        value: amount,
+                        currency_code: "USD",
+                      },
+                    },
+                  ],
+                  application_context: {
+                    shipping_preference: "NO_SHIPPING",
+                    user_action: "PAY_NOW",
+                  },
                 });
-                if (response.ok) {
-                  const data = (await response.json()) as { id: number };
-                  sessionStorage.setItem("donor_id", String(data.id));
-                }
-              } catch (error) {
-                console.error("Error registering donor:", error);
-              }
+              },
 
-              // Redirect to thank you page
-              showToast("¡Gracias por tu donación! 💛");
-              setTimeout(() => {
-                window.location.href = `/gracias?tx=${params.tx}&amt=${params.amt}`;
-              }, 1000);
-            },
-          }).render("#paypal-donate-container");
+              // Handle approved payment
+              onApprove: async function (data: any, actions: any) {
+                try {
+                  const order = await actions.order.capture();
+                  console.log("PayPal order captured:", order);
+
+                  const transactionId =
+                    order.purchase_units[0]?.payments?.captures[0]?.id ||
+                    order.id;
+                  const capturedAmount =
+                    order.purchase_units[0]?.payments?.captures[0]?.amount
+                      ?.value || getSelectedAmount();
+
+                  // Register donor with transaction info
+                  try {
+                    const response = await fetch("/api/donante", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        name: nameInput.value,
+                        email: emailInput.value,
+                        phone: phoneInput.value || null,
+                        country: countryValue || null,
+                        amount: parseFloat(capturedAmount),
+                        paypal_tx: transactionId,
+                        paypal_status: order.status,
+                      }),
+                    });
+                    if (response.ok) {
+                      const responseData = (await response.json()) as {
+                        id: number;
+                      };
+                      sessionStorage.setItem(
+                        "donor_id",
+                        String(responseData.id)
+                      );
+                    }
+                  } catch (error) {
+                    console.error("Error registering donor:", error);
+                  }
+
+                  // Redirect to thank you page
+                  showToast("¡Gracias por tu donación! 💛");
+                  setTimeout(() => {
+                    window.location.href = `/gracias?tx=${transactionId}&amt=${capturedAmount}`;
+                  }, 1000);
+                } catch (error) {
+                  console.error("Error capturing order:", error);
+                  showToast(
+                    "Error procesando el pago. Intenta de nuevo.",
+                    "error"
+                  );
+                }
+              },
+
+              // Handle errors
+              onError: function (err: any) {
+                console.error("PayPal error:", err);
+                showToast(
+                  "Error con PayPal. Por favor intenta de nuevo.",
+                  "error"
+                );
+              },
+
+              // Handle cancel
+              onCancel: function () {
+                showToast("Pago cancelado", "error");
+              },
+            })
+            .render("#paypal-donate-container");
 
           paypalButtonRendered = true;
         };
