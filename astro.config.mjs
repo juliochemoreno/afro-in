@@ -15,6 +15,15 @@ export default defineConfig({
   site: "https://afroin.org",
   output: "static", // Default in Astro 5, encompasses previous 'hybrid' behavior
 
+  i18n: {
+    defaultLocale: "es",
+    locales: ["es", "en", "fr"],
+    routing: {
+      prefixDefaultLocale: false,
+    },
+  },
+
+
   prefetch: {
     prefetchAll: true,
     defaultStrategy: "hover",

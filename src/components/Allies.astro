@@ -17,6 +17,11 @@ import caribeamTeam from "../assets/img/aliados/caribeam-team.webp";
 import kfMusic from "../assets/img/aliados/kf-music.webp";
 import gCorp from "../assets/img/aliados/g-corp.webp";
 
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
 // New allies
 import afroCompany from "../assets/img/aliados/afro-company-santa-marta.jpg";
 import casaLoma from "../assets/img/aliados/casa-loma.jpg";
@@ -182,11 +187,10 @@ const allies = [
       class="allies-header text-center animate-fade-in-up"
       style="animation-delay: 0.1s"
     >
-      <span class="section-badge">Nuestra Red</span>
-      <h2 class="section-title">Aliados AFRO IN</h2>
+      <span class="section-badge">{t("allies.badge")}</span>
+      <h2 class="section-title">{t("allies.title")}</h2>
       <p class="section-subtitle">
-        Hostales, bares, restaurantes y espacios culturales que apoyan el
-        movimiento.
+        {t("allies.subtitle")}
       </p>
     </div>
 
@@ -212,12 +216,11 @@ const allies = [
 
     <div class="become-ally text-center">
       <div class="ally-cta card-glass">
-        <h3>¿Quieres ser aliado AFRO IN?</h3>
+        <h3>{t("allies.cta.title")}</h3>
         <p>
-          Si tienes un hostal, bar, restaurante u otro negocio y quieres apoyar
-          la cultura afro, te invitamos a unirte a nuestra red de aliados.
+          {t("allies.cta.desc")}
         </p>
-        <a href="#contacto" class="btn btn-primary">Contáctanos</a>
+        <a href="#contacto" class="btn btn-primary">{t("allies.cta.btn")}</a>
       </div>
     </div>
   </div>

@@ -1,6 +1,10 @@
 ---
 import { Image } from "astro:assets";
 import { Instagram, Facebook, Youtube } from "lucide-astro";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
 // Import real images from assets - Historical and Location focus
 import img2 from "@/assets/img/palenque/palenque-1.jpg";
@@ -56,10 +60,10 @@ const categories = [
       class="gallery-header text-center animate-fade-in-up"
       style="animation-delay: 0.1s"
     >
-      <span class="section-badge">Nuestras Ediciones</span>
-      <h2 class="section-title">Galería AFRO IN</h2>
+      <span class="section-badge">{t("gallery.badge")}</span>
+      <h2 class="section-title">{t("gallery.title")}</h2>
       <p class="section-subtitle">
-        10 años celebrando la cultura afro-colombiana en Santa Marta y Palenque.
+        {t("gallery.subtitle")}
       </p>
     </div>
 
@@ -70,7 +74,7 @@ const categories = [
             class={`filter-btn ${index === 0 ? "active" : ""}`}
             data-filter={cat}
           >
-            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            {t(`gallery.category.${cat}` as any)}
           </button>
         ))
       }
@@ -95,7 +99,7 @@ const categories = [
     </div>
 
     <div class="gallery-cta text-center">
-      <p>¿Quieres ver más? Síguenos en nuestras redes sociales.</p>
+      <p>{t("gallery.cta")}</p>
       <div class="gallery-social flex justify-center gap-4">
         <a
           href="https://instagram.com/afroin"

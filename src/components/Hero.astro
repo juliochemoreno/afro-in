@@ -2,6 +2,10 @@
 import { ArrowRight } from "lucide-astro";
 import { Image } from "astro:assets";
 import heroMain from "../assets/img/hero-main.jpg";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
 interface Props {
   targetCount?: number;
@@ -23,20 +27,16 @@ const { targetCount = 12847 } = Astro.props;
     class="container mx-auto px-6 hero-content relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-center lg:text-left"
   >
     <div class="hero-text">
-      <span class="hero-badge animate-fade-in-up"
-        >🎭 Cultura Afro Independiente</span
-      >
+      <span class="hero-badge animate-fade-in-up">{t("hero.badge")}</span>
 
       <h1 class="hero-title animate-fade-in-up">
-        <span class="title-number">1 Millón</span>
-        <span class="title-de">de</span>
-        <span class="title-hearts">Corazones</span>
+        <span class="title-number">{t("hero.title.part1")}</span>
+        <span class="title-de">{t("hero.title.part2")}</span>
+        <span class="title-hearts">{t("hero.title.part3")}</span>
       </h1>
 
       <p class="hero-description animate-fade-in-up">
-        Únete a la comunidad que apoya el arte, la danza y la cultura
-        afro-colombiana. Con solo <strong>$5 USD</strong> haces parte de un movimiento
-        que transforma vidas.
+        {t("hero.description")}
       </p>
 
       <div class="hero-counter animate-fade-in-up">
@@ -44,7 +44,7 @@ const { targetCount = 12847 } = Astro.props;
           <span class="counter-number" data-target={targetCount}
             >{targetCount.toLocaleString()}</span
           >
-          <span class="counter-label">Corazones unidos</span>
+          <span class="counter-label">{t("hero.counter.label")}</span>
         </div>
         <div class="counter-progress">
           <div
@@ -53,7 +53,7 @@ const { targetCount = 12847 } = Astro.props;
           >
           </div>
         </div>
-        <span class="counter-goal">Meta: 1,000,000</span>
+        <span class="counter-goal">{t("hero.counter.goal")}</span>
       </div>
 
       <div
@@ -63,11 +63,11 @@ const { targetCount = 12847 } = Astro.props;
           href="#unirse"
           class="btn btn-primary px-8 py-4 text-lg flex items-center gap-2"
         >
-          <span>Únete Ahora</span>
+          <span>{t("hero.cta.join")}</span>
           <ArrowRight size={20} />
         </a>
         <a href="#sobre" class="btn btn-secondary px-8 py-4 text-lg"
-          >Conoce Más</a
+          >{t("hero.cta.more")}</a
         >
       </div>
     </div>
@@ -76,7 +76,7 @@ const { targetCount = 12847 } = Astro.props;
       <div class="hero-image-wrapper">
         <Image
           src={heroMain}
-          alt="Festival AFRO IN - Celebrando la cultura afro-colombiana"
+          alt={t("hero.img.alt")}
           class="hero-image"
           loading="eager"
           fetchpriority="high"
@@ -85,15 +85,15 @@ const { targetCount = 12847 } = Astro.props;
         />
         <div class="hero-float-card card-1">
           <span class="float-emoji">🎵</span>
-          <span class="float-text">Música</span>
+          <span class="float-text">{t("hero.cards.music")}</span>
         </div>
         <div class="hero-float-card card-2">
           <span class="float-emoji">🎭</span>
-          <span class="float-text">Cultura</span>
+          <span class="float-text">{t("hero.cards.culture")}</span>
         </div>
         <div class="hero-float-card card-3">
           <span class="float-emoji">👗</span>
-          <span class="float-text">Moda</span>
+          <span class="float-text">{t("hero.cards.fashion")}</span>
         </div>
       </div>
     </div>

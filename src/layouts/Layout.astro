@@ -17,10 +17,23 @@ const {
 } = Astro.props;
 
 import { ClientRouter } from "astro:transitions";
+import { getLangFromUrl } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+
+// Generate hreflang URLs for SEO
+const siteUrl =
+  Astro.site?.toString().replace(/\/$/, "") || "https://afroin.org";
+const pathname = Astro.url.pathname;
+// Remove language prefix if present to get base path
+const basePath = pathname.replace(/^\/(en|fr)/, "") || "/";
+const hreflangEs = `${siteUrl}${basePath}`;
+const hreflangEn = `${siteUrl}/en${basePath}`;
+const hreflangFr = `${siteUrl}/fr${basePath}`;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,6 +41,12 @@ import { ClientRouter } from "astro:transitions";
     <link rel="apple-touch-icon" href="/img/hero-main.jpg" />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#e31c25" />
+
+    <!-- Hreflang Tags for i18n SEO -->
+    <link rel="alternate" hreflang="es" href={hreflangEs} />
+    <link rel="alternate" hreflang="en" href={hreflangEn} />
+    <link rel="alternate" hreflang="fr" href={hreflangFr} />
+    <link rel="alternate" hreflang="x-default" href={hreflangEs} />
 
     <!-- SEO Meta Tags -->
     <title>{title} | AFRO IN</title>

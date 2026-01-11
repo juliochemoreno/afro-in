@@ -2,6 +2,12 @@
 import { Image } from "astro:assets";
 import afroinLogo from "../assets/img/logos/afroin.png";
 import CartWidget from "./CartWidget.astro";
+import LanguagePicker from "./LanguagePicker.astro";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const langPrefix = lang === "es" ? "" : `/${lang}`;
 
 interface NavLink {
   href: string;
@@ -17,24 +23,24 @@ interface Props {
 
 // Default navigation for home page
 const defaultNavLinks: NavLink[] = [
-  { href: "/#sobre", label: "Sobre AFRO IN" },
-  { href: "/#galeria", label: "Galería" },
-  { href: "/tienda", label: "Tienda" },
+  { href: `${langPrefix}/#sobre`, label: t("nav.about") },
+  { href: `${langPrefix}/#galeria`, label: t("nav.gallery") },
+  { href: `${langPrefix}/tienda`, label: t("nav.store") },
   {
-    href: "/programacion",
-    label: "AFRO IN Tour",
+    href: `${langPrefix}/programacion`,
+    label: t("nav.tour"),
     children: [
-      { href: "/programacion", label: "Programación" },
-      { href: "/programacion/santa-marta", label: "Santa Marta" },
-      { href: "/programacion/palenque", label: "Palenque" },
-      { href: "/artistas", label: "Artistas" },
+      { href: `${langPrefix}/programacion`, label: t("nav.program") },
+      { href: `${langPrefix}/programacion/santa-marta`, label: "Santa Marta" },
+      { href: `${langPrefix}/programacion/palenque`, label: "Palenque" },
+      { href: `${langPrefix}/artistas`, label: t("nav.artists") },
     ],
   },
-  { href: "/#aliados", label: "Aliados" },
-  { href: "/#contacto", label: "Contacto" },
+  { href: `${langPrefix}/#aliados`, label: t("nav.allies") },
+  { href: `${langPrefix}/#contacto`, label: t("nav.contact") },
 ];
 
-const defaultCta = { href: "/#unirse", label: "Únete" };
+const defaultCta = { href: `${langPrefix}/#unirse`, label: t("nav.join") };
 
 const {
   currentPage = "home",
@@ -52,10 +58,11 @@ function isActive(href: string): boolean {
   const normalizedPath = currentPath.replace(/\/$/, "") || "/";
 
   // Skip anchor links - they don't need active state on home
-  if (href.startsWith("/#")) return false;
+  if (href.includes("/#")) return false;
 
   // Home page exact match only for "/" link
-  if (href === "/") return normalizedPath === "/";
+  if (href === "/" || href === `/${lang}`)
+    return normalizedPath === "/" || normalizedPath === `/${lang}`;
 
   // Exact match for specific pages
   return normalizedPath === normalizedHref;
@@ -66,7 +73,7 @@ function isActive(href: string): boolean {
   class="header fixed top-0 left-0 right-0 z-1000 backdrop-blur-md transition-all duration-300"
 >
   <nav class="nav container flex items-center justify-between h-20">
-    <a href="/" class="logo flex items-center shrink-0">
+    <a href={`${langPrefix}/`} class="logo flex items-center shrink-0">
       <Image
         src={afroinLogo}
         alt="AFRO IN"
@@ -150,6 +157,7 @@ function isActive(href: string): boolean {
       }
     </ul>
     <div class="nav-actions flex items-center gap-2 sm:gap-4 md:ml-8 shrink-0">
+      <LanguagePicker />
       <div class="cart-nav-item">
         <CartWidget />
       </div>

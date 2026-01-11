@@ -1,5 +1,9 @@
 ---
 import { MapPin, Mail, MessageSquare } from "lucide-astro";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
 const contactEmail = "afroinsantamarta@gmail.com";
 const mapsLink = "https://maps.app.goo.gl/eRum8SuYxfJy9aL38";
@@ -10,11 +14,10 @@ const mapsLink = "https://maps.app.goo.gl/eRum8SuYxfJy9aL38";
     <div class="contact-grid">
       <!-- Info Column -->
       <div class="contact-info animate-fade-in-up">
-        <span class="badge">Contacto</span>
-        <h2 class="section-title">Estamos aquí para ti</h2>
+        <span class="badge">{t("contact.badge")}</span>
+        <h2 class="section-title">{t("contact.title")}</h2>
         <p class="section-desc">
-          ¿Tienes alguna pregunta sobre el festival, los talleres o cómo unirte
-          al movimiento? Escríbenos.
+          {t("contact.desc")}
         </p>
 
         <div class="contact-cards">
@@ -30,9 +33,9 @@ const mapsLink = "https://maps.app.goo.gl/eRum8SuYxfJy9aL38";
               <MapPin size={24} />
             </div>
             <div class="text-content">
-              <span class="label">Sede Principal</span>
-              <span class="title">Santa Marta</span>
-              <span class="subtitle">Colombia 🇨🇴</span>
+              <span class="label">{t("contact.location.label")}</span>
+              <span class="title">{t("contact.location.title")}</span>
+              <span class="subtitle">{t("contact.location.subtitle")}</span>
             </div>
             <div class="arrow-icon">→</div>
           </a>
@@ -43,7 +46,7 @@ const mapsLink = "https://maps.app.goo.gl/eRum8SuYxfJy9aL38";
               <Mail size={24} />
             </div>
             <div class="text-content">
-              <span class="label">Escríbenos</span>
+              <span class="label">{t("contact.email.label")}</span>
               <span class="title"
                 ><!--email_off-->{contactEmail}<!--/email_off--></span
               >
@@ -61,31 +64,35 @@ const mapsLink = "https://maps.app.goo.gl/eRum8SuYxfJy9aL38";
           <div class="icon-circle">
             <MessageSquare size={20} />
           </div>
-          <h3>Dudas Rápidas</h3>
+          <h3>{t("contact.form.title")}</h3>
         </div>
 
-        <form class="contact-form" id="dudas-form">
+        <form
+          class="contact-form"
+          id="dudas-form"
+          data-wa-template={t("contact.wa.template")}
+        >
           <div class="form-group">
-            <label for="name">Tu Nombre</label>
+            <label for="name">{t("contact.form.name")}</label>
             <input
               type="text"
               id="name"
-              placeholder="Escribe tu nombre"
+              placeholder={t("contact.form.name.placeholder")}
               required
               class="form-input"
             />
           </div>
           <div class="form-group">
-            <label for="message">Tu Mensaje</label>
+            <label for="message">{t("contact.form.message")}</label>
             <textarea
               id="message"
-              placeholder="¿Cómo podemos ayudarte?"
+              placeholder={t("contact.form.message.placeholder")}
               rows="4"
               class="form-input resize-none"
               required></textarea>
           </div>
           <button type="submit" class="btn btn-primary w-full">
-            Enviar Mensaje
+            {t("contact.form.submit")}
           </button>
         </form>
 
@@ -105,8 +112,11 @@ const mapsLink = "https://maps.app.goo.gl/eRum8SuYxfJy9aL38";
 
             const name = nameInput.value;
             const messageText = messageInput.value;
+            const template = form.dataset.waTemplate || "";
 
-            const fullMessage = `Hola! Soy *${name}*.\nTengo una duda:\n\n${messageText}\n\n--- \nEnviado desde https://afroin.org`;
+            const fullMessage = template
+              .replace("{name}", `*${name}*`)
+              .replace("{message}", messageText);
 
             const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(fullMessage)}`;
             window.open(waUrl, "_blank");

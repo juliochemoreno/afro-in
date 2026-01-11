@@ -1,0 +1,448 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { Image } from "astro:assets";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+
+// Images for visual gratitude
+// @ts-ignore
+import img1 from "@/assets/img/afro-in-palenque-1/DSC_0518.JPG"; // Happy community
+import img2 from "@/assets/img/2016/2016-afroin-img-13.jpg"; // Group
+import img3 from "@/assets/img/2019/2019-afroin-img-10.jpg"; // Event energy
+
+interface Props {
+  lang?: string;
+}
+
+const { lang = "es" } = Astro.props;
+
+// Simple navigation for the thanks page
+const t = useTranslations(lang as any);
+const navLinks = [
+  { href: getTranslatedPath("/", lang), label: t("nav.home") },
+  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
+  { href: getTranslatedPath("/programacion", lang), label: t("nav.tour") },
+];
+---
+
+<Layout title="¡Gracias por tu apoyo! | AFRO IN">
+  <Header navLinks={navLinks} />
+
+  <main class="thanks-container">
+    <!-- Hero Section -->
+    <section class="thanks-hero">
+      <div class="container">
+        <div class="hero-content animate-fade-in-up">
+          <div class="heart-badge">❤️</div>
+          <span class="section-badge">Movimiento un Millón de Corazones</span>
+          <h1>¡Gracias por tu aporte!</h1>
+          <p class="hero-text">
+            Tu contribución es fundamental para seguir fortaleciendo la cultura
+            afro y apoyar a nuestras comunidades. Juntos estamos construyendo un
+            legado que late con fuerza.
+          </p>
+
+          <div class="hero-actions">
+            <a href={getTranslatedPath("/", lang)} class="btn btn-primary"
+              >Volver al Inicio</a
+            >
+            <a href={getTranslatedPath("/tienda", lang)} class="btn btn-outline"
+              >Ir a la Tienda</a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Gallery Section -->
+    <section class="gratitude-gallery container">
+      <div class="gallery-grid">
+        <div class="gallery-item item-main">
+          <Image src={img3} alt="Energía del Evento" class="gallery-img" />
+          <div class="item-overlay"></div>
+        </div>
+        <div class="gallery-item">
+          <Image src={img1} alt="Comunidad" class="gallery-img" />
+          <div class="item-overlay"></div>
+        </div>
+        <div class="gallery-item">
+          <Image src={img2} alt="Alegría" class="gallery-img" />
+          <div class="item-overlay"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Counter Section -->
+    <section class="live-impact container">
+      <div class="impact-card">
+        <div class="impact-info">
+          <h2>Impacto en Vivo</h2>
+          <p>Ya somos muchos corazones latiendo en una sola dirección.</p>
+        </div>
+        <div class="impact-stat">
+          <span class="stat-number" id="donantes-counter">...</span>
+          <span class="stat-label">donantes activos</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Next Steps Section -->
+    <section class="next-steps container">
+      <h2 class="section-subtitle">¿Qué sigue ahora?</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-icon-box">📩</div>
+          <h3>Revisa tu correo</h3>
+          <p>
+            PayPal te enviará un comprobante de tu donación en unos minutos.
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-icon-box">📢</div>
+          <h3>Mantente al tanto</h3>
+          <p>
+            Te enviaremos actualizaciones sobre cómo tu aporte está cambiando
+            vidas.
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-icon-box">🗣️</div>
+          <h3>¡Pasa la voz!</h3>
+          <p>
+            Comparte nuestra iniciativa con amigos y familiares. ¡Creciendo
+            juntos!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social Section -->
+    <section class="final-cta container">
+      <div class="social-links-gratitude">
+        <span>Síguenos para ver el tour en vivo:</span>
+        <div class="links-row">
+          <a
+            href="https://instagram.com/afro_in_"
+            target="_blank"
+            rel="noopener">Instagram</a
+          >
+          <a
+            href="https://facebook.com/afroincolombia"
+            target="_blank"
+            rel="noopener">Facebook</a
+          >
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .thanks-container {
+    padding-top: 100px;
+    background: var(--color-white);
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg);
+  }
+
+  /* Hero Section */
+  .thanks-hero {
+    padding: var(--space-2xl) 0;
+    text-align: center;
+    background: var(--color-cream);
+  }
+
+  .heart-badge {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .section-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(227, 28, 37, 0.1);
+    color: var(--color-primary);
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    margin-bottom: var(--space-md);
+    letter-spacing: 0.05em;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+    line-height: 1.1;
+  }
+
+  .hero-text {
+    font-size: 1.25rem;
+    color: var(--color-text-light);
+    max-width: 700px;
+    margin: 0 auto var(--space-xl);
+    line-height: 1.6;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+  }
+
+  /* Gallery Section */
+  .gratitude-gallery {
+    margin: -40px auto var(--space-2xl);
+    position: relative;
+    z-index: 5;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  @media (min-width: 768px) {
+    .gallery-grid {
+      grid-template-columns: 2fr 1fr 1fr;
+      height: 400px;
+    }
+  }
+
+  .gallery-item {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    background: #000;
+  }
+
+  .gallery-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    opacity: 0.9;
+  }
+
+  .item-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.4));
+    pointer-events: none;
+  }
+
+  .gallery-item:hover .gallery-img {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+
+  /* Impact Section */
+  .live-impact {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .impact-card {
+    background: var(--gradient-dark);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
+    color: white;
+    gap: var(--space-xl);
+  }
+
+  .impact-info h2 {
+    color: white;
+    margin-bottom: var(--space-xs);
+  }
+
+  .impact-info p {
+    opacity: 0.8;
+    margin: 0;
+  }
+
+  .impact-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-width: 200px;
+  }
+
+  .stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    font-family: var(--font-heading);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.9;
+  }
+
+  /* Next Steps */
+  .section-subtitle {
+    text-align: center;
+    font-size: 2rem;
+    color: var(--color-secondary);
+    margin-bottom: var(--space-xl);
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-2xl);
+  }
+
+  .step-card {
+    background: var(--color-white);
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    border: 1px solid var(--color-cream-dark);
+    transition: all 0.3s ease;
+  }
+
+  .step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+  }
+
+  .step-icon-box {
+    width: 60px;
+    height: 60px;
+    background: var(--color-cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    margin: 0 auto var(--space-md);
+  }
+
+  .step-card h3 {
+    font-size: 1.25rem;
+    color: var(--color-secondary);
+    margin-bottom: var(--space-sm);
+  }
+
+  .step-card p {
+    font-size: 1rem;
+    color: var(--color-text-light);
+    margin: 0;
+  }
+
+  /* Final Social */
+  .final-cta {
+    padding-bottom: var(--space-2xl);
+    text-align: center;
+  }
+
+  .social-links-gratitude {
+    border-top: 1px solid var(--color-cream-dark);
+    padding-top: var(--space-xl);
+  }
+
+  .social-links-gratitude span {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--color-text-light);
+    margin-bottom: var(--space-md);
+  }
+
+  .links-row {
+    display: flex;
+    gap: var(--space-xl);
+    justify-content: center;
+  }
+
+  .links-row a {
+    color: var(--color-primary);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+
+  .links-row a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .impact-card {
+      flex-direction: column;
+      text-align: center;
+    }
+    .hero-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("astro:page-load", async () => {
+    // Confirm donation if there's a saved ID
+    const donorId = sessionStorage.getItem("donor_id");
+
+    if (donorId) {
+      try {
+        await fetch("/api/confirmar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: parseInt(donorId) }),
+        });
+        // Clear the ID after confirming
+        sessionStorage.removeItem("donor_id");
+      } catch (error) {
+        console.warn("Could not confirm donation:", error);
+      }
+    }
+
+    // Load the donors counter
+    const counterEl = document.getElementById("donantes-counter");
+    if (counterEl) {
+      try {
+        const response = await fetch("/api/contador");
+        if (response.ok) {
+          const data = (await response.json()) as { total: number };
+          counterEl.textContent = data.total.toLocaleString();
+        }
+      } catch (error) {
+        console.warn("Could not load counter:", error);
+      }
+    }
+  });
+</script>
