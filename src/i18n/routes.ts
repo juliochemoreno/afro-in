@@ -1,0 +1,36 @@
+
+export const routes = {
+  es: {
+    home: "/",
+    about: "/about",
+    program: "/programacion",
+    artists: "/artistas",
+    community: "/comunidad",
+    store: "/tienda",
+    join: "/unirse",
+    thanks: "/gracias",
+    blog: "/blog",
+  },
+  en: {
+    home: "/",
+    about: "/about",
+    program: "/program",
+    artists: "/artists",
+    community: "/community",
+    store: "/store",
+    join: "/join",
+    thanks: "/thank-you",
+    blog: "/blog",
+  },
+  fr: {
+    home: "/",
+    about: "/a-propos",
+    program: "/programme",
+    artists: "/artistes",
+    community: "/communaute",
+    store: "/boutique",
+    join: "/rejoindre",
+    thanks: "/merci",
+    blog: "/blog",
+  },
+};
