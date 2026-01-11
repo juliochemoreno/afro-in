@@ -26,12 +26,12 @@ export interface Product {
   id: number;
   slug: string;
   sku: string;
-  name: string;
-  description: string;
+  name: { es: string; en: string; fr: string };
+  description: { es: string; en: string; fr: string };
   price: number;
   priceUSD: number;
   images: ImageMetadata[];
-  category: string;
+  category: { es: string; en: string; fr: string };
   badge: string | null;
   sizes?: string[];
   colors?: string[];
@@ -44,13 +44,20 @@ export const products: Product[] = [
     id: 1,
     slug: "camiseta-palenque-2020",
     sku: "AFR-ROP-CP20-01",
-    name: "Camiseta Palenque 2020",
-    description:
-      "Camiseta edición especial Palenque 2020. Un diseño icónico que celebra la historia y la resistencia cultural.",
+    name: {
+      es: "Camiseta Palenque 2020",
+      en: "Palenque 2020 T-Shirt",
+      fr: "T-shirt Palenque 2020",
+    },
+    description: {
+      es: "Camiseta edición especial Palenque 2020. Un diseño icónico que celebra la historia y la resistencia cultural.",
+      en: "Special edition Palenque 2020 T-shirt. An iconic design celebrating history and cultural resistance.",
+      fr: "T-shirt édition spéciale Palenque 2020. Un design emblématique célébrant l'histoire et la résistance culturelle.",
+    },
     price: 119900,
     priceUSD: 30,
     images: [camiseta1],
-    category: "ropa",
+    category: { es: "ropa", en: "clothing", fr: "vêtements" },
     badge: "Premium",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
@@ -60,13 +67,20 @@ export const products: Product[] = [
     id: 10,
     slug: "camiseta-afroin-classic",
     sku: "AFR-ROP-CAC-10",
-    name: "Camiseta Clásica AFRO IN",
-    description:
-      "Nuestra camiseta insignia. Diseño limpio y moderno con el logo AFRO IN. Calidad premium para uso diario.",
+    name: {
+      es: "Camiseta Clásica AFRO IN",
+      en: "AFRO IN Classic T-Shirt",
+      fr: "T-shirt Classique AFRO IN",
+    },
+    description: {
+      es: "Nuestra camiseta insignia. Diseño limpio y moderno con el logo AFRO IN. Calidad premium para uso diario.",
+      en: "Our flagship t-shirt. Clean and modern design with the AFRO IN logo. Premium quality for everyday use.",
+      fr: "Notre t-shirt emblématique. Design épuré et moderne avec le logo AFRO IN. Qualité premium pour un usage quotidien.",
+    },
     price: 89900,
     priceUSD: 23,
     images: [camiseta4],
-    category: "ropa",
+    category: { es: "ropa", en: "clothing", fr: "vêtements" },
     badge: "Bestseller",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
@@ -76,13 +90,20 @@ export const products: Product[] = [
     id: 9,
     slug: "camiseta-negra-basica",
     sku: "AFR-ROP-CNB-09",
-    name: "Camiseta Negra AFRO IN",
-    description:
-      "Camiseta negra esencial. Cómoda, duradera y con el estilo inconfundible de AFRO IN.",
+    name: {
+      es: "Camiseta Negra AFRO IN",
+      en: "AFRO IN Black T-Shirt",
+      fr: "T-shirt Noir AFRO IN",
+    },
+    description: {
+      es: "Camiseta negra esencial. Cómoda, duradera y con el estilo inconfundible de AFRO IN.",
+      en: "Essential black t-shirt. Comfortable, durable, and with the unmistakable AFRO IN style.",
+      fr: "T-shirt noir essentiel. Confortable, durable et avec le style inimitable d'AFRO IN.",
+    },
     price: 69900,
     priceUSD: 18,
     images: [camiseta2],
-    category: "ropa",
+    category: { es: "ropa", en: "clothing", fr: "vêtements" },
     badge: null,
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
@@ -92,13 +113,20 @@ export const products: Product[] = [
     id: 8,
     slug: "gorra-sencilla",
     sku: "AFR-ACC-GSE-08",
-    name: "Gorra Sencilla",
-    description:
-      "Visera deportiva ligera y cómoda. Perfecta para protegerte del sol con estilo.",
+    name: {
+      es: "Gorra Sencilla",
+      en: "Simple Cap",
+      fr: "Casquette Simple",
+    },
+    description: {
+      es: "Visera deportiva ligera y cómoda. Perfecta para protegerte del sol con estilo.",
+      en: "Lightweight and comfortable sports visor. Perfect for protecting yourself from the sun with style.",
+      fr: "Visière de sport légère et confortable. Parfaite pour vous protéger du soleil avec style.",
+    },
     price: 59900,
     priceUSD: 15,
     images: [visera],
-    category: "gorras",
+    category: { es: "gorras", en: "caps", fr: "casquettes" },
     badge: null,
     inStock: true,
     featured: false,
@@ -107,13 +135,20 @@ export const products: Product[] = [
     id: 13,
     slug: "gorra-cafe",
     sku: "AFR-ACC-GRC-13",
-    name: "Gorra Café",
-    description:
-      "Gorra de alta calidad en tono café. Bordado premium y ajuste perfecto.",
+    name: {
+      es: "Gorra Café",
+      en: "Brown Cap",
+      fr: "Casquette Marron",
+    },
+    description: {
+      es: "Gorra de alta calidad en tono café. Bordado premium y ajuste perfecto.",
+      en: "High-quality brown cap. Premium embroidery and perfect fit.",
+      fr: "Casquette marron de haute qualité. Broderie premium et ajustement parfait.",
+    },
     price: 99999,
     priceUSD: 25,
     images: [gorraCafe],
-    category: "gorras",
+    category: { es: "gorras", en: "caps", fr: "casquettes" },
     badge: "Nuevo",
     inStock: true,
     featured: true,
@@ -122,13 +157,20 @@ export const products: Product[] = [
     id: 14,
     slug: "gorra-negra",
     sku: "AFR-ACC-GRN-14",
-    name: "Gorra Negra",
-    description:
-      "La gorra negra definitiva de AFRO IN. Elegante, versátil y con acabados de primera.",
+    name: {
+      es: "Gorra Negra",
+      en: "Black Cap",
+      fr: "Casquette Noire",
+    },
+    description: {
+      es: "La gorra negra definitiva de AFRO IN. Elegante, versátil y con acabados de primera.",
+      en: "The definitive AFRO IN black cap. Elegant, versatile, and with top-notch finishes.",
+      fr: "La casquette noire définitive d'AFRO IN. Élégante, polyvalente et aux finitions soignées.",
+    },
     price: 89999,
     priceUSD: 23,
     images: [gorraNegra],
-    category: "gorras",
+    category: { es: "gorras", en: "caps", fr: "casquettes" },
     badge: "Popular",
     inStock: true,
     featured: true,
@@ -137,13 +179,20 @@ export const products: Product[] = [
     id: 15,
     slug: "termo-afroin",
     sku: "AFR-ACC-TER-15",
-    name: "Termo AFRO IN 90",
-    description:
-      "Mantén tus bebidas a la temperatura perfecta con nuestro termo exclusivo AFRO IN.",
+    name: {
+      es: "Termo AFRO IN 90",
+      en: "AFRO IN 90 Thermos",
+      fr: "Thermos AFRO IN 90",
+    },
+    description: {
+      es: "Mantén tus bebidas a la temperatura perfecta con nuestro termo exclusivo AFRO IN.",
+      en: "Keep your drinks at the perfect temperature with our exclusive AFRO IN thermos.",
+      fr: "Gardez vos boissons à la température idéale avec notre thermos exclusif AFRO IN.",
+    },
     price: 89999,
     priceUSD: 23,
     images: [vaso],
-    category: "accesorios",
+    category: { es: "accesorios", en: "accessories", fr: "accessoires" },
     badge: "Nuevo",
     inStock: true,
     featured: true,
@@ -152,13 +201,20 @@ export const products: Product[] = [
     id: 16,
     slug: "mug-afroin",
     sku: "AFR-ACC-MUG-16",
-    name: "Mug AFRO IN",
-    description:
-      "Disfruta de tu café con estilo. Mug de cerámica de alta calidad con diseño AFRO IN.",
+    name: {
+      es: "Mug AFRO IN",
+      en: "AFRO IN Mug",
+      fr: "Mug AFRO IN",
+    },
+    description: {
+      es: "Disfruta de tu café con estilo. Mug de cerámica de alta calidad con diseño AFRO IN.",
+      en: "Enjoy your coffee with style. High-quality ceramic mug with AFRO IN design.",
+      fr: "Savourez votre café avec style. Mug en céramique de haute qualité au design AFRO IN.",
+    },
     price: 55000,
     priceUSD: 14,
     images: [mug],
-    category: "accesorios",
+    category: { es: "accesorios", en: "accessories", fr: "accessoires" },
     badge: null,
     inStock: true,
     featured: true,
@@ -178,12 +234,12 @@ export function getRelatedProducts(
   const current = getProductBySlug(currentSlug);
   if (!current) return products.slice(0, limit);
 
-  // Prioritize same category, then featured
+  // Prioritize same category (using 'es' as safe reference), then featured
   const sameCategory = products.filter(
-    (p) => p.category === current.category && p.slug !== currentSlug
+    (p) => p.category.es === current.category.es && p.slug !== currentSlug
   );
   const featured = products.filter(
-    (p) => p.featured && p.slug !== currentSlug && p.category !== current.category
+    (p) => p.featured && p.slug !== currentSlug && p.category.es !== current.category.es
   );
 
   return [...sameCategory, ...featured].slice(0, limit);
@@ -195,9 +251,25 @@ export function formatPrice(price: number): string {
     currency: "COP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(price).replace(/\s/g, ''); // Eliminar espacios raros si los hay
+  }).format(price).replace(/\s/g, '');
 }
 
 export function getFeaturedProducts(): Product[] {
   return products.filter((p) => p.featured);
+}
+
+export interface LocalizedProduct extends Omit<Product, 'name' | 'description' | 'category'> {
+  name: string;
+  description: string;
+  category: string;
+}
+
+export function getLocalizedProduct(product: Product, lang: string): LocalizedProduct {
+  const safeLang = (lang === 'en' || lang === 'fr') ? lang : 'es';
+  return {
+    ...product,
+    name: product.name[safeLang],
+    description: product.description[safeLang],
+    category: product.category[safeLang],
+  };
 }

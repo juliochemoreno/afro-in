@@ -8,6 +8,7 @@ import {
   getRelatedProducts,
   formatPrice,
   type Product,
+  getLocalizedProduct,
 } from "@/data/products";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 
@@ -17,6 +18,7 @@ interface Props {
 }
 
 const { product, lang = "es" } = Astro.props;
+const localizedProduct = getLocalizedProduct(product, lang);
 const relatedProducts = getRelatedProducts(product.slug, 4);
 
 // Store-specific navigation
@@ -51,7 +53,7 @@ const storeCta = {
 };
 ---
 
-<Layout title={`${product.name} | Tienda AFRO IN`}>
+<Layout title={`${localizedProduct.name} | Tienda AFRO IN`}>
   <Header navLinks={storeNavLinks} ctaLink={storeCta} />
   <main class="product-page">
     <div class="container">
@@ -69,7 +71,7 @@ const storeCta = {
           <div class="main-image">
             <Image
               src={product.images[0]}
-              alt={product.name}
+              alt={localizedProduct.name}
               class="gallery-img"
               loading="eager"
             />
@@ -100,17 +102,17 @@ const storeCta = {
         <!-- Details -->
         <div class="product-details">
           <div class="product-info-header">
-            <span class="category-badge">{product.category}</span>
+            <span class="category-badge">{localizedProduct.category}</span>
             <span class="sku-badge">SKU: {product.sku}</span>
           </div>
-          <h1 class="product-name">{product.name}</h1>
+          <h1 class="product-name">{localizedProduct.name}</h1>
 
           <div class="product-prices">
             <span class="price-cop">{formatPrice(product.price)}</span>
             <span class="price-usd">~${product.priceUSD} USD</span>
           </div>
 
-          <p class="product-description">{product.description}</p>
+          <p class="product-description">{localizedProduct.description}</p>
 
           <!-- Product Actions: Size/Color Selection + Add to Cart -->
           <div
@@ -119,7 +121,7 @@ const storeCta = {
             data-product-id={product.id}
             data-product-slug={product.slug}
             data-product-sku={product.sku}
-            data-product-name={product.name}
+            data-product-name={localizedProduct.name}
             data-product-price={product.price}
             data-product-image={product.images[0].src}
             data-product-instock={product.inStock}
@@ -201,20 +203,23 @@ const storeCta = {
           <section class="related-products">
             <h2>{t("store.product.related")}</h2>
             <div class="related-grid">
-              {relatedProducts.map((related) => (
-                <a
-                  href={getTranslatedPath(`/tienda/${related.slug}`, lang)}
-                  class="related-card"
-                >
-                  <div class="related-image">
-                    <Image src={related.images[0]} alt={related.name} />
-                  </div>
-                  <h3>{related.name}</h3>
-                  <span class="related-price">
-                    {formatPrice(related.price)}
-                  </span>
-                </a>
-              ))}
+              {relatedProducts.map((related) => {
+                const locRelated = getLocalizedProduct(related, lang);
+                return (
+                  <a
+                    href={getTranslatedPath(`/tienda/${related.slug}`, lang)}
+                    class="related-card"
+                  >
+                    <div class="related-image">
+                      <Image src={related.images[0]} alt={locRelated.name} />
+                    </div>
+                    <h3>{locRelated.name}</h3>
+                    <span class="related-price">
+                      {formatPrice(related.price)}
+                    </span>
+                  </a>
+                );
+              })}
             </div>
           </section>
         )

@@ -1,6 +1,10 @@
 ---
 import { Image } from "astro:assets";
-import { formatPrice, type Product } from "@/data/products";
+import {
+  formatPrice,
+  type Product,
+  getLocalizedProduct,
+} from "@/data/products";
 import {
   getLangFromUrl,
   getTranslatedPath,
@@ -16,6 +20,7 @@ const { product, showQuickAdd = true } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 
+const localizedProduct = getLocalizedProduct(product, lang);
 const productPath = getTranslatedPath(`/tienda/${product.slug}`, lang);
 
 // Translate badge
@@ -25,7 +30,7 @@ const badgeKey = product.badge
 const translatedBadge = badgeKey ? t(badgeKey as any) : null;
 ---
 
-<div class="product-card" data-category={product.category}>
+<div class="product-card" data-category={localizedProduct.category}>
   {
     translatedBadge && (
       <span class={`product-badge ${product.badge?.toLowerCase()}`}>
@@ -35,9 +40,13 @@ const translatedBadge = badgeKey ? t(badgeKey as any) : null;
   }
   <a href={productPath} class="product-link">
     <div class="product-image">
-      <Image src={product.images[0]} alt={product.name} class="product-img" />
+      <Image
+        src={product.images[0]}
+        alt={localizedProduct.name}
+        class="product-img"
+      />
     </div>
-    <h3 class="product-name">{product.name}</h3>
+    <h3 class="product-name">{localizedProduct.name}</h3>
   </a>
   <div class="product-info">
     <div class="product-prices">
@@ -55,7 +64,7 @@ const translatedBadge = badgeKey ? t(badgeKey as any) : null;
             class="btn btn-primary product-btn quick-add"
             data-id={product.slug}
             data-sku={product.sku}
-            data-name={product.name}
+            data-name={localizedProduct.name}
             data-price={product.price}
             data-image={product.images[0].src}
           >
