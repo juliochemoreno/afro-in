@@ -38,6 +38,11 @@ import { ClientRouter } from "astro:transitions";
       content="AFRO IN, cultura afro, música afro, danza afro, Colombia, Caribe, festival, Santa Marta, Palenque, arte afro-colombiano"
     />
     <meta name="author" content="AFRO IN" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta name="googlebot" content="index, follow" />
     <link rel="canonical" href={canonicalURL} />
 
     <!-- Open Graph / Facebook -->
@@ -62,17 +67,27 @@ import { ClientRouter } from "astro:transitions";
     <meta name="twitter:image" content={new URL(image, Astro.url)} />
     <meta name="twitter:image:alt" content="AFRO IN - 1 Millón de Corazones" />
 
-    <!-- Structured Data -->
+    <!-- Structured Data: Organization -->
     <script type="application/ld+json" is:inline>
       {
         "@context": "https://schema.org",
         "@type": "Organization",
+        "@id": "https://afroin.org/#organization",
         "name": "AFRO IN",
         "url": "https://afroin.org",
-        "logo": "https://afroin.org/favicon.svg",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://afroin.org/favicon.svg",
+          "width": 512,
+          "height": 512
+        },
+        "image": "https://afroin.org/img/og-image.png",
         "description": "Movimiento Cultural AFRO IN - 1 Millón de Corazones. Apoyando el arte afro independiente y la cultura en el Caribe Colombiano.",
         "foundingDate": "2018",
-        "areaServed": "Colombia",
+        "areaServed": {
+          "@type": "Country",
+          "name": "Colombia"
+        },
         "sameAs": [
           "https://instagram.com/afro_in_",
           "https://facebook.com/afroincolombia",
@@ -81,7 +96,83 @@ import { ClientRouter } from "astro:transitions";
         "contactPoint": {
           "@type": "ContactPoint",
           "contactType": "customer service",
-          "url": "https://wa.me/41782231433"
+          "url": "https://wa.me/41782231433",
+          "availableLanguage": ["Spanish", "English"]
+        }
+      }
+    </script>
+
+    <!-- Structured Data: WebSite (for Google Sitelinks Search Box) -->
+    <script type="application/ld+json" is:inline>
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": "https://afroin.org/#website",
+        "name": "AFRO IN",
+        "url": "https://afroin.org",
+        "description": "AFRO IN - 1 Millón de Corazones. Apoyando el arte afro independiente y la cultura en el Caribe Colombiano.",
+        "publisher": {
+          "@id": "https://afroin.org/#organization"
+        },
+        "inLanguage": "es-CO"
+      }
+    </script>
+
+    <!-- Structured Data: Event (AFRO IN Tour 2026) -->
+    <script type="application/ld+json" is:inline>
+      {
+        "@context": "https://schema.org",
+        "@type": "EventSeries",
+        "name": "AFRO IN Tour 2026",
+        "description": "Festival de música, danza y cultura afro-colombiana en el Caribe. Una experiencia de inmersión cultural.",
+        "url": "https://afroin.org/programacion",
+        "image": "https://afroin.org/img/og-image.png",
+        "organizer": {
+          "@id": "https://afroin.org/#organization"
+        },
+        "eventStatus": "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "subEvent": [
+          {
+            "@type": "Event",
+            "name": "AFRO IN Santa Marta 2026",
+            "startDate": "2026-01-17",
+            "endDate": "2026-01-23",
+            "location": {
+              "@type": "Place",
+              "name": "Santa Marta",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Santa Marta",
+                "addressRegion": "Magdalena",
+                "addressCountry": "CO"
+              }
+            }
+          },
+          {
+            "@type": "Event",
+            "name": "AFRO IN Palenque 2026",
+            "startDate": "2026-01-23",
+            "endDate": "2026-01-26",
+            "location": {
+              "@type": "Place",
+              "name": "San Basilio de Palenque",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "San Basilio de Palenque",
+                "addressRegion": "Bolívar",
+                "addressCountry": "CO"
+              }
+            }
+          }
+        ],
+        "offers": {
+          "@type": "Offer",
+          "url": "https://afroin.org/unirse",
+          "priceCurrency": "USD",
+          "price": "5",
+          "availability": "https://schema.org/InStock",
+          "validFrom": "2025-01-01"
         }
       }
     </script>
