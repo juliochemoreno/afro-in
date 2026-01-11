@@ -1,6 +1,10 @@
 ---
 import { products } from "@/data/products";
 import ProductCard from "./ProductCard.astro";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <section class="store section" id="tienda">
@@ -9,11 +13,10 @@ import ProductCard from "./ProductCard.astro";
       class="store-header text-center animate-fade-in-up"
       style="animation-delay: 0.1s"
     >
-      <span class="section-badge">Apoya con Estilo</span>
-      <h2 class="section-title">Tienda AFRO IN</h2>
+      <span class="section-badge">{t("store.hero.badge")}</span>
+      <h2 class="section-title">{t("store.hero.title")}</h2>
       <p class="section-subtitle">
-        Cada compra apoya directamente a artistas y comunidades
-        afro-colombianas.
+        {t("store.hero.description")}
       </p>
     </div>
 
@@ -32,9 +35,9 @@ import ProductCard from "./ProductCard.astro";
       <div class="note-card card-glass">
         <span class="note-icon">💡</span>
         <p>
-          <strong>¿Quieres vender tus productos afro aquí?</strong><br />
-          Estamos buscando artesanos y diseñadores para nuestra tienda.
-          <a href="#contacto">Contáctanos</a>
+          <strong>{t("store.note.title")}</strong><br />
+          {t("store.note.description")}
+          <a href="#contacto">{t("store.note.contact")}</a>
         </p>
       </div>
     </div>

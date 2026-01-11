@@ -1,24 +1,39 @@
 ---
 import { Image } from "astro:assets";
 import { formatPrice, type Product } from "@/data/products";
+import {
+  getLangFromUrl,
+  getTranslatedPath,
+  useTranslations,
+} from "@/i18n/utils";
 
 interface Props {
   product: Product;
-  showQuickAdd?: boolean; // If true, shows "Agregar" btn. If false, shows "Ver Producto" or simplified.
+  showQuickAdd?: boolean;
 }
 
 const { product, showQuickAdd = true } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const productPath = getTranslatedPath(`/tienda/${product.slug}`, lang);
+
+// Translate badge
+const badgeKey = product.badge
+  ? `store.badge.${product.badge.toLowerCase()}`
+  : null;
+const translatedBadge = badgeKey ? t(badgeKey as any) : null;
 ---
 
 <div class="product-card" data-category={product.category}>
   {
-    product.badge && (
-      <span class={`product-badge ${product.badge.toLowerCase()}`}>
-        {product.badge}
+    translatedBadge && (
+      <span class={`product-badge ${product.badge?.toLowerCase()}`}>
+        {translatedBadge}
       </span>
     )
   }
-  <a href={`/tienda/${product.slug}`} class="product-link">
+  <a href={productPath} class="product-link">
     <div class="product-image">
       <Image src={product.images[0]} alt={product.name} class="product-img" />
     </div>
@@ -32,11 +47,8 @@ const { product, showQuickAdd = true } = Astro.props;
     <div class="product-actions">
       {
         product.sizes && product.sizes.length > 0 ? (
-          <a
-            href={`/tienda/${product.slug}`}
-            class="btn btn-primary product-btn"
-          >
-            Ver Opciones
+          <a href={productPath} class="btn btn-primary product-btn">
+            {t("store.btn.viewOptions")}
           </a>
         ) : showQuickAdd ? (
           <button
@@ -47,14 +59,11 @@ const { product, showQuickAdd = true } = Astro.props;
             data-price={product.price}
             data-image={product.images[0].src}
           >
-            Agregar
+            {t("store.btn.add")}
           </button>
         ) : (
-          <a
-            href={`/tienda/${product.slug}`}
-            class="btn btn-primary product-btn"
-          >
-            Ver Detalles
+          <a href={productPath} class="btn btn-primary product-btn">
+            {t("store.btn.viewDetails")}
           </a>
         )
       }

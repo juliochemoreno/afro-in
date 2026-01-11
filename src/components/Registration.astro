@@ -1,5 +1,9 @@
 ---
 import { countries } from "../data/countries";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
 interface Props {
   currentCount?: number;
@@ -15,78 +19,81 @@ const { currentCount = 12847 } = Astro.props;
         class="registration-content animate-fade-in-up"
         style="animation-delay: 0.1s"
       >
-        <span class="section-badge">Únete al Movimiento</span>
+        <span class="section-badge">{t("join.badge")}</span>
         <h2 class="section-title">
-          Sé Parte del<br /><span class="title-highlight"
-            >Millón de Corazones</span
+          {t("join.title.part1")}<br /><span class="title-highlight"
+            >{t("join.title.part2")}</span
           >
         </h2>
 
         <div class="counter-badge">
           <span class="counter-number" id="live-counter">...</span>
-          <span class="counter-label">ya se han unido 💛</span>
+          <span class="counter-label">{t("join.counter")}</span>
         </div>
 
-        <p class="registration-description">
-          Con solo <strong>$5 USD (20,000 COP)</strong> te conviertes en parte de
-          nuestra comunidad y apoyas directamente el arte afro independiente.
-        </p>
+        <p class="registration-description" set:html={t("join.description")} />
 
         <ul class="benefits-list">
-          <li>✅ Acceso a contenido exclusivo</li>
-          <li>✅ Noticias y eventos de AFRO IN</li>
-          <li>✅ Descuentos en la tienda</li>
-          <li>✅ Tu nombre en nuestra comunidad</li>
-          <li>✅ Certificado digital de apoyo</li>
+          <li>{t("join.benefit.1")}</li>
+          <li>{t("join.benefit.2")}</li>
+          <li>{t("join.benefit.3")}</li>
+          <li>{t("join.benefit.4")}</li>
+          <li>{t("join.benefit.5")}</li>
         </ul>
       </div>
 
       <div class="registration-form-wrapper">
         <div class="form-card">
-          <form class="registration-form" id="registrationForm">
+          <form
+            class="registration-form"
+            id="registrationForm"
+            data-t-country-error={t("join.country.error")}
+            data-t-toast-success={t("join.toast.success")}
+            data-t-toast-error={t("join.toast.error")}
+          >
             <!-- STEP 1: CONTACT INFO -->
             <div class="form-step active" id="step1">
               <div class="step-header">
-                <span class="step-indicator">Paso 1 de 2</span>
-                <h3>Tus Datos</h3>
+                <span class="step-indicator">{t("join.step1")}</span>
+                <h3>{t("join.form.title")}</h3>
               </div>
 
               <div class="form-group">
-                <label for="name">Nombre Completo</label>
+                <label for="name">{t("join.form.name")}</label>
                 <input
                   type="text"
                   id="name"
                   name="name"
-                  placeholder="Tu nombre"
+                  placeholder={t("join.form.name.placeholder")}
                   required
                 />
               </div>
 
               <div class="form-group">
-                <label for="email">Email</label>
+                <label for="email">{t("join.form.email")}</label>
                 <input
                   type="email"
                   id="email"
                   name="email"
-                  placeholder="tu@email.com"
+                  placeholder={t("join.form.email.placeholder")}
                   required
                 />
               </div>
 
               <div class="form-group">
-                <label for="phone">Teléfono</label>
+                <label for="phone">{t("join.form.phone")}</label>
                 <input
                   type="tel"
                   id="phone"
                   name="phone"
-                  placeholder="+57 300 000 0000"
+                  placeholder={t("join.form.phone.placeholder")}
                 />
               </div>
 
               <div class="form-group">
-                <label for="country">País</label>
+                <label for="country">{t("join.form.country")}</label>
                 <select id="country" name="country" autocomplete="off">
-                  <option value="">Selecciona tu país</option>
+                  <option value="">{t("join.form.country.select")}</option>
                   {
                     countries.map((c) => (
                       <option value={c.code}>
@@ -102,7 +109,7 @@ const { currentCount = 12847 } = Astro.props;
                 class="btn btn-primary btn-block"
                 id="btnNext"
               >
-                Continuar con mi Aporte →
+                {t("join.form.next")}
               </button>
             </div>
 
@@ -110,10 +117,10 @@ const { currentCount = 12847 } = Astro.props;
             <div class="form-step" id="step2">
               <div class="step-header">
                 <button type="button" class="btn-back" id="btnBack"
-                  >← Volver</button
+                  >{t("join.form.back")}</button
                 >
-                <span class="step-indicator">Paso 2 de 2</span>
-                <h3>Tu Aporte</h3>
+                <span class="step-indicator">{t("join.step2")}</span>
+                <h3>{t("join.form.donate.title")}</h3>
               </div>
 
               <div class="form-donation">
@@ -142,7 +149,9 @@ const { currentCount = 12847 } = Astro.props;
                   <label class="donation-option custom">
                     <input type="radio" name="amount" value="custom" />
                     <span class="option-content">
-                      <span class="option-amount">Otro</span>
+                      <span class="option-amount"
+                        >{t("join.form.donate.other")}</span
+                      >
                       <input
                         type="number"
                         class="custom-amount"
@@ -158,7 +167,7 @@ const { currentCount = 12847 } = Astro.props;
               <!-- PayPal Donate Button Container -->
               <div id="paypal-donate-container"></div>
 
-              <p class="form-note">🔒 Pago seguro procesado por PayPal</p>
+              <p class="form-note">{t("join.form.secure")}</p>
             </div>
           </form>
         </div>
@@ -578,7 +587,7 @@ const { currentCount = 12847 } = Astro.props;
               sortField: { field: "text", direction: "asc" },
               render: {
                 no_results: () =>
-                  '<div class="no-results">País no encontrado...</div>',
+                  `<div class="no-results">${form.dataset.tCountryError}</div>`,
               },
             });
             tsInstance.setValue("CO");
@@ -709,7 +718,7 @@ const { currentCount = 12847 } = Astro.props;
               }
 
               // Redirect to thank you page
-              showToast("¡Gracias por tu donación! 💛");
+              showToast(form.dataset.tToastSuccess || "");
               setTimeout(() => {
                 window.location.href = `/gracias?tx=${params.tx}&amt=${params.amt}`;
               }, 1000);
@@ -730,7 +739,7 @@ const { currentCount = 12847 } = Astro.props;
             : countrySelect.value;
 
           if (!nameInput.value || !emailInput.value || !countryValue) {
-            showToast("Por favor completa los campos obligatorios", "error");
+            showToast(form.dataset.tToastError || "", "error");
             return;
           }
           step1?.classList.remove("active");

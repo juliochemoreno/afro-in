@@ -3,37 +3,41 @@ import { MapPin, Calendar, Music, Users } from "lucide-astro";
 import { Image } from "astro:assets";
 import santaMartaImg from "../assets/img/programacion/santa-marta-art.webp";
 import palenqueImg from "../assets/img/programacion/palenque-art.webp";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
 const destinations = [
   {
     id: 1,
-    name: "Santa Marta",
-    dates: "Enero 10, 11, 15, 16",
+    name: t("events.sm.name"),
+    dates: t("events.sm.dates"),
     image: santaMartaImg,
-    location: "Portal de mis Sueños, Masaya Hostel & Playa",
+    location: t("events.sm.location"),
     highlights: [
-      "Día 10: Portal de mis Sueños — Batalla de Picos",
-      "Día 11: Afro Pool Party @ Masaya con Mr. Smoke",
-      "Día 15: Workshop de Dancehall con Fideles (UK)",
-      "Día 16: Cierre con Dr. Jessil, DJ Tang & MC Budu",
-      "Entre otras actividades...",
+      t("events.sm.h1"),
+      t("events.sm.h2"),
+      t("events.sm.h3"),
+      t("events.sm.h4"),
+      t("events.sm.more"),
     ],
-    badge: "Primera Parada",
+    badge: t("events.sm.badge"),
   },
   {
     id: 2,
-    name: "Palenque",
-    dates: "Enero 18, 19, 20",
+    name: t("events.plk.name"),
+    dates: t("events.plk.dates"),
     image: palenqueImg,
-    location: "Kolao House, Plaza Principal & Calles del Pueblo",
+    location: t("events.plk.location"),
     highlights: [
-      "Homenaje a Pedro Luis Padilla Salinas 'Pedrito'",
-      "Día 18: Llegada y bienvenida en Kolao House",
-      "Día 19: Fiestas de San Sebastián — La Mojadera",
-      "Día 20: Reinados, boxeo tradicional y despedida",
-      "Entre otras actividades...",
+      t("events.plk.h1"),
+      t("events.plk.h2"),
+      t("events.plk.h3"),
+      t("events.plk.h4"),
+      t("events.plk.more"),
     ],
-    badge: "Festival Principal",
+    badge: t("events.plk.badge"),
   },
 ];
 ---
@@ -44,11 +48,10 @@ const destinations = [
       class="events-header text-center animate-fade-in-up"
       style="animation-delay: 0.1s"
     >
-      <span class="section-badge">Enero 2026</span>
-      <h2 class="section-title">AFRO IN Tour 2026</h2>
+      <span class="section-badge">{t("events.badge")}</span>
+      <h2 class="section-title">{t("events.title")}</h2>
       <p class="section-subtitle">
-        Turismo creativo desde la ciudad más antigua de Colombia hasta el primer
-        pueblo libre de Sur América.
+        {t("events.subtitle")}
       </p>
     </div>
     <div class="tour-route">
@@ -100,7 +103,7 @@ const destinations = [
 
     <div class="events-cta text-center">
       <a href="/programacion" class="btn btn-primary btn-large">
-        Ver Programación Completa
+        {t("events.cta")}
       </a>
     </div>
   </div>

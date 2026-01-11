@@ -1,0 +1,182 @@
+---
+import { languages } from "../i18n/ui";
+
+import { getLangFromUrl, getTranslatedPath } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const currentPath = Astro.url.pathname;
+
+const flags = {
+  es: "🇨🇴", // Colombia for Spanish context
+  en: "🇺🇸",
+  fr: "🇫🇷",
+};
+---
+
+<div class="language-picker">
+  <button
+    class="current-lang-btn"
+    aria-label="Seleccionar idioma"
+    aria-expanded="false"
+  >
+    <span class="flag-icon">{flags[lang]}</span>
+    <svg
+      class="chevron"
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m6 9 6 6 6-6"></path>
+    </svg>
+  </button>
+
+  <ul class="lang-dropdown">
+    {
+      Object.entries(languages).map(([code, label]) => (
+        <li>
+          <a
+            href={getTranslatedPath(currentPath, code)}
+            class={`lang-link ${code === lang ? "active" : ""}`}
+            aria-label={label}
+            title={label}
+          >
+            <span class="flag-icon">{flags[code]}</span>
+            <span class="lang-name">{label}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const picker = document.querySelector(".language-picker");
+    const btn = picker?.querySelector(".current-lang-btn");
+    const langLinks = picker?.querySelectorAll(".lang-link");
+
+    // Toggle dropdown
+    btn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      picker?.classList.toggle("open");
+      const isExpanded = picker?.classList.contains("open");
+      btn.setAttribute("aria-expanded", String(isExpanded));
+    });
+
+    // Save language preference when clicking a language link
+    langLinks?.forEach((link) => {
+      link.addEventListener("click", () => {
+        // Extract language code from the href (e.g., "/en/" -> "en", "/" -> "es")
+        const href = link.getAttribute("href") || "/";
+        let lang = "es"; // default
+        const match = href.match(/^\/([a-z]{2})\//);
+        if (match) {
+          lang = match[1];
+        }
+        // Set cookie for 1 year
+        document.cookie = `preferred-lang=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+      });
+    });
+
+    // Close on click outside
+    document.addEventListener("click", () => {
+      picker?.classList.remove("open");
+      btn?.setAttribute("aria-expanded", "false");
+    });
+  });
+</script>
+
+<style>
+  .language-picker {
+    position: relative;
+    display: inline-block;
+  }
+
+  .current-lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: none;
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .current-lang-btn:hover,
+  .language-picker.open .current-lang-btn {
+    background: rgba(var(--color-primary), 0.05);
+  }
+
+  .flag-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .chevron {
+    transition: transform 0.2s ease;
+  }
+
+  .language-picker.open .chevron {
+    transform: rotate(180deg);
+  }
+
+  .lang-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--color-white);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: 0.5rem;
+    list-style: none;
+    min-width: 140px;
+    z-index: 100;
+
+    /* Animation state */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .language-picker.open .lang-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .lang-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+  }
+
+  .lang-link:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .lang-link.active {
+    background-color: rgba(227, 28, 37, 0.08); /* Primary color low opacity */
+    color: var(--color-primary);
+  }
+
+  .lang-name {
+    font-size: 0.85rem;
+  }
+</style>

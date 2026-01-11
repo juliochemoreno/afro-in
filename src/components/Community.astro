@@ -1,5 +1,9 @@
 ---
 import { Image } from "astro:assets";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
 // Import horizontal community images for the preview
 import img1 from "@/assets/img/gente-afroin/gente-afroin-h-22.jpg";
@@ -15,11 +19,10 @@ const previewImages = [img1, img2, img3, img4, img5, img6];
 <section class="community-section" id="comunidad">
   <div class="container">
     <div class="section-header">
-      <span class="section-badge">1 Millón de Corazones</span>
-      <h2>Nuestra Comunidad</h2>
+      <span class="section-badge">{t("community.badge")}</span>
+      <h2>{t("community.title")}</h2>
       <p>
-        Somos una familia unida por la pasión por la cultura afro-colombiana.
-        Conoce a las personas que hacen posible AFRO IN.
+        {t("community.desc")}
       </p>
     </div>
 
@@ -29,7 +32,7 @@ const previewImages = [img1, img2, img3, img4, img5, img6];
           <div class={`preview-item item-${i + 1}`}>
             <Image
               src={img}
-              alt={`Comunidad AFRO IN ${i + 1}`}
+              alt={`${t("community.alt")} ${i + 1}`}
               class="preview-img"
               loading="lazy"
             />
@@ -39,7 +42,7 @@ const previewImages = [img1, img2, img3, img4, img5, img6];
     </div>
 
     <div class="section-cta">
-      <a href="/comunidad" class="btn btn-primary">Ver Toda la Comunidad →</a>
+      <a href="/comunidad" class="btn btn-primary">{t("community.cta")}</a>
     </div>
   </div>
 </section>

@@ -1,0 +1,461 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { Image } from "astro:assets";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+
+interface Props {
+  lang?: string;
+}
+
+const { lang = "es" } = Astro.props;
+
+// Import all community images dynamically
+const horizontalImages = import.meta.glob<{ default: ImageMetadata }>(
+  "@/assets/img/gente-afroin/gente-afroin-h-*.jpg",
+  { eager: true }
+);
+const verticalImages = import.meta.glob<{ default: ImageMetadata }>(
+  "@/assets/img/gente-afroin/gente-afroin-v-*.jpg",
+  { eager: true }
+);
+
+// Combine and shuffle for variety
+const allImages = [
+  ...Object.values(horizontalImages).map((img) => ({
+    src: img.default,
+    orientation: "h" as const,
+  })),
+  ...Object.values(verticalImages).map((img) => ({
+    src: img.default,
+    orientation: "v" as const,
+  })),
+];
+
+// Shuffle array for varied layout
+const shuffledImages = allImages.sort(() => Math.random() - 0.5);
+
+// Community navigation
+const t = useTranslations(lang as any);
+const communityNavLinks = [
+  { href: getTranslatedPath("/", lang), label: t("nav.home") },
+  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
+  { href: getTranslatedPath("/programacion", lang), label: t("nav.tour") },
+  { href: getTranslatedPath("/comunidad", lang), label: t("nav.community") },
+  { href: getTranslatedPath("/#contacto", lang), label: t("nav.contact") },
+];
+const communityCta = {
+  href: getTranslatedPath("/#unirse", lang),
+  label: t("nav.join"),
+};
+---
+
+<Layout title={t("community.metaTitle")}>
+  <Header navLinks={communityNavLinks} ctaLink={communityCta} />
+
+  <main class="community-page">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <span class="section-badge">{t("community.heroBadge")}</span>
+        <h1>{t("community.heroTitle")}</h1>
+        <p>
+          {t("community.heroDesc")}
+        </p>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats">
+      <div class="container stats-grid">
+        <div class="stat-item">
+          <span class="stat-number">{allImages.length}+</span>
+          <span class="stat-label">{t("community.stats.participants")}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">10+</span>
+          <span class="stat-label">{t("community.stats.years")}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">5</span>
+          <span class="stat-label">{t("community.stats.countries")}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Masonry Gallery -->
+    <section class="gallery-section">
+      <div class="masonry-grid">
+        {
+          shuffledImages.map((img, index) => (
+            <div
+              class={`masonry-item ${img.orientation === "v" ? "tall" : ""}`}
+              data-index={index}
+            >
+              <Image
+                src={img.src}
+                alt={`${t("community.alt.participant")} ${index + 1}`}
+                class="masonry-img"
+                loading={index < 12 ? "eager" : "lazy"}
+              />
+              <div class="overlay">
+                <span class="zoom-icon">🔍</span>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+      <div class="container">
+        <h2>{t("community.cta.title")}</h2>
+        <p>
+          {t("community.cta.desc")}
+        </p>
+        <a
+          href={getTranslatedPath("/#unirse", lang)}
+          class="btn btn-primary btn-lg">{t("community.cta.button")}</a
+        >
+      </div>
+    </section>
+  </main>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" aria-label="Cerrar">×</button>
+    <button class="lightbox-prev" aria-label="Anterior">‹</button>
+    <img src="" alt="" class="lightbox-img" />
+    <button class="lightbox-next" aria-label="Siguiente">›</button>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .community-page {
+    padding-top: 80px;
+    background: var(--color-cream);
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: var(--space-2xl) 0;
+    background: linear-gradient(
+      135deg,
+      var(--color-secondary) 0%,
+      #1a1a2e 100%
+    );
+    color: var(--color-white);
+  }
+
+  .section-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(227, 28, 37, 0.2);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    margin-bottom: var(--space-md);
+  }
+
+  .hero p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Stats */
+  .stats {
+    padding: var(--space-xl) 0;
+    background: var(--color-white);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+    text-align: center;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .stat-number {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    color: var(--color-primary);
+    font-family: var(--font-heading);
+  }
+
+  .stat-label {
+    font-size: 0.95rem;
+    color: var(--color-text-light);
+  }
+
+  /* Gallery Section */
+  .gallery-section {
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  /* Masonry Grid */
+  .masonry-grid {
+    columns: 4;
+    column-gap: var(--space-sm);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: var(--space-sm);
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+  }
+
+  .masonry-item:hover {
+    transform: scale(1.02);
+  }
+
+  .masonry-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: filter var(--transition-fast);
+  }
+
+  .masonry-item:hover .masonry-img {
+    filter: brightness(0.8);
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+  }
+
+  .masonry-item:hover .overlay {
+    opacity: 1;
+  }
+
+  .zoom-icon {
+    font-size: 2rem;
+  }
+
+  /* CTA Section */
+  .cta-section {
+    text-align: center;
+    padding: var(--space-2xl) 0;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #c41920 100%);
+    color: var(--color-white);
+  }
+
+  .cta-section h2 {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    margin-bottom: var(--space-md);
+  }
+
+  .cta-section p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: var(--space-lg);
+  }
+
+  .btn-lg {
+    padding: var(--space-md) var(--space-xl);
+    font-size: 1.1rem;
+  }
+
+  .cta-section .btn-primary {
+    background: var(--color-white);
+    color: var(--color-primary);
+  }
+
+  .cta-section .btn-primary:hover {
+    background: var(--color-cream);
+  }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  .lightbox.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .lightbox-img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+  }
+
+  .lightbox-close,
+  .lightbox-prev,
+  .lightbox-next {
+    position: absolute;
+    background: none;
+    border: none;
+    color: var(--color-white);
+    font-size: 3rem;
+    cursor: pointer;
+    padding: var(--space-md);
+    transition: opacity var(--transition-fast);
+  }
+
+  .lightbox-close {
+    top: var(--space-md);
+    right: var(--space-md);
+    font-size: 2.5rem;
+  }
+
+  .lightbox-prev {
+    left: var(--space-md);
+  }
+
+  .lightbox-next {
+    right: var(--space-md);
+  }
+
+  .lightbox-close:hover,
+  .lightbox-prev:hover,
+  .lightbox-next:hover {
+    opacity: 0.7;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .masonry-grid {
+      columns: 3;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .masonry-grid {
+      columns: 2;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .masonry-grid {
+      columns: 2;
+      column-gap: var(--space-xs);
+    }
+
+    .masonry-item {
+      margin-bottom: var(--space-xs);
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = lightbox?.querySelector(
+      ".lightbox-img"
+    ) as HTMLImageElement;
+    const closeBtn = lightbox?.querySelector(".lightbox-close");
+    const prevBtn = lightbox?.querySelector(".lightbox-prev");
+    const nextBtn = lightbox?.querySelector(".lightbox-next");
+    const items = document.querySelectorAll(".masonry-item");
+
+    let currentIndex = 0;
+    const images: string[] = [];
+
+    // Collect all image sources
+    items.forEach((item, index) => {
+      const img = item.querySelector("img");
+      if (img) {
+        images.push(img.src);
+        item.addEventListener("click", () => {
+          currentIndex = index;
+          showImage(currentIndex);
+          lightbox?.classList.add("active");
+          document.body.style.overflow = "hidden";
+        });
+      }
+    });
+
+    function showImage(index: number) {
+      if (lightboxImg && images[index]) {
+        lightboxImg.src = images[index];
+      }
+    }
+
+    closeBtn?.addEventListener("click", closeLightbox);
+    lightbox?.addEventListener("click", (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+
+    prevBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      currentIndex = (currentIndex - 1 + images.length) % images.length;
+      showImage(currentIndex);
+    });
+
+    nextBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      currentIndex = (currentIndex + 1) % images.length;
+      showImage(currentIndex);
+    });
+
+    function closeLightbox() {
+      lightbox?.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+
+    // Keyboard navigation
+    document.addEventListener("keydown", (e) => {
+      if (!lightbox?.classList.contains("active")) return;
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") {
+        currentIndex = (currentIndex - 1 + images.length) % images.length;
+        showImage(currentIndex);
+      }
+      if (e.key === "ArrowRight") {
+        currentIndex = (currentIndex + 1) % images.length;
+        showImage(currentIndex);
+      }
+    });
+  });
+</script>

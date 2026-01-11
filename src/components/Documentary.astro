@@ -1,14 +1,21 @@
+---
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+
 <section class="documentary" id="documental">
   <div class="container relative z-10">
     <div
       class="doc-header text-center animate-fade-in-up"
       style="animation-delay: 0.1s"
     >
-      <span class="doc-badge">Impacto Social</span>
-      <h2 class="doc-title">Nuestra Historia en Movimiento</h2>
+      <span class="doc-badge">{t("doc.badge")}</span>
+      <h2 class="doc-title">{t("doc.title")}</h2>
       <p class="doc-subtitle">
-        Un recorrido por 10 años de gestión cultural independiente que hoy busca
-        unir a <span class="highlight">1 Millón de Corazones</span>.
+        {t("doc.subtitle.part1")}
+        <span class="highlight">{t("doc.subtitle.part2")}</span>.
       </p>
     </div>
 
@@ -33,12 +40,12 @@
               </div>
             </div>
             <div class="glass-label">
-              <span>Reproducir en YouTube</span>
+              <span>{t("doc.play")}</span>
             </div>
           </div>
           <img
             src="https://img.youtube.com/vi/vWgm4qWTN_Y/hqdefault.jpg"
-            alt="AFRO IN Documental"
+            alt={t("doc.alt")}
             class="video-card-img"
           />
         </a>
@@ -50,8 +57,7 @@
       style="animation-delay: 0.5s"
     >
       <p class="quote">
-        "AFRO IN es la prueba de que el arte independiente puede transformar
-        territorios si trabajamos juntos."
+        {t("doc.quote")}
       </p>
     </div>
   </div>

@@ -1,0 +1,1110 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+import { Image } from "astro:assets";
+import { Plane, ArrowRight } from "lucide-astro";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+
+// Hero carousel images - event photos without text
+import heroImg1 from "@/assets/img/2020/2020-afroin-img-5.jpg";
+import heroImg2 from "@/assets/img/2019/2019-afroin-img-8.jpg";
+import heroImg3 from "@/assets/img/2018/2018-afroin-img-6.jpg";
+import heroImg4 from "@/assets/img/2017/2017-afroin-img-3.jpg";
+import heroImg6 from "@/assets/img/2020/2020-afroin-img-12.jpg";
+import heroImg10 from "@/assets/img/2016/2016-afroin-img-15.jpg";
+import palenqueImg1 from "@/assets/img/palenque/palenque-1.jpg";
+import palenqueImg4 from "@/assets/img/palenque/palenque-4.jpg";
+
+// New User Selected Images
+import smHero1 from "@/assets/img/2019/2019-afroin-img-10.jpg";
+import smHero2 from "@/assets/img/2018/2018-afroin-img-3.jpg";
+// @ts-ignore
+import plkHero1 from "@/assets/img/afro-in-palenque-1/DSC_0274.JPG";
+// @ts-ignore
+import plkHero2 from "@/assets/img/afro-in-palenque-1/DSC_0542.JPG";
+
+interface Props {
+  lang?: string;
+}
+
+const { lang = "es" } = Astro.props;
+
+const heroImages = [
+  smHero1, // New Main Hero
+  plkHero1,
+  heroImg1,
+  plkHero2,
+  heroImg2,
+  smHero2,
+  heroImg3,
+  heroImg6, // Crowd shot
+  palenqueImg1,
+  heroImg10,
+  palenqueImg4,
+];
+
+const destinations = await getCollection("tour2026");
+const sortedDestinations = destinations.sort(
+  (a: CollectionEntry<"tour2026">, b: CollectionEntry<"tour2026">) =>
+    a.data.order - b.data.order
+);
+
+// Calculate global stats
+const globalStats = destinations.reduce(
+  (acc, dest) => {
+    const days = dest.data.stats?.days ?? dest.data.schedule.length;
+    const venues =
+      dest.data.stats?.venues ??
+      new Set(dest.data.schedule.map((d) => d.venue)).size;
+    const activities =
+      dest.data.stats?.activities ??
+      dest.data.schedule.reduce((sum, d) => sum + d.activities.length, 0);
+
+    return {
+      days: acc.days + days,
+      venues: (acc.venues || 0) + venues, // Start with 0 if undefined
+      activities: acc.activities + activities,
+    };
+  },
+  { days: 0, venues: 0, activities: 0 }
+);
+
+
+// Program-specific navigation
+const t = useTranslations(lang as any);
+const programNavLinks = [
+  { href: getTranslatedPath("/", lang), label: t("nav.home") },
+  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
+  { href: getTranslatedPath("/programacion", lang), label: t("nav.program") },
+  { href: getTranslatedPath("/programacion/santa-marta", lang), label: "Santa Marta" },
+  { href: getTranslatedPath("/programacion/palenque", lang), label: "Palenque" },
+  { href: getTranslatedPath("/artistas", lang), label: t("nav.artists") },
+  { href: getTranslatedPath("/#contacto", lang), label: t("nav.contact") },
+];
+const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.join") };
+
+// Artist Logic for Preview
+const getAllArtists = () => {
+  const artistsMap = new Map();
+
+  destinations.forEach((dest) => {
+    dest.data.schedule.forEach((day) => {
+      day.activities.forEach((activity) => {
+        if (activity.artist && activity.artistImage) {
+          const artistKey = activity.artist.trim().toLowerCase();
+          if (!artistsMap.has(artistKey)) {
+            artistsMap.set(artistKey, {
+              name: activity.artist,
+              image: activity.artistImage,
+            });
+          }
+        }
+      });
+    });
+  });
+
+  return Array.from(artistsMap.values());
+};
+
+// Sort alphabetically for consistency in the hidden list, randomness happens on client
+const allArtists = getAllArtists().sort((a, b) => a.name.localeCompare(b.name));
+---
+
+<Layout title={t("program.pageTitle")}>
+  <Header navLinks={programNavLinks} ctaLink={programCta} />
+
+  <main class="programacion-page">
+    <!-- Hero Section with Carousel Background -->
+    <section class="programacion-hero">
+      <div class="hero-carousel">
+        {heroImages.map((img, i) => (
+          <div class={`hero-slide ${i === 0 ? 'active' : ''}`}>
+            <Image
+              src={img}
+              alt={`AFRO IN Tour ${i + 1}`}
+              class="hero-img"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "low"}
+            />
+          </div>
+        ))}
+        <div class="hero-overlay"></div>
+      </div>
+      <div class="container">
+        <div class="hero-content animate-fade-in-up">
+          <span class="hero-badge">
+            <Plane size={16} />
+            {t("program.badge")}
+          </span>
+          <h1 class="hero-title">
+            AFRO IN <span class="highlight">Tour</span> 2026
+          </h1>
+          <p class="hero-subtitle">
+            {t("program.subtitle")}
+            <strong>{globalStats.days} {t("program.subtitle2")}</strong> {t("program.subtitleEnd")}
+          </p>
+          <div class="hero-stats">
+            <div class="stat">
+              <span class="stat-number">{destinations.length}</span>
+              <span class="stat-label">{t("program.stats.destinations")}</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">{globalStats.venues}</span>
+              <span class="stat-label">{t("program.stats.venues")}</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">{globalStats.activities}</span>
+              <span class="stat-label">{t("program.stats.activities")}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-indicator">
+        <span>{t("program.scrollHint")}</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- Destination Sections -->
+    {
+      sortedDestinations.map((destination, index) => (
+        <section
+          class={`destination-section ${index % 2 === 1 ? "dark" : "light"}`}
+        >
+          <div class="container">
+            <div
+              class={`destination-layout ${index % 2 === 1 ? "reversed" : ""}`}
+            >
+              <!-- Carousel (left) -->
+              <div class="carousel-wrapper animate-fade-in-up">
+                {(() => {
+                  const galleryImages = (destination.data.gallery && destination.data.gallery.length > 0) 
+                    ? destination.data.gallery 
+                    : destination.data.schedule.filter((e) => e.image).map(e => e.image);
+                  
+                  return (
+                    <>
+                      <div class="carousel" data-carousel={`carousel-${index}`}>
+                        {galleryImages.map((img, i) => {
+                          if (!img) return null;
+                          const src = typeof img === 'string' ? img : img.src;
+                          // Extract filename for matching
+                          const filename = src.split('/').pop()?.split('?')[0];
+                          return (
+                            <div class={`carousel-slide ${i === 0 ? 'active' : ''}`} data-filename={filename}>
+                              <Image src={img} alt={destination.data.name} class="carousel-img" />
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div class="carousel-dots">
+                        {galleryImages.map((_, i) => (
+                          <span class={`dot ${i === 0 ? 'active' : ''}`}></span>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              <!-- Content (right) -->
+              <div class="destination-content animate-fade-in-up">
+                <span class="section-label">{destination.data.badge}</span>
+                <h2 class="destination-name">{destination.data.name}</h2>
+                {destination.data.tribute && (
+                  <p class="destination-tribute">
+                    <strong>{t("program.tribute")}</strong> {destination.data.tribute}
+                  </p>
+                )}
+                <p class="destination-dates">{destination.data.dates}</p>
+                
+                <h3 class="events-heading">{t("program.schedule")}</h3>
+                <div class="events-grid">
+                  {destination.data.schedule.map((event) => {
+                     // Get filename from event image if exists
+                     let filename = '';
+                     if (event.image) {
+                        const src = typeof event.image === 'string' ? event.image : event.image.src;
+                        filename = src.split('/').pop()?.split('?')[0] || '';
+                     }
+                     return (
+                    <div class="event-card actionable" data-filename={filename}>
+                      <div class="event-date">
+                        <span class="day">{event.day}</span>
+                        <span class="month">{event.month}</span>
+                      </div>
+                      <div class="event-info">
+                        <span class="event-name">{event.venue}</span>
+                        <span class="event-venue">{event.venueSubtitle || event.weekday}</span>
+                      </div>
+                    </div>
+                  )})}
+                </div>
+                <a
+                  href={getTranslatedPath(`/programacion/${destination.id.replace(/\.md$/, "")}`, lang)}
+                  class="btn btn-primary btn-destination"
+                >
+                  {t("program.viewSchedule")}
+                  <ArrowRight size={18} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      ))
+    }
+
+    <section class="artists-preview-section">
+        <div class="container">
+          <div class="artists-preview-content animate-fade-in-up">
+            <span class="section-label">{t("program.artistsBadge")}</span>
+            <h2>{t("program.artistsTitle")}</h2>
+            <p>
+              {t("program.artistsDescription")}
+            </p>
+
+            <!-- Container for Random Artists -->
+            <div class="artists-grid-preview" id="random-artists-container">
+              <!-- JavaScript will populate this -->
+            </div>
+
+            <!-- Hidden Source of All Artists -->
+            <div id="all-artists-source" style="display: none;">
+              {
+                allArtists.map((artist) => (
+                  <div class="artist-preview-card">
+                    <div class="artist-image-wrapper">
+                      <Image
+                        src={artist.image}
+                        alt={artist.name}
+                        class="artist-preview-img"
+                      />
+                    </div>
+                    <h3 class="artist-preview-name">{artist.name}</h3>
+                  </div>
+                ))
+              }
+            </div>
+
+            <a href={getTranslatedPath("/artistas", lang)} class="btn btn-secondary btn-large">
+              {t("program.viewAllArtists")}
+              <ArrowRight size={18} />
+            </a>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <script>
+      let artistInterval: any;
+
+      function randomizeArtists() {
+        const sourceContainer = document.getElementById("all-artists-source");
+        const targetContainer = document.getElementById("random-artists-container");
+
+        if (!sourceContainer || !targetContainer) return;
+
+        const allCards = Array.from(sourceContainer.children).map(node => node.cloneNode(true) as HTMLElement);
+        for (let i = allCards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
+        }
+        const selectedCards = allCards.slice(0, 4);
+
+        if (targetContainer.children.length > 0) {
+            targetContainer.style.opacity = '0';
+            setTimeout(() => {
+                targetContainer.innerHTML = "";
+                selectedCards.forEach((card) => targetContainer.appendChild(card));
+                targetContainer.style.opacity = '1';
+            }, 300);
+        } else {
+            targetContainer.innerHTML = "";
+            selectedCards.forEach((card) => targetContainer.appendChild(card));
+        }
+      }
+
+      function startArtistRotation() {
+        if (artistInterval) clearInterval(artistInterval);
+        const targetContainer = document.getElementById("random-artists-container");
+        if (targetContainer) targetContainer.style.transition = 'opacity 0.3s ease-in-out';
+        randomizeArtists();
+        artistInterval = setInterval(randomizeArtists, 5000);
+      }
+
+      // Initialize all interactive elements (Artists + Event Cards)
+      function initInteractivity() {
+        startArtistRotation();
+
+        // Logic for Event Card Click -> Update Carousel
+        const eventCards = document.querySelectorAll('.event-card[data-filename]');
+        eventCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const filename = card.getAttribute('data-filename');
+                if (!filename) return;
+
+                // Find parent section to scope the search
+                const section = card.closest('.destination-layout');
+                if (!section) return;
+
+                // Find carousel slides in this section
+                const slides = section.querySelectorAll('.carousel-slide');
+                const dots = section.querySelectorAll('.dot');
+                
+                let foundIndex = -1;
+
+                // Remove active classes first? No, only when we find the target
+                slides.forEach((slide, index) => {
+                    if (slide.getAttribute('data-filename') === filename) {
+                        foundIndex = index;
+                    }
+                });
+
+                if (foundIndex !== -1) {
+                    // Update Active State
+                    slides.forEach(s => s.classList.remove('active'));
+                    dots.forEach(d => d.classList.remove('active'));
+
+                    slides[foundIndex].classList.add('active');
+                    if (dots[foundIndex]) dots[foundIndex].classList.add('active');
+                }
+            });
+        });
+      }
+
+      document.addEventListener("astro:page-load", initInteractivity);
+      
+      document.addEventListener("astro:before-swap", () => {
+        if (artistInterval) clearInterval(artistInterval);
+      });
+    </script>
+  </main>
+  <Footer />
+
+  <style>
+    .programacion-page {
+      background: var(--color-cream);
+    }
+
+    /* Hero Section */
+    .programacion-hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-white);
+      overflow: hidden;
+    }
+
+    .hero-carousel {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .hero-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+    }
+
+    .hero-slide.active {
+      opacity: 1;
+    }
+
+    .hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.4) 0%,
+        rgba(0, 0, 0, 0.6) 50%,
+        rgba(0, 0, 0, 0.8) 100%
+      );
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-lg);
+      background: rgba(227, 28, 37, 0.9);
+      border-radius: var(--radius-full);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: var(--space-lg);
+    }
+
+    .hero-title {
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: var(--space-lg);
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-title .highlight {
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 1.3rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: var(--space-xl);
+      line-height: 1.6;
+    }
+
+    .hero-subtitle strong {
+      color: var(--color-primary);
+    }
+
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-2xl);
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-number {
+      display: block;
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--color-primary);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.8;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: var(--space-xl);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-sm);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .scroll-line {
+      width: 2px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--color-primary), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%,
+      100% {
+        opacity: 1;
+        height: 40px;
+      }
+      50% {
+        opacity: 0.5;
+        height: 30px;
+      }
+    }
+
+    /* Destination Sections */
+    .destination-section {
+      padding: var(--space-2xl) 0;
+    }
+
+    .destination-section.dark {
+      background: var(--gradient-dark);
+      color: var(--color-white);
+    }
+
+    .destination-section.light {
+      background: var(--color-cream);
+      color: var(--color-text);
+    }
+
+    .destination-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-2xl);
+      align-items: center;
+    }
+
+    .destination-layout.reversed {
+      direction: rtl;
+    }
+
+    .destination-layout.reversed > * {
+      direction: ltr;
+    }
+
+    .destination-image-link {
+      display: block;
+      text-decoration: none;
+    }
+
+    .image-wrapper {
+      position: relative;
+      aspect-ratio: 3/4;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      transition:
+        transform 0.4s ease,
+        box-shadow 0.4s ease;
+    }
+
+    .destination-image-link:hover .image-wrapper {
+      transform: scale(1.02);
+      box-shadow: 0 20px 60px rgba(227, 28, 37, 0.3);
+    }
+
+    .destination-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+
+    .destination-image-link:hover .destination-img {
+      transform: scale(1.1);
+    }
+
+    .image-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.8) 0%,
+        rgba(0, 0, 0, 0.4) 50%,
+        transparent 100%
+      );
+    }
+
+    .image-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: var(--space-xl);
+      color: var(--color-white);
+      z-index: 2;
+    }
+
+    .image-content .section-label {
+      margin-bottom: var(--space-sm);
+    }
+
+    .image-content .destination-name {
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: var(--space-xs);
+      background: none;
+      -webkit-text-fill-color: var(--color-white);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .destination-dates {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .event-thumbnails {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-md);
+    }
+
+    .thumb {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      box-shadow: var(--shadow-md);
+    }
+
+    .thumb:hover {
+      transform: scale(1.1);
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .thumb-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 2px 4px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-size: 0.6rem;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .parada-badge {
+      position: absolute;
+      top: var(--space-lg);
+      right: var(--space-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--color-primary);
+      border-radius: 50%;
+      z-index: 3;
+      box-shadow: 0 4px 15px rgba(227, 28, 37, 0.5);
+    }
+
+    .parada-number {
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--color-white);
+    }
+
+    .parada-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-white);
+    }
+
+    .destination-content {
+      padding: var(--space-xl) 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .destination-dates {
+      font-size: 1.1rem;
+      margin-bottom: var(--space-lg);
+    }
+
+    .destination-section.dark .destination-dates {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .destination-section.light .destination-dates {
+      color: var(--color-text-light);
+    }
+
+    .section-label {
+      display: inline-block;
+      padding: var(--space-xs) var(--space-md);
+      background: var(--color-primary);
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-white);
+      margin-bottom: var(--space-md);
+    }
+
+    .destination-title {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    color: var(--color-white);
+    margin-bottom: var(--space-sm);
+    line-height: 1.1;
+  }
+
+  .destination-tribute-hero {
+    font-size: 1.25rem;
+    color: var(--color-primary);
+    margin-bottom: var(--space-lg);
+    font-weight: 500;
+  }
+
+    .destination-name {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      margin-bottom: var(--space-md);
+      line-height: 1.1;
+    }
+
+    .destination-section.dark .destination-name {
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .destination-section.light .destination-name {
+      color: var(--color-secondary);
+    }
+
+    .destination-meta {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xl);
+    }
+
+    .destination-meta .meta-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 1rem;
+    }
+
+    .destination-section.dark .meta-item {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .destination-section.light .meta-item {
+      color: var(--color-text-light);
+    }
+
+    .destination-meta .meta-item :global(svg) {
+      color: var(--color-primary);
+      flex-shrink: 0;
+    }
+
+    .events-preview {
+      margin-bottom: var(--space-xl);
+    }
+
+    .events-heading {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: var(--space-md);
+      opacity: 0.7;
+      align-self: stretch;
+    }
+
+    .events-grid {
+      align-self: stretch;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .event-card {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      transition: all 0.3s ease;
+    }
+
+    .destination-section.dark .event-card {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .destination-section.light .event-card {
+      background: var(--color-white);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .event-card:hover {
+      transform: translateX(8px);
+    }
+
+    .destination-section.dark .event-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .event-date {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 50px;
+      padding: var(--space-sm);
+      background: var(--color-primary);
+      border-radius: var(--radius-sm);
+      color: var(--color-white);
+    }
+
+    .event-date .day {
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .event-date .month {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .event-info {
+      flex: 1;
+    }
+
+    .event-name {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .event-venue {
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    .more-events {
+      margin-top: var(--space-sm);
+      font-size: 0.9rem;
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+
+    .destination-content .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .btn-destination {
+      margin-top: var(--space-lg);
+    }
+
+    /* Artists Preview */
+    .artists-preview-section {
+      padding: var(--space-2xl) 0;
+      background: var(--color-white);
+      text-align: center;
+    }
+
+    .artists-preview-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .artists-preview-content h2 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      margin-bottom: var(--space-md);
+      color: var(--color-secondary);
+    }
+
+    .artists-preview-content p {
+      font-size: 1.1rem;
+      color: var(--color-text-light);
+      margin-bottom: var(--space-xl);
+    }
+    
+    .artists-grid-preview {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+        transition: opacity 0.3s ease-in-out;
+    }
+    
+    .artist-preview-card {
+        text-align: center;
+    }
+    
+    .artist-image-wrapper {
+        aspect-ratio: 1;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+        border: 2px solid var(--color-primary);
+    }
+    
+    .artist-preview-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .artist-preview-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--color-secondary);
+    }
+
+    .btn-large {
+      padding: var(--space-md) var(--space-xl);
+      font-size: 1.1rem;
+    }
+    
+    @media (max-width: 968px) {
+      .destination-layout {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+      }
+
+      .destination-layout.reversed {
+        direction: ltr;
+      }
+
+      .hero-stats {
+        gap: var(--space-lg);
+      }
+
+      .stat-number {
+        font-size: 2rem;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .destination-layout,
+      .destination-layout.reversed {
+        grid-template-columns: 1fr;
+        direction: ltr; /* Reset direction for mobile stacking */
+      }
+      
+      .destination-layout.reversed > * {
+        direction: ltr;
+      }
+      
+      .artists-grid-preview {
+          grid-template-columns: repeat(2, 1fr);
+      }
+
+      .hero-title {
+        font-size: 3.5rem;
+      }
+
+      .stat-number {
+        font-size: 2rem;
+      }
+
+      .carousel-wrapper {
+        max-width: 100%;
+      }
+    }
+    
+    /* Carousel Styles */
+    .carousel-wrapper {
+        position: relative;
+        aspect-ratio: 3/4;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .carousel {
+        position: absolute;
+        inset: 0;
+    }
+    
+    .carousel-slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+    }
+    
+    .carousel-slide.active {
+        opacity: 1;
+    }
+    
+    .carousel-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .carousel-dots {
+        position: absolute;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.5rem;
+        z-index: 2;
+    }
+    
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.5);
+        transition: all 0.3s ease;
+    }
+    
+    .dot.active {
+        background: white;
+        transform: scale(1.2);
+    }
+  </style>
+
+  <script>
+    document.addEventListener("astro:page-load", () => {
+      const carousels = document.querySelectorAll(".carousel");
+
+      carousels.forEach((carousel) => {
+        const slides = carousel.querySelectorAll(".carousel-slide");
+        const wrapper = carousel.closest(".carousel-wrapper");
+        const dots = wrapper?.querySelectorAll(".dot");
+
+        if (slides.length <= 1) return;
+
+        let current = 0;
+
+        const showSlide = (index: number) => {
+          slides.forEach((slide, i) => {
+            slide.classList.toggle("active", i === index);
+          });
+          dots?.forEach((dot, i) => {
+            dot.classList.toggle("active", i === index);
+          });
+        };
+
+        setInterval(() => {
+          current = (current + 1) % slides.length;
+          showSlide(current);
+        }, 4000);
+      });
+
+      // Hero background carousel
+      const heroSlides = document.querySelectorAll(".hero-slide");
+      if (heroSlides.length > 1) {
+        let heroIndex = 0;
+        setInterval(() => {
+          heroSlides[heroIndex].classList.remove("active");
+          heroIndex = (heroIndex + 1) % heroSlides.length;
+          heroSlides[heroIndex].classList.add("active");
+        }, 5000);
+      }
+    });
+  </script>
+</Layout>

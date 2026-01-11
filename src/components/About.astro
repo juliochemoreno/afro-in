@@ -15,37 +15,59 @@ import {
   Users,
 } from "lucide-astro";
 
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
 const features = [
   {
     Icon: Drama,
-    title: "Arte Afro",
-    description:
-      "Danza tradicional, contemporánea y moderna de las raíces africanas y afro-colombianas.",
+    title: t("about.features.art.title"),
+    description: t("about.features.art.desc"),
   },
   {
     Icon: Music,
-    title: "Música en Vivo",
-    description:
-      "Tambores, marimba, y ritmos ancestrales que conectan con nuestras raíces.",
+    title: t("about.features.music.title"),
+    description: t("about.features.music.desc"),
   },
   {
     Icon: Shirt,
-    title: "Moda Africana",
-    description:
-      "Desfiles de moda con diseños únicos que celebran la identidad afro.",
+    title: t("about.features.fashion.title"),
+    description: t("about.features.fashion.desc"),
   },
   {
     Icon: BookOpen,
-    title: "Formación",
-    description: "Talleres y programas educativos en colegios y comunidades.",
+    title: t("about.features.education.title"),
+    description: t("about.features.education.desc"),
   },
 ];
 
 const stats = [
-  { number: 10, suffix: "+", label: "Años de Historia", Icon: Calendar },
-  { number: 8, suffix: "", label: "Ediciones en Palenque", Icon: MapPin },
-  { number: 100, suffix: "+", label: "Artistas Participantes", Icon: Palette },
-  { number: 5000, suffix: "+", label: "Asistentes", Icon: Users },
+  {
+    number: 10,
+    suffix: "+",
+    label: t("about.stats.history"),
+    Icon: Calendar,
+  },
+  {
+    number: 8,
+    suffix: "",
+    label: t("about.stats.editions"),
+    Icon: MapPin,
+  },
+  {
+    number: 100,
+    suffix: "+",
+    label: t("about.stats.artists"),
+    Icon: Palette,
+  },
+  {
+    number: 5000,
+    suffix: "+",
+    label: t("about.stats.attendees"),
+    Icon: Users,
+  },
 ];
 ---
 
@@ -55,43 +77,43 @@ const stats = [
       class="about-header text-center animate-fade-in-up"
       style="animation-delay: 0.1s"
     >
-      <span class="section-badge">Nuestra Misión</span>
-      <h2 class="section-title">¿Qué es AFRO IN?</h2>
+      <span class="section-badge">{t("about.mission")}</span>
+      <h2 class="section-title">{t("about.title")}</h2>
       <p class="section-subtitle">
-        Somos un movimiento cultural que busca reunir <strong
-          >1 millón de corazones</strong
-        >
-        comprometidos con el apoyo al arte afro independiente en Colombia y el mundo.
+        {t("about.subtitle.part1")}
+        <strong>{t("about.subtitle.part2")}</strong>
+        {t("about.subtitle.part3")}
       </p>
     </div>
 
     <div class="about-content">
       <div class="about-text animate-fade-in-up" style="animation-delay: 0.3s">
-        <h3>El Poder de la Comunidad</h3>
+        <h3>{t("about.community.title")}</h3>
         <p>
-          Imagina 1 millón de personas conscientes de que con solo <strong
-            >$5 USD</strong
-          >
-          pueden cambiar el mundo. Multiplicado, eso son recursos para:
+          {t("about.community.desc.part1")}
+          <strong>{t("about.community.desc.part2")}</strong>
+          {t("about.community.desc.part3")}
         </p>
         <ul class="impact-list">
           <li>
-            <School size={20} class="impact-icon" /> Construir escuelas de danza afrolatina
+            <School size={20} class="impact-icon" />
+            {t("about.impact.school")}
           </li>
           <li>
-            <Plane size={20} class="impact-icon" /> Traer artistas internacionales
-            de África
+            <Plane size={20} class="impact-icon" />
+            {t("about.impact.artists")}
           </li>
           <li>
-            <Tent size={20} class="impact-icon" /> Organizar festivales en comunidades
+            <Tent size={20} class="impact-icon" />
+            {t("about.impact.festivals")}
           </li>
           <li>
-            <BookText size={20} class="impact-icon" /> Crear programas educativos
-            en colegios
+            <BookText size={20} class="impact-icon" />
+            {t("about.impact.education")}
           </li>
         </ul>
         <a href="#unirse" class="btn btn-primary"
-          ><span>Quiero Ser Parte</span> <ArrowRight size={20} /></a
+          ><span>{t("about.cta")}</span> <ArrowRight size={20} /></a
         >
       </div>
 

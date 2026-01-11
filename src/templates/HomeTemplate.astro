@@ -1,0 +1,49 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Hero from "../components/Hero.astro";
+import About from "../components/About.astro";
+import Documentary from "../components/Documentary.astro";
+import Gallery from "../components/Gallery.astro";
+import Store from "../components/Store.astro";
+import Events from "../components/Events.astro";
+import Registration from "../components/Registration.astro";
+import Allies from "../components/Allies.astro";
+import Community from "../components/Community.astro";
+import Contact from "../components/Contact.astro";
+import Footer from "../components/Footer.astro";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+interface Props {
+  lang?: string;
+}
+
+const { lang = "es" } = Astro.props;
+const t = useTranslations(lang as "es" | "en" | "fr");
+
+// Get title based on language
+const titles = {
+  es: "1 Millón de Corazones",
+  en: "1 Million Hearts",
+  fr: "1 Million de Cœurs",
+};
+
+const title = titles[lang as keyof typeof titles] || titles.es;
+---
+
+<Layout title={title}>
+  <Header />
+  <main>
+    <Hero />
+    <About />
+    <Documentary />
+    <Gallery />
+    <Store />
+    <Events />
+    <Registration />
+    <Allies />
+    <Community />
+    <Contact />
+  </main>
+  <Footer />
+</Layout>

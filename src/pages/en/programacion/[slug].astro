@@ -1,0 +1,19 @@
+---
+import { getCollection } from "astro:content";
+import ProgramacionSlugTemplate from "@/templates/ProgramacionSlugTemplate.astro";
+
+export async function getStaticPaths() {
+  const allDestinations = await getCollection("tour2026");
+  // Filter only English content (files with .en suffix which becomes 'en' at end of ID)
+  const destinations = allDestinations.filter((d) => d.id.endsWith("en"));
+  return destinations.map((destination) => ({
+    // Remove the 'en' suffix from the slug
+    params: { slug: destination.id.replace(/en$/, "") },
+    props: { destination },
+  }));
+}
+
+const { destination } = Astro.props;
+---
+
+<ProgramacionSlugTemplate destination={destination} lang="en" />
