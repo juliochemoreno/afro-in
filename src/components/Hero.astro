@@ -109,62 +109,66 @@ const { targetCount = 12847 } = Astro.props;
     </div>
   </div>
   <script>
-    const counterElement = document.querySelector(".counter-number");
-    const progressBar = document.querySelector(".progress-bar") as HTMLElement;
+    document.addEventListener("astro:page-load", () => {
+      const counterElement = document.querySelector(".counter-number");
+      const progressBar = document.querySelector(
+        ".progress-bar"
+      ) as HTMLElement;
 
-    if (counterElement) {
-      // Función para animar el contador
-      const animateCounter = (target: number) => {
-        const duration = 2000; // 2 seconds
-        const startTime = performance.now();
+      if (counterElement) {
+        // Función para animar el contador
+        const animateCounter = (target: number) => {
+          const duration = 2000; // 2 seconds
+          const startTime = performance.now();
 
-        function updateCounter(currentTime: number) {
-          const elapsed = currentTime - startTime;
-          const progress = Math.min(elapsed / duration, 1);
+          function updateCounter(currentTime: number) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
 
-          // Easing function (easeOutExpo)
-          const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            // Easing function (easeOutExpo)
+            const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
 
-          const current = Math.floor(ease * target);
-          if (counterElement) {
-            counterElement.textContent = current.toLocaleString();
+            const current = Math.floor(ease * target);
+            if (counterElement) {
+              counterElement.textContent = current.toLocaleString();
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(updateCounter);
+            }
           }
 
-          if (progress < 1) {
-            requestAnimationFrame(updateCounter);
-          }
-        }
+          requestAnimationFrame(updateCounter);
+        };
 
-        requestAnimationFrame(updateCounter);
-      };
+        // Fetch del valor real
+        fetch("/api/contador")
+          .then((res) => res.json())
+          .then((data: any) => {
+            const total = data.total || 0;
 
-      // Fetch del valor real
-      fetch("/api/contador")
-        .then((res) => res.json())
-        .then((data: any) => {
-          const total = data.total || 0;
+            // Actualizar atributo para referencia
+            counterElement.setAttribute("data-target", total.toString());
 
-          // Actualizar atributo para referencia
-          counterElement.setAttribute("data-target", total.toString());
+            // Actualizar barra de progreso
+            if (progressBar) {
+              const percentage = Math.min((total / 1000000) * 100, 100);
+              progressBar.style.width = `${percentage}%`;
+            }
 
-          // Actualizar barra de progreso
-          if (progressBar) {
-            const percentage = Math.min((total / 1000000) * 100, 100);
-            progressBar.style.width = `${percentage}%`;
-          }
-
-          // Iniciar animación
-          animateCounter(total);
-        })
-        .catch((err) => {
-          console.error("Error fetching counter:", err);
-          // Fallback al valor por defecto si falla
-          const fallbackTarget = parseInt(
-            counterElement.getAttribute("data-target") || "0"
-          );
-          animateCounter(fallbackTarget);
-        });
-    }
+            // Iniciar animación
+            animateCounter(total);
+          })
+          .catch((err) => {
+            console.error("Error fetching counter:", err);
+            // Fallback al valor por defecto si falla
+            const fallbackTarget = parseInt(
+              counterElement.getAttribute("data-target") || "0"
+            );
+            animateCounter(fallbackTarget);
+          });
+      }
+    });
   </script>
 </section>
 
