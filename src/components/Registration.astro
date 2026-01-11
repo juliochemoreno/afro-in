@@ -1,6 +1,10 @@
 ---
 import { countries } from "../data/countries";
-import { getLangFromUrl, useTranslations } from "../i18n/utils";
+import {
+  getLangFromUrl,
+  useTranslations,
+  getTranslatedPath,
+} from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -10,6 +14,7 @@ interface Props {
 }
 
 const { currentCount = 12847 } = Astro.props;
+const thanksUrl = getTranslatedPath("/gracias", lang);
 ---
 
 <section class="registration section" id="unirse">
@@ -50,6 +55,7 @@ const { currentCount = 12847 } = Astro.props;
             data-t-country-error={t("join.country.error")}
             data-t-toast-success={t("join.toast.success")}
             data-t-toast-error={t("join.toast.error")}
+            data-t-redirect-url={thanksUrl}
           >
             <!-- STEP 1: CONTACT INFO -->
             <div class="form-step active" id="step1">
@@ -720,7 +726,8 @@ const { currentCount = 12847 } = Astro.props;
               // Redirect to thank you page
               showToast(form.dataset.tToastSuccess || "");
               setTimeout(() => {
-                window.location.href = `/gracias?tx=${params.tx}&amt=${params.amt}`;
+                const redirectBase = form.dataset.tRedirectUrl || "/gracias";
+                window.location.href = `${redirectBase}?tx=${params.tx}&amt=${params.amt}`;
               }, 1000);
             },
           }).render("#paypal-donate-container");

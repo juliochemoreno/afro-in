@@ -1,7 +1,11 @@
 ---
 import { products } from "@/data/products";
 import ProductCard from "./ProductCard.astro";
-import { getLangFromUrl, useTranslations } from "../i18n/utils";
+import {
+  getLangFromUrl,
+  useTranslations,
+  getTranslatedPath,
+} from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -37,7 +41,9 @@ const t = useTranslations(lang);
         <p>
           <strong>{t("store.note.title")}</strong><br />
           {t("store.note.description")}
-          <a href="#contacto">{t("store.note.contact")}</a>
+          <a href={getTranslatedPath("/#contacto", lang)}
+            >{t("store.note.contact")}</a
+          >
         </p>
       </div>
     </div>
