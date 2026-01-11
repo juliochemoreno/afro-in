@@ -3,7 +3,11 @@ import { Image } from "astro:assets";
 import afroinLogo from "../assets/img/logos/afroin.png";
 import CartWidget from "./CartWidget.astro";
 import LanguagePicker from "./LanguagePicker.astro";
-import { getLangFromUrl, useTranslations } from "../i18n/utils";
+import {
+  getLangFromUrl,
+  useTranslations,
+  getTranslatedPath,
+} from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -23,24 +27,36 @@ interface Props {
 
 // Default navigation for home page
 const defaultNavLinks: NavLink[] = [
-  { href: `${langPrefix}/#sobre`, label: t("nav.about") },
-  { href: `${langPrefix}/#galeria`, label: t("nav.gallery") },
-  { href: `${langPrefix}/tienda`, label: t("nav.store") },
+  { href: getTranslatedPath("/#sobre", lang), label: t("nav.about") },
+  { href: getTranslatedPath("/#galeria", lang), label: t("nav.gallery") },
+  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
   {
-    href: `${langPrefix}/programacion`,
+    href: getTranslatedPath("/programacion", lang),
     label: t("nav.tour"),
     children: [
-      { href: `${langPrefix}/programacion`, label: t("nav.program") },
-      { href: `${langPrefix}/programacion/santa-marta`, label: "Santa Marta" },
-      { href: `${langPrefix}/programacion/palenque`, label: "Palenque" },
-      { href: `${langPrefix}/artistas`, label: t("nav.artists") },
+      {
+        href: getTranslatedPath("/programacion", lang),
+        label: t("nav.program"),
+      },
+      {
+        href: getTranslatedPath("/programacion/santa-marta", lang),
+        label: "Santa Marta",
+      },
+      {
+        href: getTranslatedPath("/programacion/palenque", lang),
+        label: "Palenque",
+      },
+      { href: getTranslatedPath("/artistas", lang), label: t("nav.artists") },
     ],
   },
-  { href: `${langPrefix}/#aliados`, label: t("nav.allies") },
-  { href: `${langPrefix}/#contacto`, label: t("nav.contact") },
+  { href: getTranslatedPath("/#aliados", lang), label: t("nav.allies") },
+  { href: getTranslatedPath("/#contacto", lang), label: t("nav.contact") },
 ];
 
-const defaultCta = { href: `${langPrefix}/#unirse`, label: t("nav.join") };
+const defaultCta = {
+  href: getTranslatedPath("/#unirse", lang),
+  label: t("nav.join"),
+};
 
 const {
   currentPage = "home",
@@ -73,7 +89,10 @@ function isActive(href: string): boolean {
   class="header fixed top-0 left-0 right-0 z-1000 backdrop-blur-md transition-all duration-300"
 >
   <nav class="nav container flex items-center justify-between h-20">
-    <a href={`${langPrefix}/`} class="logo flex items-center shrink-0">
+    <a
+      href={getTranslatedPath("/", lang)}
+      class="logo flex items-center shrink-0"
+    >
       <Image
         src={afroinLogo}
         alt="AFRO IN"

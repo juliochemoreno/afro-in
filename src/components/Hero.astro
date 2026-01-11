@@ -2,7 +2,11 @@
 import { ArrowRight } from "lucide-astro";
 import { Image } from "astro:assets";
 import heroMain from "../assets/img/hero-main.jpg";
-import { getLangFromUrl, useTranslations } from "../i18n/utils";
+import {
+  getLangFromUrl,
+  useTranslations,
+  getTranslatedPath,
+} from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -60,14 +64,15 @@ const { targetCount = 12847 } = Astro.props;
         class="hero-cta animate-fade-in-up flex gap-4 justify-center lg:justify-start flex-wrap lg:flex-nowrap origin-bottom"
       >
         <a
-          href="#unirse"
+          href={getTranslatedPath("/#unirse", lang)}
           class="btn btn-primary px-8 py-4 text-lg flex items-center gap-2"
         >
           <span>{t("hero.cta.join")}</span>
           <ArrowRight size={20} />
         </a>
-        <a href="#sobre" class="btn btn-secondary px-8 py-4 text-lg"
-          >{t("hero.cta.more")}</a
+        <a
+          href={getTranslatedPath("/#sobre", lang)}
+          class="btn btn-secondary px-8 py-4 text-lg">{t("hero.cta.more")}</a
         >
       </div>
     </div>

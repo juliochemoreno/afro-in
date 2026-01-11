@@ -1,7 +1,11 @@
 ---
 import { Instagram, Facebook, Youtube } from "lucide-astro";
 import { Image } from "astro:assets";
-import { getLangFromUrl, useTranslations } from "../i18n/utils";
+import {
+  getLangFromUrl,
+  useTranslations,
+  getTranslatedPath,
+} from "../i18n/utils";
 import afroinLogo from "../assets/img/logos/afroin.png";
 
 const lang = getLangFromUrl(Astro.url);
@@ -10,11 +14,11 @@ const t = useTranslations(lang);
 const currentYear = new Date().getFullYear();
 
 const quickLinks = [
-  { href: "#sobre", label: t("nav.about") },
-  { href: "#galeria", label: t("nav.gallery") },
-  { href: "#tienda", label: t("nav.store") },
-  { href: "#afrotour", label: t("nav.tour") },
-  { href: "#aliados", label: t("nav.allies") },
+  { href: getTranslatedPath("/#sobre", lang), label: t("nav.about") },
+  { href: getTranslatedPath("/#galeria", lang), label: t("nav.gallery") },
+  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
+  { href: getTranslatedPath("/programacion", lang), label: t("nav.tour") },
+  { href: getTranslatedPath("/#aliados", lang), label: t("nav.allies") },
 ];
 ---
 
