@@ -17,19 +17,24 @@ const {
 } = Astro.props;
 
 import { ClientRouter } from "astro:transitions";
-import { getLangFromUrl } from "../i18n/utils";
+import { getLangFromUrl, getTranslatedPath } from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 
 // Generate hreflang URLs for SEO
 const siteUrl =
   Astro.site?.toString().replace(/\/$/, "") || "https://afroin.org";
-const pathname = Astro.url.pathname;
-// Remove language prefix if present to get base path
-const basePath = pathname.replace(/^\/(en|fr)/, "") || "/";
-const hreflangEs = `${siteUrl}${basePath}`;
-const hreflangEn = `${siteUrl}/en${basePath}`;
-const hreflangFr = `${siteUrl}/fr${basePath}`;
+const currentPath = Astro.url.pathname;
+
+const esPath = getTranslatedPath(currentPath, "es");
+const enPath = getTranslatedPath(currentPath, "en");
+const frPath = getTranslatedPath(currentPath, "fr");
+
+const hreflangEs = `${siteUrl}${esPath}`;
+const hreflangEn = `${siteUrl}${enPath}`;
+const hreflangFr = `${siteUrl}${frPath}`;
+
+const locale = lang === "en" ? "en_US" : lang === "fr" ? "fr_FR" : "es_CO";
 ---
 
 <!doctype html>
@@ -68,7 +73,7 @@ const hreflangFr = `${siteUrl}/fr${basePath}`;
     <meta property="og:type" content="website" />
     <meta property="og:url" content={Astro.url} />
     <meta property="og:site_name" content="AFRO IN" />
-    <meta property="og:locale" content="es_CO" />
+    <meta property="og:locale" content={locale} />
     <meta property="og:title" content={`${title} | AFRO IN`} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={new URL(image, Astro.url)} />
@@ -122,20 +127,21 @@ const hreflangFr = `${siteUrl}/fr${basePath}`;
     </script>
 
     <!-- Structured Data: WebSite (for Google Sitelinks Search Box) -->
-    <script type="application/ld+json" is:inline>
-      {
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
         "@context": "https://schema.org",
         "@type": "WebSite",
         "@id": "https://afroin.org/#website",
-        "name": "AFRO IN",
-        "url": "https://afroin.org",
-        "description": "AFRO IN - 1 Millón de Corazones. Apoyando el arte afro independiente y la cultura en el Caribe Colombiano.",
-        "publisher": {
-          "@id": "https://afroin.org/#organization"
+        name: "AFRO IN",
+        url: "https://afroin.org",
+        description: description,
+        publisher: {
+          "@id": "https://afroin.org/#organization",
         },
-        "inLanguage": "es-CO"
-      }
-    </script>
+        inLanguage: locale,
+      })}
+    />
 
     <!-- Structured Data: Event (AFRO IN Tour 2026) -->
     <script type="application/ld+json" is:inline>
