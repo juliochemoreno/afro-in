@@ -20,5 +20,34 @@
       "database_name": "afroin",
       "database_id": "1a752558-2271-40d7-8553-28f7a622eb20"
     }
+  ],
+  "vars": {
+    "PUBLIC_ENV": "production",
+    "PUBLIC_PAYPAL_CLIENT_ID": "AWiAgQ-XBy7-e4NAzC6IJuToMyxBbovwv3o8fnxdo0luLazjL2WsmDxbtS_OtxCPIrHgehpomBK5naF4"
+  },
+  "env": {
+    "dev": {
+      "name": "afro-in-dev",
+      "vars": {
+        "PUBLIC_ENV": "development",
+        "PUBLIC_PAYPAL_CLIENT_ID": "AWiAgQ-XBy7-e4NAzC6IJuToMyxBbovwv3o8fnxdo0luLazjL2WsmDxbtS_OtxCPIrHgehpomBK5naF4"
+      },
+      "routes": [
+        {
+          "pattern": "dev.afroin.org",
+          "custom_domain": true
+        }
+      ]
+    }
+  },
+  "routes": [
+    {
+      "pattern": "afroin.org",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.afroin.org",
+      "custom_domain": true
+    }
   ]
 }
