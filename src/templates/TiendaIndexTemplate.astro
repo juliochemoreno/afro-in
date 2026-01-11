@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import { products } from "@/data/products";
+import { products, getLocalizedProduct } from "@/data/products";
 import ProductCard from "@/components/ProductCard.astro";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 
@@ -16,7 +16,9 @@ const { lang = "es" } = Astro.props;
 const sortedProducts = [...products].sort((a, b) => b.id - a.id);
 
 // Get unique categories
-const categories = [...new Set(products.map((p) => p.category))];
+const categories = [
+  ...new Set(products.map((p) => getLocalizedProduct(p, lang).category)),
+];
 
 // Store-specific navigation
 const t = useTranslations(lang as any);
@@ -71,7 +73,7 @@ const storeCta = {
         {
           categories.map((cat) => (
             <button class="filter-btn" data-category={cat}>
-              {t(`store.category.${cat}` as any)}
+              {cat}
             </button>
           ))
         }
