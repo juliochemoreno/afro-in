@@ -3,7 +3,11 @@ import { MapPin, Calendar, Music, Users } from "lucide-astro";
 import { Image } from "astro:assets";
 import santaMartaImg from "../assets/img/programacion/santa-marta-art.webp";
 import palenqueImg from "../assets/img/programacion/palenque-art.webp";
-import { getLangFromUrl, useTranslations } from "../i18n/utils";
+import {
+  getLangFromUrl,
+  useTranslations,
+  getTranslatedPath,
+} from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -102,7 +106,10 @@ const destinations = [
     </div>
 
     <div class="events-cta text-center">
-      <a href="/programacion" class="btn btn-primary btn-large">
+      <a
+        href={getTranslatedPath("/programacion", lang)}
+        class="btn btn-primary btn-large"
+      >
         {t("events.cta")}
       </a>
     </div>

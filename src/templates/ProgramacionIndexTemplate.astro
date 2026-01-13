@@ -45,7 +45,13 @@ const heroImages = [
   palenqueImg4,
 ];
 
-const destinations = await getCollection("tour2026");
+const allDestinations = await getCollection("tour2026");
+const destinations = allDestinations.filter(d => {
+  if (lang === 'en') return d.id.endsWith('en');
+  if (lang === 'fr') return d.id.endsWith('fr');
+  return !d.id.endsWith('en') && !d.id.endsWith('fr');
+});
+
 const sortedDestinations = destinations.sort(
   (a: CollectionEntry<"tour2026">, b: CollectionEntry<"tour2026">) =>
     a.data.order - b.data.order
@@ -243,7 +249,7 @@ const allArtists = getAllArtists().sort((a, b) => a.name.localeCompare(b.name));
                   )})}
                 </div>
                 <a
-                  href={getTranslatedPath(`/programacion/${destination.id.replace(/\.md$/, "")}`, lang)}
+                  href={getTranslatedPath(`/programacion/${destination.id.replace(/\.(en|fr)$/, "").replace(/(en|fr)$/, "")}`, lang)}
                   class="btn btn-primary btn-destination"
                 >
                   {t("program.viewSchedule")}
