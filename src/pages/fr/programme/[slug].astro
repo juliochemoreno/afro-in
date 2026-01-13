@@ -8,7 +8,7 @@ export async function getStaticPaths() {
   const destinations = allDestinations.filter((d) => d.id.endsWith("fr"));
   return destinations.map((destination) => ({
     // Remove the 'fr' suffix from the slug
-    params: { slug: destination.id.replace(/fr$/, "") },
+    params: { slug: destination.id.replace(/\.?fr$/, "") },
     props: { destination },
   }));
 }

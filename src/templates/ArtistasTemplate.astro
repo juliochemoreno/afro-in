@@ -62,8 +62,18 @@ const getArtistsForDestination = (slug: string) => {
   );
 };
 
-const santaMartaArtists = getArtistsForDestination("santa-marta");
-const palenqueArtists = getArtistsForDestination("palenque");
+const suffix = lang === "es" ? "" : lang === "en" ? "en" : "fr";
+const dotSuffix = lang === "es" ? "" : `.${suffix}`;
+
+const getArtists = (id: string) => {
+  if (lang === "es") return getArtistsForDestination(id);
+  const withDot = getArtistsForDestination(`${id}${dotSuffix}`);
+  if (withDot.length > 0) return withDot;
+  return getArtistsForDestination(`${id}${suffix}`);
+};
+
+const santaMartaArtists = getArtists("santa-marta");
+const palenqueArtists = getArtists("palenque");
 
 // Translated nav links could be dynamically generated here or passed from a utility
 // For now, using the getTranslatedPath to ensure links point to correct lang
