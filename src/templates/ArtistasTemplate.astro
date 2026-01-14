@@ -368,8 +368,14 @@ const descriptionText = t("artists.metaDescription");
 
   @media (min-width: 768px) {
     .artists-grid {
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .artists-grid {
+      grid-template-columns: repeat(5, 1fr);
     }
   }
 
