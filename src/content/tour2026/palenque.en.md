@@ -118,6 +118,11 @@ schedule:
         artist: "Chichi Banana"
         artistImage: "../../assets/img/artistas/2026/Dj Chichi Banana.jpeg"
         activityType: "dj"
+      - time: ""
+        title: "VJ Set"
+        artist: "VJ Tuty"
+        artistImage: "../../assets/img/artistas/2026/vj-tuty.jpg"
+        activityType: "dj"
 
   - day: "19"
     month: "January"
