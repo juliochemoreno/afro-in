@@ -10,6 +10,7 @@ import {
   Mail,
   CreditCard,
   MessageSquare,
+  LogOut,
 } from "lucide-astro";
 
 // Access is protected via HTTP Basic Auth in src/middleware.ts (ADMIN_USER / ADMIN_PASSWORD)
@@ -127,6 +128,9 @@ function formatDate(dateString: string) {
             <h1>Panel de Administración</h1>
             <p>Gestión de Donadores - 1 Millón de Corazones</p>
           </div>
+          <a href="/api/admin-logout" class="btn-logout">
+            <LogOut size={16} /> Cerrar sesión
+          </a>
         </div>
       </header>
 
@@ -179,7 +183,15 @@ function formatDate(dateString: string) {
         <div class="table-card">
           <div class="table-header">
             <h2>Listado de Donaciones</h2>
-            <span class="badge-count">{donors.length} registros</span>
+            <span class="badge-count" id="rowCount">{donors.length} registros</span
+            >
+          </div>
+
+          <div class="filter-bar" role="tablist" aria-label="Filtrar por estado">
+            <button class="filter-chip active" data-filter="all">Todos</button>
+            <button class="filter-chip" data-filter="completed">Completados</button>
+            <button class="filter-chip" data-filter="pending">Pendientes</button>
+            <button class="filter-chip" data-filter="rejected">Rechazados</button>
           </div>
 
           <div class="table-responsive">
@@ -217,7 +229,7 @@ function formatDate(dateString: string) {
                 {
                   donors.length > 0 ? (
                     donors.map((donor: any) => (
-                      <tr class={donor.status}>
+                      <tr class={donor.status} data-status={donor.status}>
                         <td class="text-sm text-light whitespace-nowrap">
                           {formatDate(donor.created_at)}
                         </td>
@@ -269,6 +281,14 @@ function formatDate(dateString: string) {
                     </tr>
                   )
                 }
+                <tr id="filterEmpty" hidden>
+                  <td colspan="7" class="empty-state">
+                    <div class="empty-content">
+                      <Users size={48} className="opacity-20 mb-2" />
+                      <p>No hay registros con ese estado.</p>
+                    </div>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -396,6 +416,65 @@ function formatDate(dateString: string) {
     font-size: 0.85rem;
     color: var(--color-text-light);
     font-weight: 600;
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-cream-dark);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-normal);
+  }
+
+  .btn-logout:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  /* Status filter chips */
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0 2rem 1.25rem;
+  }
+
+  .filter-chip {
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--color-cream-dark);
+    border-radius: var(--radius-full);
+    background: var(--color-white);
+    color: var(--color-text-light);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .filter-chip:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .filter-chip.active {
+    background: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: var(--color-white);
   }
 
   /* Table Styles */
@@ -581,3 +660,42 @@ function formatDate(dateString: string) {
     }
   }
 </style>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const chips = document.querySelectorAll<HTMLButtonElement>(".filter-chip");
+    if (!chips.length) return;
+
+    const rows = document.querySelectorAll<HTMLTableRowElement>(
+      "tbody tr[data-status]"
+    );
+    const countEl = document.getElementById("rowCount");
+    const emptyRow = document.getElementById("filterEmpty");
+
+    const matches = (status: string, filter: string) =>
+      filter === "all" ||
+      (filter === "pending"
+        ? status.startsWith("pending")
+        : status === filter);
+
+    const applyFilter = (filter: string) => {
+      let visible = 0;
+      rows.forEach((row) => {
+        const status = row.getAttribute("data-status") || "";
+        const show = matches(status, filter);
+        row.hidden = !show;
+        if (show) visible++;
+      });
+      if (countEl) countEl.textContent = `${visible} registros`;
+      if (emptyRow) emptyRow.hidden = visible !== 0;
+    };
+
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        chips.forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        applyFilter(chip.dataset.filter || "all");
+      });
+    });
+  });
+</script>
