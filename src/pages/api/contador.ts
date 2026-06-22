@@ -8,11 +8,14 @@ export const GET: APIRoute = async ({ locals }) => {
   const env = runtime.env;
 
   try {
+    // Count unique people (by email), not the number of contributions: if a
+    // person donates 10 times they still count as one joined person. The
+    // amount stays a full sum of every completed contribution.
     const result = await env.DB.prepare(
-      `SELECT 
-        COUNT(*) as total,
+      `SELECT
+        COUNT(DISTINCT LOWER(TRIM(email))) as total,
         COALESCE(SUM(amount), 0) as total_amount
-       FROM donors 
+       FROM donors
        WHERE status = 'completed'`
     ).first<{ total: number; total_amount: number }>();
 
