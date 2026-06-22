@@ -6,10 +6,10 @@ import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 
 // Images for visual gratitude
-// @ts-ignore
-import img1 from "@/assets/img/afro-in-palenque-1/DSC_0518.JPG"; // Happy community
-import img2 from "@/assets/img/2016/2016-afroin-img-13.jpg"; // Group
-import img3 from "@/assets/img/2019/2019-afroin-img-10.jpg"; // Event energy
+import heroMain from "@/assets/img/hero-main.jpg"; // Same hero photo used on the home page
+import imgEvento from "@/assets/img/gracias-afroin-evento.jpg"; // Afro In event with banner
+import imgBenkos from "@/assets/img/gracias-benkos-bioho.jpg"; // Benkos Biohó statue (Palenque)
+import logoCorazones from "@/assets/img/un-millon-corazones.jpeg"; // "Soy Afro In - Un Millón de Corazones" banner
 
 interface Props {
   lang?: string;
@@ -34,8 +34,14 @@ const navLinks = [
     <section class="thanks-hero">
       <div class="container">
         <div class="hero-content animate-fade-in-up">
-          <div class="heart-badge">❤️</div>
-          <span class="section-badge">Movimiento un Millón de Corazones</span>
+          <div class="brand-banner">
+            <Image
+              src={logoCorazones}
+              alt="Soy Afro In - Un Millón de Corazones"
+              class="brand-banner-img"
+              loading="eager"
+            />
+          </div>
           <h1>¡Gracias por tu aporte!</h1>
           <p class="hero-text">
             Tu contribución es fundamental para seguir fortaleciendo la cultura
@@ -63,15 +69,15 @@ const navLinks = [
     <section class="gratitude-gallery container">
       <div class="gallery-grid">
         <div class="gallery-item item-main">
-          <Image src={img3} alt="Energía del Evento" class="gallery-img" />
+          <Image src={heroMain} alt="Comunidad con corazones Afro In" class="gallery-img" />
           <div class="item-overlay"></div>
         </div>
         <div class="gallery-item">
-          <Image src={img1} alt="Comunidad" class="gallery-img" />
+          <Image src={imgEvento} alt="Evento Afro In" class="gallery-img" />
           <div class="item-overlay"></div>
         </div>
         <div class="gallery-item">
-          <Image src={img2} alt="Alegría" class="gallery-img" />
+          <Image src={imgBenkos} alt="Estatua de Benkos Biohó, Palenque" class="gallery-img" />
           <div class="item-overlay"></div>
         </div>
       </div>
@@ -146,7 +152,6 @@ const navLinks = [
 
 <style>
   .thanks-container {
-    padding-top: 100px;
     background: var(--color-white);
   }
 
@@ -158,40 +163,20 @@ const navLinks = [
 
   /* Hero Section */
   .thanks-hero {
-    padding: var(--space-2xl) 0;
+    padding: 140px 0 var(--space-2xl);
     text-align: center;
-    background: var(--color-cream);
+    background: var(--color-white);
   }
 
-  .heart-badge {
-    font-size: 3rem;
-    margin-bottom: var(--space-md);
-    animation: pulse 2s infinite;
+  .brand-banner {
+    max-width: 640px;
+    margin: 0 auto var(--space-lg);
   }
 
-  @keyframes pulse {
-    0% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.1);
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
-
-  .section-badge {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-md);
-    background: rgba(227, 28, 37, 0.1);
-    color: var(--color-primary);
-    border-radius: var(--radius-full);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    margin-bottom: var(--space-md);
-    letter-spacing: 0.05em;
+  .brand-banner-img {
+    width: 100%;
+    height: auto;
+    display: block;
   }
 
   h1 {
