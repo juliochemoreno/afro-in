@@ -1,0 +1,6 @@
+# Local secrets for `astro dev` (loaded by the Cloudflare platformProxy).
+# Copy this file to `.dev.vars` and set real values. Do NOT commit `.dev.vars`.
+
+# Credentials for the /admin area (HTTP Basic Auth)
+ADMIN_USER="admin"
+ADMIN_PASSWORD="change-me-in-local"
