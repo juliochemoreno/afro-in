@@ -21,6 +21,9 @@ import { getLangFromUrl, getTranslatedPath } from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 
+// Localized thank-you path (used by the global Bold-return handler below).
+const graciasUrl = getTranslatedPath("/gracias", lang);
+
 // Generate hreflang URLs for SEO
 const siteUrl =
   Astro.site?.toString().replace(/\/$/, "") || "https://afroin.org";
@@ -295,6 +298,25 @@ const locale = lang === "en" ? "en_US" : lang === "fr" ? "fr_FR" : "es_CO";
         );
 
         animatedElements.forEach((el) => observer.observe(el));
+      });
+    </script>
+
+    <!-- Global Bold return handler: route any page that Bold redirects to
+         (e.g. the site root in local/dev) to the localized thank-you page,
+         which confirms the payment server-side and shows the confirmation. -->
+    <script define:vars={{ graciasUrl }}>
+      document.addEventListener("astro:page-load", () => {
+        const params = new URLSearchParams(window.location.search);
+        const boldOrderId = params.get("bold-order-id");
+        if (!boldOrderId) return;
+
+        const here = window.location.pathname.replace(/\/$/, "");
+        const target = graciasUrl.replace(/\/$/, "");
+        // Already on the thank-you page — let it handle the confirmation.
+        if (here === target) return;
+
+        // Preserve Bold's query params and route to the thank-you page.
+        window.location.replace(graciasUrl + window.location.search);
       });
     </script>
   </body>

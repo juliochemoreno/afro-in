@@ -50,14 +50,18 @@ try {
         phone: "+57 300 123 4567",
         amount: 50000,
         status: "completed",
+        provider: "bold",
+        currency: "COP",
         message: "¡Mucha fuerza con el proyecto!",
       },
       {
         created_at: new Date(Date.now() - 86400000).toISOString(),
         name: "Otro Donante",
         email: "otro@example.com",
-        amount: 20000,
-        status: "pending_payment",
+        amount: 10,
+        status: "pending",
+        provider: "paypal",
+        currency: "USD",
         message: "",
       },
       {
@@ -65,7 +69,9 @@ try {
         name: "Maria Gonzalez",
         email: "maria@example.com",
         amount: 100000,
-        status: "completed",
+        status: "rejected",
+        provider: "bold",
+        currency: "COP",
         message: "Desde Cali con amor ❤️",
       },
     ];
@@ -85,11 +91,12 @@ try {
   error = e.message;
 }
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-CO", {
+function formatCurrency(amount: number, currency: string = "COP") {
+  const isUsd = (currency || "COP").toUpperCase() === "USD";
+  return new Intl.NumberFormat(isUsd ? "en-US" : "es-CO", {
     style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
+    currency: isUsd ? "USD" : "COP",
+    minimumFractionDigits: isUsd ? 2 : 0,
   }).format(amount);
 }
 
@@ -191,6 +198,7 @@ function formatDate(dateString: string) {
                       <CreditCard size={14} /> Monto
                     </div></th
                   >
+                  <th>Método</th>
                   <th>Estado</th>
                   <th
                     ><div class="th-content">
@@ -216,14 +224,23 @@ function formatDate(dateString: string) {
                             )}
                           </div>
                         </td>
-                        <td class="amount">{formatCurrency(donor.amount)}</td>
+                        <td class="amount">
+                          {formatCurrency(donor.amount, donor.currency)}
+                        </td>
+                        <td>
+                          <span class={`method-badge ${donor.provider || "paypal"}`}>
+                            {donor.provider === "bold" ? "Bold" : "PayPal"}
+                          </span>
+                        </td>
                         <td>
                           <span class={`status-badge ${donor.status}`}>
                             {donor.status === "completed"
                               ? "Completado"
-                              : donor.status === "pending_payment"
+                              : donor.status === "pending"
                                 ? "Pendiente"
-                                : donor.status}
+                                : donor.status === "rejected"
+                                  ? "Rechazado"
+                                  : donor.status}
                           </span>
                         </td>
                         <td class="message-cell" title={donor.message}>
@@ -237,7 +254,7 @@ function formatDate(dateString: string) {
                     ))
                   ) : (
                     <tr>
-                      <td colspan="6" class="empty-state">
+                      <td colspan="7" class="empty-state">
                         <div class="empty-content">
                           <Users size={48} className="opacity-20 mb-2" />
                           <p>No hay donadores registrados aún.</p>
@@ -449,10 +466,37 @@ function formatDate(dateString: string) {
     border: 1px solid rgba(45, 106, 79, 0.2);
   }
 
+  .status-badge.pending,
   .status-badge.pending_payment {
     background: rgba(255, 193, 7, 0.1);
     color: #bfa004;
     border: 1px solid rgba(255, 193, 7, 0.2);
+  }
+
+  .status-badge.rejected {
+    background: rgba(220, 38, 38, 0.08);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+  }
+
+  .method-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid var(--color-cream-dark);
+  }
+
+  .method-badge.bold {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--color-secondary);
+  }
+
+  .method-badge.paypal {
+    background: rgba(0, 48, 135, 0.08);
+    color: #003087;
   }
 
   .message-cell {
