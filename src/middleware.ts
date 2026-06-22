@@ -1,46 +1,26 @@
 import { defineMiddleware } from "astro:middleware";
+import { ADMIN_COOKIE, isValidAdminSession } from "./lib/adminAuth";
 
 const SUPPORTED_LANGS = ["es", "en", "fr"] as const;
 const DEFAULT_LANG = "es";
 const COOKIE_NAME = "preferred-lang";
 
-function unauthorized() {
-  return new Response("Unauthorized", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="AFRO IN Admin", charset="UTF-8"',
-    },
-  });
-}
-
-export const onRequest = defineMiddleware((context, next) => {
+export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
   const pathname = url.pathname;
 
-  // 0. Protect /admin routes with HTTP Basic Auth
-  if (pathname.startsWith("/admin")) {
+  // 0. Protect /admin routes with a cookie-based session. The login page
+  // itself is excluded so unauthenticated users can reach it.
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     const env = (context.locals as any).runtime?.env ?? {};
-    const expectedUser = env.ADMIN_USER || "admin";
-    const expectedPass = env.ADMIN_PASSWORD;
-
-    // Fail closed: if no password is configured, deny access
-    if (!expectedPass) return unauthorized();
-
-    const header = context.request.headers.get("authorization") || "";
-    if (!header.startsWith("Basic ")) return unauthorized();
-
-    let user = "";
-    let pass = "";
-    try {
-      const decoded = atob(header.slice(6));
-      const idx = decoded.indexOf(":");
-      user = decoded.slice(0, idx);
-      pass = decoded.slice(idx + 1);
-    } catch {
-      return unauthorized();
+    const cookie = context.cookies.get(ADMIN_COOKIE)?.value;
+    const authed = await isValidAdminSession(env, cookie);
+    if (!authed) {
+      return context.redirect(
+        `/admin/login?next=${encodeURIComponent(pathname)}`,
+        302
+      );
     }
-
-    if (user !== expectedUser || pass !== expectedPass) return unauthorized();
   }
 
   // 1. Redirect www to non-www
