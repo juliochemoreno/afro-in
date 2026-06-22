@@ -12,15 +12,30 @@ import {
   MessageSquare,
 } from "lucide-astro";
 
-// Auth removed as requested
+// Access is protected via HTTP Basic Auth in src/middleware.ts (ADMIN_USER / ADMIN_PASSWORD)
 
 let donors: any[] = [];
 let error = null;
 let stats = {
   totalDonors: 0,
-  totalAmount: 0,
+  totalAmountCop: 0,
+  totalAmountUsd: 0,
   confirmedDonors: 0,
 };
+
+function calcStats(list: any[]) {
+  const completed = list.filter((d: any) => d.status === "completed");
+  return {
+    totalDonors: list.length,
+    confirmedDonors: completed.length,
+    totalAmountCop: completed
+      .filter((d: any) => (d.currency || "COP").toUpperCase() === "COP")
+      .reduce((sum: number, d: any) => sum + (Number(d.amount) || 0), 0),
+    totalAmountUsd: completed
+      .filter((d: any) => (d.currency || "COP").toUpperCase() === "USD")
+      .reduce((sum: number, d: any) => sum + (Number(d.amount) || 0), 0),
+  };
+}
 
 // Always fetch data
 try {
@@ -32,14 +47,8 @@ try {
     ).all();
     donors = result.results || [];
 
-    // Calculate basic stats
-    stats.totalDonors = donors.length;
-    stats.confirmedDonors = donors.filter(
-      (d: any) => d.status === "completed"
-    ).length;
-    stats.totalAmount = donors
-      .filter((d: any) => d.status === "completed")
-      .reduce((sum: number, d: any) => sum + (Number(d.amount) || 0), 0);
+    // Calculate basic stats (split by currency)
+    stats = calcStats(donors);
   } else {
     // Mock data for local dev
     donors = [
@@ -75,14 +84,8 @@ try {
         message: "Desde Cali con amor ❤️",
       },
     ];
-    // Recalc stats for mock
-    stats.totalDonors = donors.length;
-    stats.confirmedDonors = donors.filter(
-      (d: any) => d.status === "completed"
-    ).length;
-    stats.totalAmount = donors
-      .filter((d: any) => d.status === "completed")
-      .reduce((sum: number, d: any) => sum + (Number(d.amount) || 0), 0);
+    // Recalc stats for mock (split by currency)
+    stats = calcStats(donors);
 
     error = "Modo Desarrollo: Mostrando datos de prueba.";
   }
@@ -145,7 +148,10 @@ function formatDate(dateString: string) {
             <div class="stat-info">
               <h3>Total Recaudado</h3>
               <p class="stat-value text-gradient">
-                {formatCurrency(stats.totalAmount)}
+                {formatCurrency(stats.totalAmountCop, "COP")}
+              </p>
+              <p class="stat-value-secondary">
+                {formatCurrency(stats.totalAmountUsd, "USD")}
               </p>
             </div>
           </div>
@@ -352,6 +358,14 @@ function formatDate(dateString: string) {
     background: var(--gradient-gold);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+
+  .stat-value-secondary {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-light);
+    line-height: 1.2;
+    margin-top: 0.1rem;
   }
 
   /* Table Card */
