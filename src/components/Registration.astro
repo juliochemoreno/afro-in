@@ -225,8 +225,8 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
                           type="number"
                           class="custom-amount-bold"
                           inputmode="decimal"
-                          placeholder="0"
-                          min="1"
+                          placeholder="5"
+                          min="5"
                           step="1"
                         />
                         <span class="amount-input-suffix">USD</span>
@@ -237,6 +237,14 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
                     </span>
                   </label>
                 </div>
+
+                <label class="fee-cover">
+                  <input type="checkbox" id="boldCoverFee" />
+                  <span class="fee-cover-text">
+                    {t("join.fee.cover")}
+                    <span class="fee-cover-amount" id="boldFeeAmount"></span>
+                  </span>
+                </label>
               </div>
 
               <!-- PAYPAL amounts (USD) -->
@@ -275,8 +283,8 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
                           type="number"
                           class="custom-amount"
                           inputmode="decimal"
-                          placeholder="0"
-                          min="1"
+                          placeholder="5"
+                          min="5"
                           step="1"
                         />
                         <span class="amount-input-suffix">USD</span>
@@ -713,6 +721,44 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         color: var(--color-primary);
       }
 
+      /* "Cover the processing fee" opt-in (Bold only) */
+      .fee-cover {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-sm);
+        margin-top: var(--space-md);
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid var(--color-cream-dark);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: border-color var(--transition-fast);
+      }
+
+      .fee-cover:hover {
+        border-color: var(--color-primary);
+      }
+
+      .fee-cover input[type="checkbox"] {
+        width: 1.15rem;
+        height: 1.15rem;
+        margin-top: 2px;
+        accent-color: var(--color-primary);
+        flex-shrink: 0;
+        cursor: pointer;
+      }
+
+      .fee-cover-text {
+        font-size: 0.9rem;
+        color: var(--color-text);
+        line-height: 1.35;
+      }
+
+      .fee-cover-amount {
+        font-weight: 700;
+        color: var(--color-primary);
+        white-space: nowrap;
+      }
+
       #paypal-donate-container {
         width: 100%;
         min-height: 50px;
@@ -892,6 +938,10 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         // USD is shown as the primary figure.
         const COP_PER_USD = 4000;
 
+        // Minimum contribution accepted in the "Otro" (custom) field.
+        const MIN_USD = 5;
+        const MIN_COP = MIN_USD * COP_PER_USD;
+
         // Shared step-1 validation. Returns a specific localized error message,
         // or null when the contact details are valid.
         const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -950,7 +1000,13 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
             const customInputEl = document.querySelector(
               ".custom-amount"
             ) as HTMLInputElement;
-            amount = customInputEl?.value || "5";
+            // Enforce the minimum contribution (5 USD); clamp and reflect it
+            // back into the field so the donor sees what will be charged.
+            const typed = Number(customInputEl?.value);
+            const finalUsd =
+              Number.isFinite(typed) && typed >= MIN_USD ? typed : MIN_USD;
+            if (customInputEl) customInputEl.value = String(finalUsd);
+            amount = String(finalUsd);
           }
 
           // Clear container and render button
@@ -1029,10 +1085,16 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
           return boldSdkPromise;
         };
 
-        // Resolve the selected Bold amount in COP (what we actually charge).
-        // Fixed options carry the COP value; the custom field is entered in USD
-        // and converted to COP for the charge.
-        const getBoldAmount = (): number => {
+        // Bold's standard processing fee. When the donor opts in to cover it,
+        // we gross up the charge so the foundation nets the chosen amount.
+        const BOLD_FEE_PCT = 0.0359;
+        const BOLD_FEE_FIXED = 900;
+        const grossUpBold = (base: number): number =>
+          Math.ceil((base + BOLD_FEE_FIXED) / (1 - BOLD_FEE_PCT));
+
+        // Base Bold amount in COP (before any fee). Fixed options carry the COP
+        // value; the custom field is entered in USD and converted to COP.
+        const getBoldBase = (): number => {
           const selected = form.querySelector(
             'input[name="amount_bold"]:checked'
           ) as HTMLInputElement | null;
@@ -1046,6 +1108,31 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
             return Math.trunc(usd * COP_PER_USD);
           }
           return Math.trunc(Number(value));
+        };
+
+        const isCoveringFee = (): boolean =>
+          (document.getElementById("boldCoverFee") as HTMLInputElement | null)
+            ?.checked ?? false;
+
+        // Final Bold amount in COP (what we actually charge), including the fee
+        // when the donor opted to cover it.
+        const getBoldAmount = (): number => {
+          const base = getBoldBase();
+          if (base <= 0) return 0;
+          return isCoveringFee() ? grossUpBold(base) : base;
+        };
+
+        // Reflect the fee that would be added next to the checkbox label.
+        const boldFeeAmountEl = document.getElementById("boldFeeAmount");
+        const updateBoldFeeLabel = () => {
+          if (!boldFeeAmountEl) return;
+          const base = getBoldBase();
+          if (base <= 0) {
+            boldFeeAmountEl.textContent = "";
+            return;
+          }
+          const fee = grossUpBold(base) - base;
+          boldFeeAmountEl.textContent = `+ $${fee.toLocaleString("es-CO")} COP`;
         };
 
         // --- Bold payment flow ---
@@ -1069,7 +1156,7 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
           const countryValue = getCountry();
 
           const amount = getBoldAmount();
-          if (!Number.isFinite(amount) || amount < 1000) {
+          if (!Number.isFinite(amount) || amount < MIN_COP) {
             showToast(form.dataset.tAmountMin || "", "error");
             return;
           }
@@ -1243,7 +1330,19 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
           ) as HTMLInputElement;
           if (radio) radio.checked = true;
         });
-        boldCustomInput?.addEventListener("input", updateBoldCustomUsd);
+        boldCustomInput?.addEventListener("input", () => {
+          updateBoldCustomUsd();
+          updateBoldFeeLabel();
+        });
+
+        // Recompute the fee when a fixed Bold amount or the cover-fee toggle changes.
+        form.querySelectorAll('input[name="amount_bold"]').forEach((input) => {
+          input.addEventListener("change", updateBoldFeeLabel);
+        });
+        document
+          .getElementById("boldCoverFee")
+          ?.addEventListener("change", updateBoldFeeLabel);
+        updateBoldFeeLabel();
 
         // Focus the custom amount input as soon as its "Otro" option is picked.
         const paypalCustomRadio = document.querySelector(
