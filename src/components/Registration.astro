@@ -1,5 +1,6 @@
 ---
 import { countries } from "../data/countries";
+import CountryCombobox from "./CountryCombobox";
 import {
   getLangFromUrl,
   useTranslations,
@@ -56,6 +57,13 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
             data-t-toast-success={t("join.toast.success")}
             data-t-toast-error={t("join.toast.error")}
             data-t-redirect-url={thanksUrl}
+            data-t-amount-min={t("join.form.amount.min")}
+            data-t-secure-paypal={t("join.form.secure.paypal")}
+            data-t-secure-bold={t("join.form.secure.bold")}
+            data-t-error-name={t("join.error.name")}
+            data-t-error-email={t("join.error.email")}
+            data-t-error-country={t("join.error.country")}
+            data-t-error-generic={t("join.error.generic")}
           >
             <!-- STEP 1: CONTACT INFO -->
             <div class="form-step active" id="step1">
@@ -98,16 +106,14 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
 
               <div class="form-group">
                 <label for="country">{t("join.form.country")}</label>
-                <select id="country" name="country" autocomplete="off">
-                  <option value="">{t("join.form.country.select")}</option>
-                  {
-                    countries.map((c) => (
-                      <option value={c.code}>
-                        {c.emoji} {c.name}
-                      </option>
-                    ))
-                  }
-                </select>
+                <CountryCombobox
+                  client:visible
+                  lang={lang}
+                  countries={countries}
+                  placeholder={t("join.form.country.select")}
+                  searchPlaceholder={t("join.country.search")}
+                  emptyText={t("join.country.error")}
+                />
               </div>
 
               <button
@@ -129,7 +135,112 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
                 <h3>{t("join.form.donate.title")}</h3>
               </div>
 
-              <div class="form-donation">
+              <!-- Payment method selector -->
+              <p class="form-question">{t("join.q.method")}</p>
+              <div
+                class="method-selector"
+                role="tablist"
+                aria-label={t("join.method.label")}
+              >
+                <button
+                  type="button"
+                  class="method-tab active"
+                  data-method="bold"
+                  role="tab"
+                  aria-selected="true"
+                >
+                  <span class="method-logo">
+                    <span class="method-logo-bold">bold</span>
+                  </span>
+                  <span class="method-text">
+                    <span class="method-name">{t("join.method.bold")}</span>
+                    <span class="method-hint">{t("join.method.bold.hint")}</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="method-tab"
+                  data-method="paypal"
+                  role="tab"
+                  aria-selected="false"
+                >
+                  <span class="method-logo">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="26"
+                      height="26"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill="#003087"
+                        d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"
+                      ></path>
+                    </svg>
+                  </span>
+                  <span class="method-text">
+                    <span class="method-name">{t("join.method.paypal")}</span>
+                    <span class="method-hint"
+                      >{t("join.method.paypal.hint")}</span
+                    >
+                  </span>
+                </button>
+              </div>
+
+              <!-- Amount question (shared across methods) -->
+              <p class="form-question">{t("join.q.amount")}</p>
+
+              <!-- BOLD amounts (COP) -->
+              <div class="form-donation" data-method-panel="bold">
+                <div class="donation-options">
+                  <label class="donation-option">
+                    <input type="radio" name="amount_bold" value="20000" checked />
+                    <span class="option-content">
+                      <span class="option-amount">$5 USD</span>
+                      <span class="option-desc">≈ $20.000 COP</span>
+                    </span>
+                  </label>
+                  <label class="donation-option">
+                    <input type="radio" name="amount_bold" value="40000" />
+                    <span class="option-content">
+                      <span class="option-amount">$10 USD</span>
+                      <span class="option-desc">≈ $40.000 COP</span>
+                    </span>
+                  </label>
+                  <label class="donation-option">
+                    <input type="radio" name="amount_bold" value="100000" />
+                    <span class="option-content">
+                      <span class="option-amount">$25 USD</span>
+                      <span class="option-desc">≈ $100.000 COP</span>
+                    </span>
+                  </label>
+                  <label class="donation-option custom">
+                    <input type="radio" name="amount_bold" value="custom" />
+                    <span class="option-content">
+                      <span class="option-amount"
+                        >{t("join.form.donate.other")}</span
+                      >
+                      <span class="amount-input-group">
+                        <span class="amount-input-prefix">$</span>
+                        <input
+                          type="number"
+                          class="custom-amount-bold"
+                          inputmode="decimal"
+                          placeholder="0"
+                          min="1"
+                          step="1"
+                        />
+                        <span class="amount-input-suffix">USD</span>
+                      </span>
+                      <span
+                        class="option-desc custom-usd-hint"
+                        id="boldCustomUsd"></span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- PAYPAL amounts (USD) -->
+              <div class="form-donation" data-method-panel="paypal" hidden>
                 <div class="donation-options">
                   <label class="donation-option">
                     <input type="radio" name="amount" value="5" checked />
@@ -158,22 +269,41 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
                       <span class="option-amount"
                         >{t("join.form.donate.other")}</span
                       >
-                      <input
-                        type="number"
-                        class="custom-amount"
-                        placeholder="$"
-                        min="1"
-                        step="0.01"
-                      />
+                      <span class="amount-input-group">
+                        <span class="amount-input-prefix">$</span>
+                        <input
+                          type="number"
+                          class="custom-amount"
+                          inputmode="decimal"
+                          placeholder="0"
+                          min="1"
+                          step="1"
+                        />
+                        <span class="amount-input-suffix">USD</span>
+                      </span>
                     </span>
                   </label>
                 </div>
               </div>
 
-              <!-- PayPal Donate Button Container -->
-              <div id="paypal-donate-container"></div>
+              <!-- Bold pay button (COP) -->
+              <div id="bold-pay-container" data-method-panel="bold">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-block"
+                  id="btnBoldPay"
+                >
+                  {t("join.method.bold")} →
+                </button>
+              </div>
 
-              <p class="form-note">{t("join.form.secure")}</p>
+              <!-- PayPal Donate Button Container (USD) -->
+              <div id="paypal-donate-container" data-method-panel="paypal" hidden>
+              </div>
+
+              <p class="form-note" id="secureNote">
+                {t("join.form.secure.bold")}
+              </p>
             </div>
           </form>
         </div>
@@ -386,6 +516,97 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         margin: var(--space-lg) 0;
       }
 
+      /* Question titles in step 2 */
+      .form-question {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: var(--color-secondary);
+        margin: var(--space-lg) 0 var(--space-sm);
+      }
+      .form-question:first-of-type {
+        margin-top: 0;
+      }
+
+      /* Payment method selector — stacked in 2 rows */
+      .method-selector {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-md);
+      }
+
+      .method-tab {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: var(--space-md);
+        padding: var(--space-md);
+        border: 2px solid var(--color-cream-dark);
+        border-radius: var(--radius-md);
+        background: var(--color-white);
+        cursor: pointer;
+        text-align: left;
+        transition: all var(--transition-fast);
+      }
+
+      .method-logo {
+        width: 56px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-right: 1px solid var(--color-cream-dark);
+        padding-right: var(--space-md);
+      }
+
+      .method-logo-bold {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: 1.4rem;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        background: linear-gradient(95deg, #2b4bf2 0%, #8b3df0 50%, #f0425a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+      }
+
+      .method-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .method-tab:hover {
+        border-color: var(--color-primary);
+      }
+
+      .method-tab.active {
+        border-color: var(--color-primary);
+        background: rgba(227, 28, 37, 0.05);
+      }
+
+      .method-tab .method-name {
+        font-weight: 700;
+        color: var(--color-secondary);
+        font-size: 0.95rem;
+      }
+
+      .method-tab .method-hint {
+        font-size: 0.75rem;
+        color: var(--color-text-light);
+        line-height: 1.2;
+      }
+
+      #bold-pay-container {
+        width: 100%;
+        margin-top: var(--space-md);
+        margin-bottom: var(--space-sm);
+      }
+
       .donation-options {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -426,13 +647,70 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         color: var(--color-text-light);
       }
 
-      .custom-amount {
-        width: 80px;
-        margin-top: var(--space-xs);
-        padding: var(--space-xs);
+      /* Custom amount input group (shared by PayPal & Bold "Otro") */
+      .amount-input-group {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        max-width: 180px;
+        margin-top: var(--space-sm);
         border: 1px solid var(--color-cream-dark);
         border-radius: var(--radius-sm);
+        background: var(--color-white);
+        overflow: hidden;
+        transition: all var(--transition-fast);
+      }
+
+      .amount-input-group:focus-within {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+      }
+
+      .amount-input-prefix,
+      .amount-input-suffix {
+        display: flex;
+        align-items: center;
+        padding: 0 0.5rem;
+        color: var(--color-text-light);
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: var(--color-cream);
+        align-self: stretch;
+      }
+
+      .amount-input-prefix {
+        font-size: 1rem;
+        color: var(--color-secondary);
+      }
+
+      .amount-input-group input {
+        flex: 1;
+        min-width: 0;
+        border: none;
+        outline: none;
+        padding: 0.45rem 0.4rem;
+        font-family: inherit;
+        font-size: 1rem;
         text-align: center;
+        background: transparent;
+        color: var(--color-secondary);
+      }
+
+      /* Hide number input spinners for a cleaner look */
+      .amount-input-group input::-webkit-outer-spin-button,
+      .amount-input-group input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .amount-input-group input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+
+      .custom-usd-hint {
+        margin-top: var(--space-xs);
+        font-weight: 600;
+        color: var(--color-primary);
       }
 
       #paypal-donate-container {
@@ -494,33 +772,74 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
     </style>
 
     <style is:global>
-      /* Tom Select Custom Styling - Loaded in head but needs global styles here */
-      .ts-wrapper.single .ts-control {
-        padding: 0.8rem 1rem !important;
-        border: 1px solid var(--color-cream-dark) !important;
-        border-radius: var(--radius-md) !important;
-        font-family: var(--font-body) !important;
-        font-size: 1rem !important;
-        background: var(--color-white) !important;
-        box-shadow: none !important;
-        min-height: 44px;
+      /* CountryCombobox trigger — matches the form inputs' look */
+      .cc-trigger {
+        width: 100%;
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid var(--color-cream-dark);
+        border-radius: var(--radius-md);
+        background: var(--color-white);
+        font-family: inherit;
+        font-size: 1rem;
+        min-height: 46px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
       }
-      .ts-wrapper.single.focus .ts-control {
-        border-color: var(--color-primary) !important;
-        box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1) !important;
+      .cc-trigger:hover {
+        border-color: var(--color-primary);
       }
-      .ts-dropdown {
-        border-radius: var(--radius-md) !important;
-        border: 1px solid var(--color-cream-dark) !important;
-        box-shadow: var(--shadow-lg) !important;
-        margin-top: 5px !important;
-        z-index: 1000 !important;
+      .cc-trigger[aria-expanded="true"] {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
       }
-      .ts-dropdown .option.active {
-        background-color: rgba(227, 28, 37, 0.1) !important;
-        color: var(--color-primary) !important;
+      .cc-trigger .cc-value {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .cc-trigger .cc-placeholder {
+        color: var(--color-text-light);
+      }
+      .cc-flag {
+        font-size: 1.2rem;
+        line-height: 1;
+        width: 1.6rem;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      /* Country dropdown (portaled to body).
+         The project's global reset `* { padding: 0 }` is unlayered and overrides
+         Tailwind's layered padding utilities, so we restore spacing explicitly
+         via the higher-specificity [data-slot] attribute selectors. */
+      [data-slot="popover-content"] {
+        padding: 0;
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+      }
+      [data-slot="command-input-wrapper"] {
+        padding: 0 0.85rem;
+      }
+      [data-slot="command-input"] {
+        padding: 0.6rem 0;
+      }
+      [data-slot="command-list"] {
+        padding: 0.35rem;
+      }
+      [data-slot="command-item"] {
+        padding: 0.6rem 0.7rem;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+        border-radius: var(--radius-sm);
+      }
+      [data-slot="command-empty"] {
+        padding: 1.25rem;
       }
     </style>
 
@@ -529,8 +848,8 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
 
       declare global {
         interface Window {
-          TomSelect: any;
           PayPal: any;
+          BoldCheckout: any;
         }
       }
 
@@ -558,73 +877,35 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         const step2 = document.getElementById("step2");
         const btnNext = document.getElementById("btnNext");
         const btnBack = document.getElementById("btnBack");
-        const countrySelect = document.getElementById(
-          "country"
-        ) as any as HTMLSelectElement;
-        let tsInstance: any = null;
         let paypalButtonRendered = false;
+        let currentMethod: "bold" | "paypal" = "bold";
+        let boldSdkPromise: Promise<void> | null = null;
+        const secureNote = document.getElementById("secureNote");
 
-        // --- Lazy TomSelect ---
-        const loadTomSelect = async () => {
-          if (window.TomSelect || tsInstance) return;
+        // Country value comes from the CountryCombobox React island, which keeps
+        // a hidden input (#country) in sync (localized names + search + geo).
+        const getCountry = (): string =>
+          (document.getElementById("country") as HTMLInputElement | null)
+            ?.value || "";
 
-          // Load CSS and JS dynamically
-          if (!document.getElementById("tom-select-css")) {
-            const link = document.createElement("link");
-            link.id = "tom-select-css";
-            link.rel = "stylesheet";
-            link.href =
-              "https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css";
-            document.head.appendChild(link);
-          }
+        // Display-only USD<->COP approximation. We charge in COP via Bold, but
+        // USD is shown as the primary figure.
+        const COP_PER_USD = 4000;
 
-          if (!window.TomSelect) {
-            await new Promise((resolve) => {
-              const script = document.createElement("script");
-              script.src =
-                "https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js";
-              script.onload = resolve;
-              document.body.appendChild(script);
-            });
-          }
-
-          if (countrySelect && window.TomSelect && !tsInstance) {
-            tsInstance = new window.TomSelect(countrySelect, {
-              create: false,
-              sortField: { field: "text", direction: "asc" },
-              render: {
-                no_results: () =>
-                  `<div class="no-results">${form.dataset.tCountryError}</div>`,
-              },
-            });
-            tsInstance.setValue("CO");
-            fetch("https://ipapi.co/json/")
-              .then((r) => r.json())
-              .then((d: any) => {
-                if (d.country_code && tsInstance)
-                  tsInstance.setValue(d.country_code);
-              })
-              .catch(() => {});
-          }
+        // Shared step-1 validation. Returns a specific localized error message,
+        // or null when the contact details are valid.
+        const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const validateStep1 = (): string | null => {
+          const nameInput = document.getElementById("name") as HTMLInputElement;
+          const emailInput = document.getElementById(
+            "email"
+          ) as HTMLInputElement;
+          if (!nameInput?.value.trim()) return form.dataset.tErrorName || "";
+          if (!EMAIL_RE.test((emailInput?.value || "").trim()))
+            return form.dataset.tErrorEmail || "";
+          if (!getCountry()) return form.dataset.tErrorCountry || "";
+          return null;
         };
-
-        const initLazy = () => {
-          loadTomSelect();
-          countrySelect?.removeEventListener("focus", initLazy);
-        };
-        countrySelect?.addEventListener("focus", initLazy);
-
-        const observer = new IntersectionObserver(
-          (entries) => {
-            if (entries[0].isIntersecting) {
-              loadTomSelect();
-              observer.disconnect();
-            }
-          },
-          { rootMargin: "200px" }
-        );
-        const section = document.getElementById("unirse");
-        if (section) observer.observe(section);
 
         // --- Load PayPal Donate SDK ---
         const loadPayPalSDK = async (): Promise<void> => {
@@ -657,9 +938,7 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
           const phoneInput = document.getElementById(
             "phone"
           ) as HTMLInputElement;
-          const countryValue = tsInstance
-            ? tsInstance.getValue()
-            : countrySelect.value;
+          const countryValue = getCountry();
 
           // Get selected amount
           const selectedAmountEl = form.querySelector(
@@ -736,25 +1015,180 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
           paypalButtonRendered = true;
         };
 
-        // --- Navigation ---
-        btnNext?.addEventListener("click", async () => {
+        // --- Load Bold Checkout SDK ---
+        const loadBoldSDK = (): Promise<void> => {
+          if (window.BoldCheckout) return Promise.resolve();
+          if (boldSdkPromise) return boldSdkPromise;
+          boldSdkPromise = new Promise<void>((resolve) => {
+            const script = document.createElement("script");
+            script.src =
+              "https://checkout.bold.co/library/boldPaymentButton.js";
+            script.onload = () => resolve();
+            document.body.appendChild(script);
+          });
+          return boldSdkPromise;
+        };
+
+        // Resolve the selected Bold amount in COP (what we actually charge).
+        // Fixed options carry the COP value; the custom field is entered in USD
+        // and converted to COP for the charge.
+        const getBoldAmount = (): number => {
+          const selected = form.querySelector(
+            'input[name="amount_bold"]:checked'
+          ) as HTMLInputElement | null;
+          const value = selected?.value || "20000";
+          if (value === "custom") {
+            const customEl = document.querySelector(
+              ".custom-amount-bold"
+            ) as HTMLInputElement | null;
+            const usd = Number(customEl?.value);
+            if (!Number.isFinite(usd) || usd <= 0) return 0;
+            return Math.trunc(usd * COP_PER_USD);
+          }
+          return Math.trunc(Number(value));
+        };
+
+        // --- Bold payment flow ---
+        const payWithBold = async () => {
+          // Re-validate contact details; if invalid, send the donor back to fix them.
+          const step1Error = validateStep1();
+          if (step1Error) {
+            step2?.classList.remove("active");
+            step1?.classList.add("active");
+            showToast(step1Error, "error");
+            return;
+          }
+
           const nameInput = document.getElementById("name") as HTMLInputElement;
           const emailInput = document.getElementById(
             "email"
           ) as HTMLInputElement;
-          const countryValue = tsInstance
-            ? tsInstance.getValue()
-            : countrySelect.value;
+          const phoneInput = document.getElementById(
+            "phone"
+          ) as HTMLInputElement;
+          const countryValue = getCountry();
 
-          if (!nameInput.value || !emailInput.value || !countryValue) {
-            showToast(form.dataset.tToastError || "", "error");
+          const amount = getBoldAmount();
+          if (!Number.isFinite(amount) || amount < 1000) {
+            showToast(form.dataset.tAmountMin || "", "error");
+            return;
+          }
+
+          await loadBoldSDK();
+
+          let res: Response;
+          try {
+            res = await fetch("/api/bold-firma", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: nameInput.value,
+                email: emailInput.value,
+                phone: phoneInput.value || null,
+                country: countryValue || null,
+                amount,
+              }),
+            });
+          } catch (error) {
+            showToast(form.dataset.tErrorGeneric || "", "error");
+            return;
+          }
+
+          if (!res.ok) {
+            showToast(form.dataset.tErrorGeneric || "", "error");
+            return;
+          }
+
+          const data = (await res.json()) as {
+            orderId: string;
+            integritySignature: string;
+            apiKey: string;
+            amount: string;
+            currency: string;
+          };
+
+          // Remember the order so /gracias can confirm it server-side.
+          sessionStorage.setItem("bold_order_id", data.orderId);
+
+          if (!window.BoldCheckout) {
+            showToast(form.dataset.tErrorGeneric || "", "error");
+            return;
+          }
+
+          const boldConfig: Record<string, string> = {
+            orderId: data.orderId,
+            currency: data.currency,
+            amount: data.amount,
+            apiKey: data.apiKey,
+            integritySignature: data.integritySignature,
+            description: "Aporte AFRO IN - Millón de Corazones",
+          };
+
+          // Bold only accepts a public HTTPS redirect URL. On localhost (http)
+          // we omit it — the payment still processes and is confirmed via the
+          // webhook / backup query. In production we redirect back to /gracias.
+          const origin = window.location.origin;
+          if (origin.startsWith("https://")) {
+            boldConfig.redirectionUrl =
+              origin + (form.dataset.tRedirectUrl || "/gracias");
+          }
+
+          const checkout = new window.BoldCheckout(boldConfig);
+          checkout.open();
+        };
+
+        // --- Switch active payment method ---
+        const activateMethod = async (method: "bold" | "paypal") => {
+          currentMethod = method;
+
+          document.querySelectorAll(".method-tab").forEach((tab) => {
+            const active = tab.getAttribute("data-method") === method;
+            tab.classList.toggle("active", active);
+            tab.setAttribute("aria-selected", String(active));
+          });
+
+          document.querySelectorAll("[data-method-panel]").forEach((el) => {
+            (el as HTMLElement).hidden =
+              el.getAttribute("data-method-panel") !== method;
+          });
+
+          if (secureNote) {
+            secureNote.textContent =
+              method === "bold"
+                ? form.dataset.tSecureBold || ""
+                : form.dataset.tSecurePaypal || "";
+          }
+
+          if (method === "paypal") {
+            await renderPayPalButton();
+          } else {
+            await loadBoldSDK();
+          }
+        };
+
+        // Method tab + Bold button listeners
+        document.querySelectorAll(".method-tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            const method = tab.getAttribute("data-method") as "bold" | "paypal";
+            activateMethod(method);
+          });
+        });
+        document
+          .getElementById("btnBoldPay")
+          ?.addEventListener("click", payWithBold);
+
+        // --- Navigation ---
+        btnNext?.addEventListener("click", async () => {
+          const error = validateStep1();
+          if (error) {
+            showToast(error, "error");
             return;
           }
           step1?.classList.remove("active");
           step2?.classList.add("active");
 
-          // Render PayPal button when entering step 2
-          await renderPayPalButton();
+          // Activate the currently selected method when entering step 2
+          await activateMethod(currentMethod);
         });
 
         btnBack?.addEventListener("click", () => {
@@ -788,6 +1222,41 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
             paypalButtonRendered = false;
             renderPayPalButton();
           }
+        });
+
+        // --- Bold custom amount (entered in USD): live COP equivalent ---
+        const boldCustomInput = document.querySelector(
+          ".custom-amount-bold"
+        ) as HTMLInputElement;
+        const boldCustomUsd = document.getElementById("boldCustomUsd");
+        const updateBoldCustomUsd = () => {
+          if (!boldCustomUsd) return;
+          const usd = Number(boldCustomInput?.value);
+          boldCustomUsd.textContent =
+            Number.isFinite(usd) && usd > 0
+              ? `≈ $${Math.round(usd * COP_PER_USD).toLocaleString("es-CO")} COP`
+              : "";
+        };
+        boldCustomInput?.addEventListener("focus", () => {
+          const radio = document.querySelector(
+            'input[name="amount_bold"][value="custom"]'
+          ) as HTMLInputElement;
+          if (radio) radio.checked = true;
+        });
+        boldCustomInput?.addEventListener("input", updateBoldCustomUsd);
+
+        // Focus the custom amount input as soon as its "Otro" option is picked.
+        const paypalCustomRadio = document.querySelector(
+          'input[name="amount"][value="custom"]'
+        ) as HTMLInputElement;
+        paypalCustomRadio?.addEventListener("change", () => {
+          if (paypalCustomRadio.checked) customInput?.focus();
+        });
+        const boldCustomRadio = document.querySelector(
+          'input[name="amount_bold"][value="custom"]'
+        ) as HTMLInputElement;
+        boldCustomRadio?.addEventListener("change", () => {
+          if (boldCustomRadio.checked) boldCustomInput?.focus();
         });
       });
     </script>
