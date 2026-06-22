@@ -8,6 +8,8 @@ interface DonorData {
   phone?: string;
   country?: string;
   amount: number;
+  paypal_tx?: string;
+  paypal_status?: string;
 }
 
 // API to register donors
@@ -26,17 +28,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Insert into database
+    // Insert into database (PayPal provider, USD). Persist the PayPal tx so it
+    // is no longer discarded.
     const result = await env.DB.prepare(
-      `INSERT INTO donors (name, email, phone, country, amount, status) 
-       VALUES (?, ?, ?, ?, ?, 'pending')`
+      `INSERT INTO donors (name, email, phone, country, amount, status, provider, currency, transaction_id, provider_status)
+       VALUES (?, ?, ?, ?, ?, 'pending', 'paypal', 'USD', ?, ?)`
     )
       .bind(
         data.name,
         data.email,
         data.phone || null,
         data.country || null,
-        data.amount
+        data.amount,
+        data.paypal_tx || null,
+        data.paypal_status || null
       )
       .run();
 

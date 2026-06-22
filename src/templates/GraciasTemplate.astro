@@ -43,6 +43,10 @@ const navLinks = [
             legado que late con fuerza.
           </p>
 
+          <p class="verify-note" id="boldVerifyNote" hidden>
+            {t("join.bold.verifying")}
+          </p>
+
           <div class="hero-actions">
             <a href={getTranslatedPath("/", lang)} class="btn btn-primary"
               >Volver al Inicio</a
@@ -203,6 +207,18 @@ const navLinks = [
     max-width: 700px;
     margin: 0 auto var(--space-xl);
     line-height: 1.6;
+  }
+
+  .verify-note {
+    display: inline-block;
+    background: rgba(255, 193, 7, 0.12);
+    color: #bfa004;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-full);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: var(--space-lg);
   }
 
   .hero-actions {
@@ -414,7 +430,7 @@ const navLinks = [
 
 <script>
   document.addEventListener("astro:page-load", async () => {
-    // Confirm donation if there's a saved ID
+    // --- PayPal: confirm donation if there's a saved ID ---
     const donorId = sessionStorage.getItem("donor_id");
 
     if (donorId) {
@@ -428,6 +444,37 @@ const navLinks = [
         sessionStorage.removeItem("donor_id");
       } catch (error) {
         console.warn("Could not confirm donation:", error);
+      }
+    }
+
+    // --- Bold: backup server-side confirmation ---
+    // Bold appends `bold-order-id` (and `bold-tx-status`) to the redirect URL.
+    const params = new URLSearchParams(window.location.search);
+    const boldOrderId =
+      params.get("bold-order-id") ||
+      sessionStorage.getItem("bold_order_id") ||
+      params.get("bold_order_id") ||
+      params.get("orderId");
+
+    if (boldOrderId) {
+      try {
+        const res = await fetch("/api/bold-confirmar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: boldOrderId }),
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { status: string };
+          // If the payment is not yet approved (e.g. PSE pending), surface a
+          // "verifying" note instead of a hard confirmation.
+          if (data.status !== "completed") {
+            const note = document.getElementById("boldVerifyNote");
+            if (note) note.hidden = false;
+          }
+        }
+        sessionStorage.removeItem("bold_order_id");
+      } catch (error) {
+        console.warn("Could not confirm Bold donation:", error);
       }
     }
 
