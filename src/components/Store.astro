@@ -1,6 +1,5 @@
 ---
-import { getProducts } from "@/lib/products";
-import ProductCard from "./ProductCard.astro";
+import FeaturedProducts from "./FeaturedProducts.astro";
 import {
   getLangFromUrl,
   useTranslations,
@@ -9,14 +8,6 @@ import {
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
-
-// Read the catalog from D1 so the home respects CMS visibility (visible=1) and
-// shows up to 8 products, featured first. Requires the home pages to be SSR
-// (prerender=false).
-const db = (Astro.locals as any).runtime?.env?.DB;
-const featured = db
-  ? (await getProducts(db, { visibleOnly: true })).slice(0, 8)
-  : [];
 ---
 
 <section class="store section" id="tienda">
@@ -32,13 +23,9 @@ const featured = db
       </p>
     </div>
 
-    <div class="products-grid animate-fade-in-up" style="animation-delay: 0.3s">
-      {
-        featured.map((product) => (
-          <ProductCard product={product} showQuickAdd={false} />
-        ))
-      }
-    </div>
+    <FeaturedProducts server:defer lang={lang}>
+      <div slot="fallback" class="products-grid"></div>
+    </FeaturedProducts>
 
     <div class="store-note text-center">
       <div class="note-card card-glass">

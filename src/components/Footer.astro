@@ -1,6 +1,5 @@
 ---
 import { Instagram, Facebook, Youtube } from "lucide-astro";
-import { Image } from "astro:assets";
 import {
   getLangFromUrl,
   useTranslations,
@@ -29,8 +28,8 @@ const quickLinks = [
     >
       <!-- Brand Column -->
       <div class="footer-brand">
-        <Image
-          src={afroinLogo}
+        <img
+          src={afroinLogo.src}
           alt="AFRO IN"
           class="footer-logo h-16 w-auto brightness-0 invert"
         />

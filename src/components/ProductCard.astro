@@ -25,10 +25,11 @@ interface CardProduct {
 interface Props {
   product: CardProduct;
   showQuickAdd?: boolean;
+  lang?: "es" | "en" | "fr";
 }
 
-const { product, showQuickAdd = true } = Astro.props;
-const lang = getLangFromUrl(Astro.url);
+const { product, showQuickAdd = true, lang: langProp } = Astro.props;
+const lang = langProp ?? getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 
 const safeLang = (lang === "en" || lang === "fr" ? lang : "es") as

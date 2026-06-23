@@ -1,5 +1,4 @@
 ---
-import { Image } from "astro:assets";
 import afroinLogo from "../assets/img/logos/afroin.png";
 import CartWidget from "./CartWidget.astro";
 import LanguagePicker from "./LanguagePicker.astro";
@@ -93,8 +92,8 @@ function isActive(href: string): boolean {
       href={getTranslatedPath("/", lang)}
       class="logo flex items-center shrink-0"
     >
-      <Image
-        src={afroinLogo}
+      <img
+        src={afroinLogo.src}
         alt="AFRO IN"
         class="logo-img h-8 sm:h-12 w-auto"
         loading="eager"
@@ -102,7 +101,6 @@ function isActive(href: string): boolean {
         decoding="sync"
         width={160}
         height={75}
-        quality={80}
       />
     </a>
 
