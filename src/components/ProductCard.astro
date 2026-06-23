@@ -85,6 +85,7 @@ const translatedBadge = product.badge ? product.badge[safeLang] : null;
           <button
             class="btn btn-primary product-btn quick-add"
             data-id={product.slug}
+            data-slug={product.slug}
             data-sku={product.sku}
             data-name={localizedProduct.name}
             data-price={product.price}

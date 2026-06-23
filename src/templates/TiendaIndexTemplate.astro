@@ -277,12 +277,13 @@ const storeCta = {
 
         const button = e.currentTarget as HTMLButtonElement;
         const id = button.dataset.id || "";
+        const slug = button.dataset.slug || button.dataset.id || "";
         const sku = button.dataset.sku || "";
         const name = button.dataset.name || "";
         const price = parseInt(button.dataset.price || "0");
         const image = button.dataset.image || "";
 
-        addToCart({ id, sku, name, price, image });
+        addToCart({ id, slug, sku, name, price, image });
 
         // Get translated toast message
         const filtersEl = document.querySelector(".store-filters");

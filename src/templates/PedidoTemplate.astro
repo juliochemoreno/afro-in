@@ -1,0 +1,157 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import OrderReceipt from "@/components/OrderReceipt";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+
+interface Props {
+  lang?: string;
+}
+const { lang = "es" } = Astro.props;
+const t = useTranslations(lang as any);
+
+const navLinks = [
+  { href: getTranslatedPath("/", lang), label: t("nav.home") },
+  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
+];
+
+const OK_KEYS = [
+  "order.loading",
+  "order.success.title",
+  "order.success.text",
+  "order.pending.title",
+  "order.pending.text",
+  "order.failed.title",
+  "order.failed.text",
+  "order.number",
+  "order.total",
+  "order.continue",
+];
+const strings = Object.fromEntries(OK_KEYS.map((k) => [k, t(k as any)]));
+const storePath = getTranslatedPath("/tienda", lang);
+---
+
+<Layout title={`${t("order.success.title")} | AFRO IN`}>
+  <Header navLinks={navLinks} />
+
+  <main class="pedido-page">
+    <div class="container">
+      <OrderReceipt client:only="react" t={strings} storePath={storePath} />
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style is:global>
+  .pedido-page {
+    background: var(--color-cream);
+    min-height: 70vh;
+    padding: calc(var(--space-xl) + 80px) 0 var(--space-xl);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .pedido-page .container {
+    max-width: 560px;
+  }
+
+  .receipt {
+    background: var(--color-white);
+    border: 1px solid var(--color-cream-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+  }
+  .receipt h1 {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-sm);
+  }
+  .receipt-text {
+    color: var(--color-text-light);
+    margin-bottom: var(--space-lg);
+  }
+  .receipt-badge {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto var(--space-md);
+    color: var(--color-white);
+  }
+  .receipt-badge.ok {
+    background: #16a34a;
+  }
+  .receipt-badge.pending {
+    background: #d97706;
+  }
+  .receipt-badge.fail {
+    background: var(--color-primary);
+  }
+
+  .receipt-card {
+    text-align: left;
+    background: var(--color-cream);
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-lg);
+  }
+  .receipt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-text);
+  }
+  .receipt-items {
+    list-style: none;
+    margin: var(--space-sm) 0;
+    padding: var(--space-sm) 0;
+    border-top: 1px solid var(--color-cream-dark);
+    border-bottom: 1px solid var(--color-cream-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .receipt-items li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-md);
+    font-size: 0.9rem;
+    color: var(--color-text);
+  }
+  .receipt-total {
+    margin-top: var(--space-sm);
+    font-size: 1.1rem;
+    color: var(--color-secondary);
+  }
+  .receipt-total strong {
+    color: var(--color-primary);
+    font-family: var(--font-heading);
+  }
+
+  .receipt-status {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--color-text-light);
+  }
+  .receipt-spinner {
+    width: 38px;
+    height: 38px;
+    margin: 0 auto var(--space-md);
+    border: 3px solid var(--color-cream-dark);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: receipt-spin 0.8s linear infinite;
+  }
+  @keyframes receipt-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>

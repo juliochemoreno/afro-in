@@ -1,5 +1,9 @@
 import type { APIRoute } from "astro";
-import { confirmBoldOrder, extractOrderId } from "@/lib/bold";
+import {
+  confirmBoldOrder,
+  extractOrderId,
+  confirmTargetForOrder,
+} from "@/lib/bold";
 
 export const prerender = false;
 
@@ -32,8 +36,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return json({ error: "Provider not configured" }, 500);
     }
 
-    // Re-query Bold for the real status and update idempotently.
-    const result = await confirmBoldOrder(env.DB, env.BOLD_API_KEY, orderId);
+    // Re-query Bold for the real status and update idempotently. Route to the
+    // right table (donors vs orders) by the order id prefix.
+    const result = await confirmBoldOrder(
+      env.DB,
+      env.BOLD_API_KEY,
+      orderId,
+      confirmTargetForOrder(orderId)
+    );
 
     return json(
       {

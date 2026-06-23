@@ -1,0 +1,13 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import OrdersDashboard from "@/components/OrdersDashboard";
+
+// Access is protected via the session cookie (middleware guards /admin).
+---
+
+<AdminLayout title="Pedidos | AFRO IN Admin">
+  <main class="flex h-full flex-col overflow-hidden">
+    <OrdersDashboard client:only="react" />
+  </main>
+</AdminLayout>
