@@ -1,0 +1,65 @@
+---
+// Minimal layout for the admin panel: loads Tailwind v4 + shadcn tokens
+// (global.css) with Tailwind's own preflight, WITHOUT the public site's
+// unlayered `* { margin/padding: 0 }` reset, which would otherwise override
+// Tailwind's layered utilities used by the shadcn components.
+import "@/styles/global.css";
+import { Image } from "astro:assets";
+import afroinLogo from "@/assets/img/logos/afroin.png";
+import { LogOut } from "lucide-astro";
+
+interface Props {
+  title?: string;
+}
+const { title = "Admin | AFRO IN" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title}</title>
+  </head>
+  <body
+    class="min-h-screen bg-[#eceef6] text-foreground antialiased"
+    style="font-family: 'Inter', system-ui, sans-serif;"
+  >
+    <header
+      class="sticky top-0 z-20 border-b border-black/5 bg-white/85 backdrop-blur-md"
+    >
+      <div
+        class="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-6"
+      >
+        <a href="/" class="flex items-center gap-3">
+          <Image
+            src={afroinLogo}
+            alt="AFRO IN"
+            class="h-8 w-auto"
+            loading="eager"
+          />
+          <span
+            class="border-l border-black/10 pl-3 text-sm font-semibold text-neutral-500"
+          >
+            Panel de aportes
+          </span>
+        </a>
+        <a
+          href="/api/admin-logout"
+          class="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:border-[#e31c25] hover:text-[#e31c25]"
+        >
+          <LogOut size={16} /> Salir
+        </a>
+      </div>
+    </header>
+    <slot />
+  </body>
+</html>
