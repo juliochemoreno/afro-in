@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   Search,
   Download,
-  ChevronRight,
   Eye,
   EyeOff,
   DollarSign,
@@ -14,16 +13,10 @@ import {
   Users,
 } from "lucide-react";
 
+import type { ColDef } from "ag-grid-community";
 import { cn } from "@/lib/utils";
+import AdminGrid from "@/components/admin/AdminGrid";
 import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,7 +174,7 @@ function StatCard({
     <Card
       className={cn(
         "relative gap-0 p-4",
-        hero && "border-0 bg-neutral-900 text-white shadow-lg"
+        hero && "border bg-neutral-900 text-white shadow-lg dark:border-border"
       )}
     >
       {action ? <div className="absolute top-3 right-3">{action}</div> : null}
@@ -189,7 +182,7 @@ function StatCard({
         <div
           className={cn(
             "flex size-11 shrink-0 items-center justify-center rounded-xl",
-            hero ? "bg-[#e31c25] text-white" : "bg-[#e31c25]/10 text-[#e31c25]"
+            hero ? "bg-primary text-white" : "bg-primary/10 text-primary"
           )}
         >
           {icon}
@@ -240,6 +233,77 @@ function DetailRow({
   );
 }
 
+// --- AG Grid cell renderers ---
+function DonorCell(p: any) {
+  const d = p.data as Donor;
+  return (
+    <div className="flex h-full items-center gap-3">
+      <span className="flex w-7 shrink-0 items-center justify-center">
+        <PaymentIcon provider={d.provider} />
+      </span>
+      <span className="flex min-w-0 flex-col leading-tight">
+        <span className="text-foreground truncate font-semibold">{d.name}</span>
+        <span className="text-muted-foreground truncate text-xs">
+          {d.countryEmoji ? `${d.countryEmoji} ` : ""}
+          {d.provider === "bold" ? "Bold" : "PayPal"}
+          {d.country ? ` · ${d.country}` : ""}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function ContactCell(p: any) {
+  const d = p.data as Donor;
+  return (
+    <div className="flex h-full flex-col justify-center leading-tight">
+      <span className="truncate">{d.email}</span>
+      {d.phone ? (
+        <span className="text-muted-foreground truncate text-xs">{d.phone}</span>
+      ) : null}
+    </div>
+  );
+}
+
+function DonorStatusCell(p: any) {
+  return (
+    <div className="flex h-full items-center">
+      <StatusBadge status={p.data.status} />
+    </div>
+  );
+}
+
+function AmountCell(p: any) {
+  const d = p.data as Donor;
+  return (
+    <div className="flex h-full items-center justify-end">
+      <span className="font-extrabold">
+        {formatCurrency(d.amount, currencyOf(d))}
+      </span>
+    </div>
+  );
+}
+
+function ViewCell(p: any) {
+  const d = p.data as Donor;
+  const onView = p.context?.onView as (d: Donor) => void;
+  return (
+    <div className="flex h-full items-center justify-center">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Ver detalles"
+        onClick={(e) => {
+          e.stopPropagation();
+          onView?.(d);
+        }}
+      >
+        <Eye className="size-4" />
+      </Button>
+    </div>
+  );
+}
+
 export default function DonorsDashboard({ donors, generatedAt }: Props) {
   const [search, setSearch] = React.useState("");
   const [status, setStatus] = React.useState("all");
@@ -276,8 +340,11 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
     };
   }, [donors]);
 
-  const filtered = React.useMemo(() => {
-    const term = search.trim().toLowerCase();
+  const [displayed, setDisplayed] = React.useState(0);
+
+  // Status + method filtering is applied to rowData; the search box drives AG
+  // Grid's quick filter (matches the Donante/Contacto column values).
+  const rows = React.useMemo(() => {
     return donors.filter((d) => {
       const matchStatus =
         status === "all" ||
@@ -285,10 +352,60 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
           ? (d.status || "").startsWith("pending")
           : d.status === status);
       const matchMethod = method === "all" || (d.provider || "paypal") === method;
-      const haystack = `${d.name || ""} ${d.email || ""}`.toLowerCase();
-      return matchStatus && matchMethod && (!term || haystack.includes(term));
+      return matchStatus && matchMethod;
     });
-  }, [donors, search, status, method]);
+  }, [donors, status, method]);
+
+  const columnDefs = React.useMemo<ColDef<Donor>[]>(
+    () => [
+      {
+        headerName: "Donante",
+        field: "name",
+        flex: 2,
+        minWidth: 220,
+        cellRenderer: DonorCell,
+      },
+      {
+        headerName: "Contacto",
+        field: "email",
+        flex: 2,
+        minWidth: 200,
+        cellRenderer: ContactCell,
+      },
+      {
+        headerName: "Fecha",
+        colId: "fecha",
+        width: 200,
+        valueGetter: (p) => p.data?.created_at,
+        valueFormatter: (p) => formatDate(p.value),
+        cellClass: "text-muted-foreground",
+      },
+      {
+        headerName: "Estado",
+        field: "status",
+        width: 150,
+        cellRenderer: DonorStatusCell,
+      },
+      {
+        headerName: "Monto",
+        colId: "monto",
+        width: 160,
+        type: "rightAligned",
+        valueGetter: (p) => Number(p.data?.amount) || 0,
+        cellRenderer: AmountCell,
+      },
+      {
+        headerName: "",
+        colId: "acciones",
+        width: 70,
+        sortable: false,
+        filter: false,
+        resizable: false,
+        cellRenderer: ViewCell,
+      },
+    ],
+    []
+  );
 
   const downloadCsv = () => {
     const headers = [
@@ -338,9 +455,9 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
   };
 
   return (
-    <div className="text-foreground">
+    <div className="text-foreground flex h-full min-h-0 flex-col gap-4 p-6">
       {/* Header */}
-      <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
+      <header className="flex shrink-0 flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">
             Aportes recibidos
@@ -355,7 +472,7 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
       </header>
 
       {/* Stats */}
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid shrink-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           hero
           icon={<DollarSign className="size-5" />}
@@ -397,9 +514,9 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
                   {((stats.people / GOAL) * 100).toFixed(4)}%
                 </span>
               </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#e31c25]/10">
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-primary/10">
                 <div
-                  className="h-full rounded-full bg-[#e31c25]"
+                  className="h-full rounded-full bg-primary"
                   style={{
                     width: `${Math.max(2, (stats.people / GOAL) * 100)}%`,
                   }}
@@ -422,7 +539,7 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
           hint={
             <span className="inline-flex items-center gap-2">
               <span className="inline-flex items-center gap-1">
-                <span className="size-2 rounded-full bg-[#e31c25]" /> Bold{" "}
+                <span className="size-2 rounded-full bg-primary" /> Bold{" "}
                 {stats.bold}
               </span>
               <span className="inline-flex items-center gap-1">
@@ -457,18 +574,18 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
       </div>
 
       {/* Toolbar */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="flex shrink-0 flex-wrap items-center gap-3">
         <div className="relative min-w-[220px] flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nombre o correo"
-            className="border-border bg-white pl-9 shadow-sm"
+            className="border-border bg-background pl-9 shadow-sm"
           />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="border-border w-[180px] bg-white shadow-sm">
+          <SelectTrigger className="border-border w-[180px] bg-background shadow-sm">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -479,7 +596,7 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
           </SelectContent>
         </Select>
         <Select value={method} onValueChange={setMethod}>
-          <SelectTrigger className="border-border w-[160px] bg-white shadow-sm">
+          <SelectTrigger className="border-border w-[160px] bg-background shadow-sm">
             <SelectValue placeholder="Método" />
           </SelectTrigger>
           <SelectContent>
@@ -491,91 +608,27 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
         <Button
           variant="outline"
           onClick={downloadCsv}
-          className="bg-white shadow-sm"
+          className="bg-background shadow-sm"
         >
           <Download /> Descargar
         </Button>
       </div>
 
-      {/* Table */}
-      <Card className="overflow-hidden py-0">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="py-4 pl-6">Donante</TableHead>
-              <TableHead>Contacto</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="pr-6 text-right">Monto</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-muted-foreground py-12 text-center"
-                >
-                  No hay aportes que coincidan con el filtro.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((d, i) => (
-                <TableRow
-                  key={d.id ?? i}
-                  className="cursor-pointer"
-                  onClick={() => setSelected(d)}
-                >
-                  <TableCell className="py-4 pl-6">
-                    <div className="flex items-center gap-3">
-                      <span className="flex w-7 shrink-0 items-center justify-center">
-                        <PaymentIcon provider={d.provider} />
-                      </span>
-                      <span className="flex flex-col">
-                        <span className="text-foreground font-semibold">
-                          {d.name}
-                        </span>
-                        <span className="text-muted-foreground text-xs">
-                          {d.countryEmoji ? `${d.countryEmoji} ` : ""}
-                          {d.provider === "bold" ? "Bold" : "PayPal"}
-                          {d.country ? ` · ${d.country}` : ""}
-                        </span>
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span>{d.email}</span>
-                      {d.phone ? (
-                        <span className="text-muted-foreground text-xs">
-                          {d.phone}
-                        </span>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(d.created_at)}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={d.status} />
-                  </TableCell>
-                  <TableCell className="pr-6 text-right">
-                    <span className="inline-flex items-center gap-2">
-                      <span className="font-extrabold">
-                        {formatCurrency(d.amount, currencyOf(d))}
-                      </span>
-                      <ChevronRight className="text-muted-foreground size-4" />
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+      {/* Grid */}
+      <AdminGrid<Donor>
+        rowData={rows}
+        columnDefs={columnDefs}
+        quickFilterText={search}
+        context={{ onView: setSelected }}
+        rowHeight={60}
+        rowClass="cursor-pointer"
+        overlayNoRowsTemplate="No hay aportes que coincidan con el filtro."
+        onRowClicked={(e) => setSelected(e.data ?? null)}
+        onModelUpdated={(e) => setDisplayed(e.api.getDisplayedRowCount())}
+      />
 
-      <p className="text-muted-foreground mt-3 text-sm">
-        {filtered.length} de {donors.length} aportes
+      <p className="text-muted-foreground shrink-0 text-sm">
+        {displayed} de {donors.length} aportes
       </p>
 
       {/* Detail dialog */}

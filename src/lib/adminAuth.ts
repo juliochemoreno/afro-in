@@ -44,3 +44,21 @@ export async function isValidAdminSession(
   }
   return diff === 0;
 }
+
+// Guard for /api/admin/* endpoints. The middleware only protects /admin PAGES,
+// not /api routes, so every admin API endpoint must call this explicitly.
+export async function requireAdmin(context: {
+  locals: any;
+  cookies: { get(name: string): { value: string } | undefined };
+}): Promise<boolean> {
+  const env = (context.locals as any).runtime?.env ?? {};
+  const cookie = context.cookies.get(ADMIN_COOKIE)?.value;
+  return isValidAdminSession(env, cookie);
+}
+
+export function adminUnauthorized(): Response {
+  return new Response(JSON.stringify({ error: "unauthorized" }), {
+    status: 401,
+    headers: { "Content-Type": "application/json" },
+  });
+}

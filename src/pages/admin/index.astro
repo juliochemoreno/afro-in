@@ -1,0 +1,175 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { DollarSign, Clock, Users, Package, ArrowRight } from "lucide-astro";
+
+// Access is protected via the session cookie (middleware guards /admin).
+const GOAL = 1_000_000;
+const db = (Astro.locals as any).runtime?.env?.DB;
+
+let donStats = { cop: 0, usd: 0, people: 0 };
+let pending = { n: 0, cop: 0 };
+let prod = { total: 0, visible: 0 };
+let recent: any[] = [];
+
+if (db) {
+  try {
+    donStats =
+      (await db
+        .prepare(
+          `SELECT
+             COALESCE(SUM(CASE WHEN UPPER(COALESCE(currency,'COP'))='COP' THEN amount ELSE 0 END),0) AS cop,
+             COALESCE(SUM(CASE WHEN UPPER(COALESCE(currency,'COP'))='USD' THEN amount ELSE 0 END),0) AS usd,
+             COUNT(DISTINCT LOWER(TRIM(email))) AS people
+           FROM donors WHERE status='completed'`
+        )
+        .first()) || donStats;
+    pending =
+      (await db
+        .prepare(
+          `SELECT COUNT(*) AS n,
+             COALESCE(SUM(CASE WHEN UPPER(COALESCE(currency,'COP'))='COP' THEN amount ELSE 0 END),0) AS cop
+           FROM donors WHERE status IN ('pending','pending_payment')`
+        )
+        .first()) || pending;
+    prod =
+      (await db
+        .prepare(
+          `SELECT COUNT(*) AS total, COALESCE(SUM(visible),0) AS visible FROM products`
+        )
+        .first()) || prod;
+    const r = await db
+      .prepare(
+        `SELECT name, email, amount, currency, created_at FROM donors
+         WHERE status IN ('pending','pending_payment') ORDER BY created_at DESC LIMIT 5`
+      )
+      .all();
+    recent = r.results || [];
+  } catch (e) {
+    console.error("resumen error", e);
+  }
+}
+
+const fmt = (n: number, cur: string) =>
+  new Intl.NumberFormat(cur === "USD" ? "en-US" : "es-CO", {
+    style: "currency",
+    currency: cur,
+    minimumFractionDigits: cur === "USD" ? 2 : 0,
+  }).format(n);
+
+const pct = Math.min(100, (Number(donStats.people) / GOAL) * 100);
+---
+
+<AdminLayout title="Resumen | AFRO IN Admin">
+  <main class="mx-auto h-full w-full max-w-[1280px] overflow-y-auto px-6 py-8">
+    <header class="mb-7">
+      <h1 class="text-3xl font-extrabold tracking-tight">Resumen</h1>
+      <p class="text-muted-foreground mt-1 text-sm">
+        Movimiento un Millón de Corazones
+      </p>
+    </header>
+
+    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- Recaudado -->
+      <div class="bg-card rounded-xl border p-5 shadow-sm">
+        <div
+          class="bg-primary/10 text-primary mb-3 flex size-10 items-center justify-center rounded-xl"
+        >
+          <DollarSign size={20} />
+        </div>
+        <p class="text-muted-foreground text-sm font-semibold">Recaudado</p>
+        <p class="mt-1 text-2xl font-extrabold">{fmt(Number(donStats.cop), "COP")}</p>
+        <p class="text-muted-foreground mt-0.5 text-sm font-bold">
+          + {fmt(Number(donStats.usd), "USD")}
+        </p>
+      </div>
+
+      <!-- Personas vs meta -->
+      <div class="bg-card rounded-xl border p-5 shadow-sm">
+        <div
+          class="bg-primary/10 text-primary mb-3 flex size-10 items-center justify-center rounded-xl"
+        >
+          <Users size={20} />
+        </div>
+        <p class="text-muted-foreground text-sm font-semibold">Personas unidas</p>
+        <p class="mt-1 text-2xl font-extrabold">
+          {Number(donStats.people).toLocaleString("es-CO")}
+          <span class="text-muted-foreground text-base font-semibold">/ 1.000.000</span>
+        </p>
+        <div class="bg-primary/10 mt-3 h-1.5 overflow-hidden rounded-full">
+          <div class="bg-primary h-full rounded-full" style={`width:${Math.max(2, pct)}%`}></div>
+        </div>
+      </div>
+
+      <!-- Pendientes -->
+      <div class="bg-card rounded-xl border p-5 shadow-sm">
+        <div
+          class="bg-primary/10 text-primary mb-3 flex size-10 items-center justify-center rounded-xl"
+        >
+          <Clock size={20} />
+        </div>
+        <p class="text-muted-foreground text-sm font-semibold">Pendientes</p>
+        <p class="mt-1 text-2xl font-extrabold">{Number(pending.n)}</p>
+        <p class="mt-0.5 text-sm font-medium">
+          {
+            Number(pending.cop) > 0 ? (
+              <span class="text-amber-600 dark:text-amber-400">
+                {fmt(Number(pending.cop), "COP")} por confirmar
+              </span>
+            ) : (
+              <span class="text-emerald-600 dark:text-emerald-400">Todo al día</span>
+            )
+          }
+        </p>
+      </div>
+
+      <!-- Productos -->
+      <div class="bg-card rounded-xl border p-5 shadow-sm">
+        <div
+          class="bg-primary/10 text-primary mb-3 flex size-10 items-center justify-center rounded-xl"
+        >
+          <Package size={20} />
+        </div>
+        <p class="text-muted-foreground text-sm font-semibold">Productos</p>
+        <p class="mt-1 text-2xl font-extrabold">{Number(prod.visible)}</p>
+        <p class="text-muted-foreground mt-0.5 text-sm">
+          visibles · {Number(prod.total)} en total
+        </p>
+      </div>
+    </div>
+
+    <!-- Requiere atención -->
+    <div class="bg-card rounded-xl border shadow-sm">
+      <div class="flex items-center justify-between border-b px-5 py-4">
+        <h2 class="font-bold">Aportes pendientes</h2>
+        <a
+          href="/admin/donadores"
+          class="text-primary inline-flex items-center gap-1 text-sm font-semibold hover:underline"
+        >
+          Ver todos <ArrowRight size={14} />
+        </a>
+      </div>
+      {
+        recent.length > 0 ? (
+          <ul class="divide-border divide-y">
+            {recent.map((d: any) => (
+              <li class="flex items-center justify-between px-5 py-3 text-sm">
+                <div class="flex flex-col">
+                  <span class="font-medium">{d.name}</span>
+                  <span class="text-muted-foreground text-xs">{d.email}</span>
+                </div>
+                <span class="font-bold">
+                  {fmt(Number(d.amount), (d.currency || "COP").toUpperCase())}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="text-muted-foreground px-5 py-8 text-center text-sm">
+            No hay aportes pendientes. 🎉
+          </p>
+        )
+      }
+    </div>
+  </main>
+</AdminLayout>

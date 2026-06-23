@@ -1,17 +1,36 @@
 ---
-// Minimal layout for the admin panel: loads Tailwind v4 + shadcn tokens
-// (global.css) with Tailwind's own preflight, WITHOUT the public site's
-// unlayered `* { margin/padding: 0 }` reset, which would otherwise override
-// Tailwind's layered utilities used by the shadcn components.
+// Admin shell: fixed sidebar + dark-mode aware. Loads Tailwind v4 + shadcn
+// tokens (global.css) without the public site's reset. Uses semantic color
+// tokens (bg-background/bg-card/bg-sidebar/...) so light & dark both work.
 import "@/styles/global.css";
 import { Image } from "astro:assets";
 import afroinLogo from "@/assets/img/logos/afroin.png";
-import { LogOut } from "lucide-astro";
+import {
+  LayoutDashboard,
+  Users,
+  Package,
+  Tags,
+  LogOut,
+  Sun,
+  Moon,
+} from "lucide-astro";
 
 interface Props {
   title?: string;
 }
 const { title = "Admin | AFRO IN" } = Astro.props;
+
+const path = Astro.url.pathname;
+const navItems = [
+  { href: "/admin", label: "Resumen", icon: LayoutDashboard },
+  { href: "/admin/donadores", label: "Aportes", icon: Users },
+  { href: "/admin/productos", label: "Productos", icon: Package },
+  { href: "/admin/atributos", label: "Atributos", icon: Tags },
+];
+const isActive = (href: string) =>
+  href === "/admin"
+    ? path === "/admin" || path === "/admin/"
+    : path.startsWith(href);
 ---
 
 <!doctype html>
@@ -28,38 +47,134 @@ const { title = "Admin | AFRO IN" } = Astro.props;
       rel="stylesheet"
     />
     <title>{title}</title>
+    <style is:global>
+      /* Let client:only islands participate in the parent flex/height chain so
+         full-height grids can fill the content area. */
+      astro-island {
+        display: contents;
+      }
+    </style>
+    <script is:inline>
+      // Pre-paint: apply saved theme before first paint to avoid a flash.
+      (function () {
+        try {
+          var t = localStorage.getItem("admin-theme");
+          var prefersDark = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+          ).matches;
+          if (t === "dark" || (!t && prefersDark)) {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body
-    class="min-h-screen bg-[#eceef6] text-foreground antialiased"
+    class="bg-background text-foreground h-dvh overflow-hidden antialiased"
     style="font-family: 'Inter', system-ui, sans-serif;"
   >
-    <header
-      class="sticky top-0 z-20 border-b border-black/5 bg-white/85 backdrop-blur-md"
-    >
-      <div
-        class="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-6"
+    <div class="flex h-full">
+      <!-- Sidebar (desktop) -->
+      <aside
+        class="bg-sidebar border-sidebar-border hidden h-full w-60 shrink-0 flex-col border-r lg:flex"
       >
-        <a href="/" class="flex items-center gap-3">
-          <Image
-            src={afroinLogo}
-            alt="AFRO IN"
-            class="h-8 w-auto"
-            loading="eager"
-          />
-          <span
-            class="border-l border-black/10 pl-3 text-sm font-semibold text-neutral-500"
+        <div class="border-sidebar-border flex h-16 items-center gap-2 border-b px-5">
+          <Image src={afroinLogo} alt="AFRO IN" class="h-7 w-auto" loading="eager" />
+          <span class="text-muted-foreground text-xs font-semibold">Admin</span>
+        </div>
+        <nav class="flex-1 space-y-1 p-3">
+          {
+            navItems.map((item) => (
+              <a
+                href={item.href}
+                class:list={[
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  isActive(item.href)
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
+                ]}
+              >
+                <item.icon size={18} />
+                {item.label}
+              </a>
+            ))
+          }
+        </nav>
+        <div class="border-sidebar-border space-y-1 border-t p-3">
+          <button
+            id="theme-toggle"
+            type="button"
+            class="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
           >
-            Panel de aportes
-          </span>
-        </a>
-        <a
-          href="/api/admin-logout"
-          class="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:border-[#e31c25] hover:text-[#e31c25]"
+            <Moon size={18} class="dark:hidden" />
+            <Sun size={18} class="hidden dark:block" />
+            <span class="dark:hidden">Modo oscuro</span>
+            <span class="hidden dark:block">Modo claro</span>
+          </button>
+          <a
+            href="/api/admin-logout"
+            class="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+          >
+            <LogOut size={18} /> Salir
+          </a>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <div class="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+        <!-- Mobile top bar -->
+        <header
+          class="border-border bg-background/85 sticky top-0 z-20 flex items-center justify-between gap-3 border-b px-4 py-3 backdrop-blur-md lg:hidden"
         >
-          <LogOut size={16} /> Salir
-        </a>
+          <Image src={afroinLogo} alt="AFRO IN" class="h-7 w-auto" />
+          <div class="flex items-center gap-1">
+            {
+              navItems.map((item) => (
+                <a
+                  href={item.href}
+                  class:list={[
+                    "rounded-md px-2.5 py-1.5 text-xs font-semibold",
+                    isActive(item.href)
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground",
+                  ]}
+                >
+                  {item.label}
+                </a>
+              ))
+            }
+            <button
+              id="theme-toggle-mobile"
+              type="button"
+              class="text-muted-foreground ml-1 p-1.5"
+              aria-label="Cambiar tema"
+            >
+              <Moon size={18} class="dark:hidden" />
+              <Sun size={18} class="hidden dark:block" />
+            </button>
+            <a href="/api/admin-logout" class="text-muted-foreground p-1.5" aria-label="Salir">
+              <LogOut size={18} />
+            </a>
+          </div>
+        </header>
+
+        <div class="min-h-0 flex-1 overflow-hidden"><slot /></div>
       </div>
-    </header>
-    <slot />
+    </div>
+
+    <script is:inline>
+      function toggleTheme() {
+        var isDark = document.documentElement.classList.toggle("dark");
+        try {
+          localStorage.setItem("admin-theme", isDark ? "dark" : "light");
+        } catch (e) {}
+      }
+      document
+        .getElementById("theme-toggle")
+        ?.addEventListener("click", toggleTheme);
+      document
+        .getElementById("theme-toggle-mobile")
+        ?.addEventListener("click", toggleTheme);
+    </script>
   </body>
 </html>
