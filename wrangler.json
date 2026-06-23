@@ -20,5 +20,11 @@
       "database_name": "afroin",
       "database_id": "1a752558-2271-40d7-8553-28f7a622eb20"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "afroin-media"
+    }
   ]
 }

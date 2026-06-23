@@ -1,18 +1,29 @@
 ---
-import { Image } from "astro:assets";
-import {
-  formatPrice,
-  type Product,
-  getLocalizedProduct,
-} from "@/data/products";
+import { formatPrice } from "@/lib/products";
+import ImagePlaceholder from "./ImagePlaceholder.astro";
 import {
   getLangFromUrl,
   getTranslatedPath,
   useTranslations,
 } from "@/i18n/utils";
 
+// Image-source agnostic: the store passes D1 products (images as {url}) and the
+// home passes static products mapped to {url}. Localization is done inline so
+// this card does not depend on either products module's shape.
+interface CardProduct {
+  slug: string;
+  sku: string;
+  name: { es: string; en: string; fr: string };
+  category: { es: string; en: string; fr: string };
+  price: number;
+  priceUSD?: number | null;
+  badge?: { es: string; en: string; fr: string } | null;
+  sizes?: string[];
+  images: { url: string }[];
+}
+
 interface Props {
-  product: Product;
+  product: CardProduct;
   showQuickAdd?: boolean;
 }
 
@@ -20,38 +31,48 @@ const { product, showQuickAdd = true } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 
-const localizedProduct = getLocalizedProduct(product, lang);
+const safeLang = (lang === "en" || lang === "fr" ? lang : "es") as
+  | "es"
+  | "en"
+  | "fr";
+const localizedProduct = {
+  name: product.name[safeLang],
+  category: product.category[safeLang],
+};
 const productPath = getTranslatedPath(`/tienda/${product.slug}`, lang);
+const mainImage = product.images[0]?.url ?? "";
 
-// Translate badge
-const badgeKey = product.badge
-  ? `store.badge.${product.badge.toLowerCase()}`
-  : null;
-const translatedBadge = badgeKey ? t(badgeKey as any) : null;
+// Badge = first tag's localized name (taxonomy), shown directly.
+const translatedBadge = product.badge ? product.badge[safeLang] : null;
 ---
 
 <div class="product-card" data-category={localizedProduct.category}>
-  {
-    translatedBadge && (
-      <span class={`product-badge ${product.badge?.toLowerCase()}`}>
-        {translatedBadge}
-      </span>
-    )
-  }
+  {translatedBadge && <span class="product-badge">{translatedBadge}</span>}
   <a href={productPath} class="product-link">
     <div class="product-image">
-      <Image
-        src={product.images[0]}
-        alt={localizedProduct.name}
-        class="product-img"
-      />
+      {
+        mainImage ? (
+          <img
+            src={mainImage}
+            alt={localizedProduct.name}
+            class="product-img"
+            loading="lazy"
+          />
+        ) : (
+          <ImagePlaceholder />
+        )
+      }
     </div>
     <h3 class="product-name">{localizedProduct.name}</h3>
   </a>
   <div class="product-info">
     <div class="product-prices">
       <span class="price-cop">{formatPrice(product.price)}</span>
-      <span class="price-usd">~${product.priceUSD} USD</span>
+      {
+        product.priceUSD ? (
+          <span class="price-usd">~${product.priceUSD} USD</span>
+        ) : null
+      }
     </div>
     <div class="product-actions">
       {
@@ -66,7 +87,7 @@ const translatedBadge = badgeKey ? t(badgeKey as any) : null;
             data-sku={product.sku}
             data-name={localizedProduct.name}
             data-price={product.price}
-            data-image={product.images[0].src}
+            data-image={mainImage}
           >
             {t("store.btn.add")}
           </button>
@@ -111,15 +132,7 @@ const translatedBadge = badgeKey ? t(badgeKey as any) : null;
     font-weight: 600;
     text-transform: uppercase;
     z-index: 1;
-  }
-
-  .product-badge.popular {
     background: var(--color-primary);
-    color: var(--color-white);
-  }
-
-  .product-badge.nuevo {
-    background: var(--color-success);
     color: var(--color-white);
   }
 

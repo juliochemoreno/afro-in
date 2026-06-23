@@ -1,0 +1,13 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import TaxonomyManager from "@/components/admin/TaxonomyManager";
+
+// Access is protected via the session cookie (middleware guards /admin).
+---
+
+<AdminLayout title="Atributos | AFRO IN Admin">
+  <main class="flex h-full flex-col overflow-hidden">
+    <TaxonomyManager client:only="react" />
+  </main>
+</AdminLayout>
