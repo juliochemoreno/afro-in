@@ -1,0 +1,50 @@
+---
+import { getProducts } from "@/lib/products";
+import ProductCard from "./ProductCard.astro";
+
+interface Props {
+  lang: "es" | "en" | "fr";
+}
+const { lang } = Astro.props;
+
+// Rendered as a server island (server:defer from Store.astro) so the home page
+// stays statically built — and its <Image> assets keep being optimized at build
+// — while this section still reads D1 live at request time (respecting CMS
+// visibility). Product images come from R2 via /media, which works at runtime.
+// `lang` is passed as a prop because inside a server island `Astro.url` is the
+// island endpoint URL, not the page URL.
+const db = (Astro.locals as any).runtime?.env?.DB;
+const featured = db
+  ? (await getProducts(db, { visibleOnly: true })).slice(0, 8)
+  : [];
+---
+
+<div class="products-grid">
+  {
+    featured.map((product) => (
+      <ProductCard product={product} lang={lang} showQuickAdd={false} />
+    ))
+  }
+</div>
+
+<style>
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+
+  @media (max-width: 968px) {
+    .products-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .products-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-sm);
+    }
+  }
+</style>
