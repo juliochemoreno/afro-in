@@ -253,7 +253,7 @@ export default function OrdersDashboard() {
   );
 
   return (
-    <div className="text-foreground flex h-full min-h-0 flex-col gap-4 p-6">
+    <div className="text-foreground flex flex-col gap-4 p-6 lg:h-full lg:min-h-0">
       <header className="shrink-0">
         <h1 className="text-3xl font-extrabold tracking-tight">Pedidos</h1>
         <p className="text-muted-foreground mt-1 text-sm">

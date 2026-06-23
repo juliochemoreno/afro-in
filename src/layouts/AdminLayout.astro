@@ -13,6 +13,8 @@ import {
   LogOut,
   Sun,
   Moon,
+  Menu,
+  X,
 } from "lucide-astro";
 
 interface Props {
@@ -71,10 +73,10 @@ const isActive = (href: string) =>
     </script>
   </head>
   <body
-    class="bg-background text-foreground h-dvh overflow-hidden antialiased"
+    class="bg-background text-foreground min-h-dvh overflow-x-hidden lg:h-dvh lg:overflow-hidden antialiased"
     style="font-family: 'Inter', system-ui, sans-serif;"
   >
-    <div class="flex h-full">
+    <div class="flex min-h-dvh lg:h-full">
       <!-- Sidebar (desktop) -->
       <aside
         class="bg-sidebar border-sidebar-border hidden h-full w-60 shrink-0 flex-col border-r lg:flex"
@@ -122,44 +124,68 @@ const isActive = (href: string) =>
       </aside>
 
       <!-- Content -->
-      <div class="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+      <div class="flex min-w-0 flex-1 flex-col lg:h-full lg:overflow-hidden">
         <!-- Mobile top bar -->
         <header
-          class="border-border bg-background/85 sticky top-0 z-20 flex items-center justify-between gap-3 border-b px-4 py-3 backdrop-blur-md lg:hidden"
+          class="border-border bg-background/85 sticky top-0 z-30 flex items-center justify-between gap-3 border-b px-4 py-3 backdrop-blur-md lg:hidden"
         >
           <img src={afroinLogo.src} alt="AFRO IN" class="h-7 w-auto" />
-          <div class="flex items-center gap-1">
-            {
-              navItems.map((item) => (
-                <a
-                  href={item.href}
-                  class:list={[
-                    "rounded-md px-2.5 py-1.5 text-xs font-semibold",
-                    isActive(item.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground",
-                  ]}
-                >
-                  {item.label}
-                </a>
-              ))
-            }
-            <button
-              id="theme-toggle-mobile"
-              type="button"
-              class="text-muted-foreground ml-1 p-1.5"
-              aria-label="Cambiar tema"
-            >
-              <Moon size={18} class="dark:hidden" />
-              <Sun size={18} class="hidden dark:block" />
-            </button>
-            <a href="/api/admin-logout" class="text-muted-foreground p-1.5" aria-label="Salir">
-              <LogOut size={18} />
-            </a>
+          <button
+            id="mobile-menu-toggle"
+            type="button"
+            class="text-foreground -mr-1 p-1.5"
+            aria-label="Menú"
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+          >
+            <Menu id="mm-icon-open" size={24} />
+            <X id="mm-icon-close" size={24} class="hidden" />
+          </button>
+
+          <!-- Collapsible menu (drops down from the sticky header) -->
+          <div
+            id="mobile-menu"
+            class="border-border bg-background absolute inset-x-0 top-full hidden border-b shadow-lg"
+          >
+            <nav class="space-y-1 p-3">
+              {
+                navItems.map((item) => (
+                  <a
+                    href={item.href}
+                    class:list={[
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
+                      isActive(item.href)
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground",
+                    ]}
+                  >
+                    <item.icon size={18} />
+                    {item.label}
+                  </a>
+                ))
+              }
+              <div class="border-border my-1 border-t"></div>
+              <button
+                id="theme-toggle-mobile"
+                type="button"
+                class="text-muted-foreground flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium"
+              >
+                <Moon size={18} class="dark:hidden" />
+                <Sun size={18} class="hidden dark:block" />
+                <span class="dark:hidden">Modo oscuro</span>
+                <span class="hidden dark:block">Modo claro</span>
+              </button>
+              <a
+                href="/api/admin-logout"
+                class="text-muted-foreground flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium"
+              >
+                <LogOut size={18} /> Salir
+              </a>
+            </nav>
           </div>
         </header>
 
-        <div class="min-h-0 flex-1 overflow-hidden"><slot /></div>
+        <div class="flex-1 lg:min-h-0 lg:overflow-hidden"><slot /></div>
       </div>
     </div>
 
@@ -176,6 +202,34 @@ const isActive = (href: string) =>
       document
         .getElementById("theme-toggle-mobile")
         ?.addEventListener("click", toggleTheme);
+
+      // Collapsible mobile menu
+      (function () {
+        var mt = document.getElementById("mobile-menu-toggle");
+        var mm = document.getElementById("mobile-menu");
+        var oi = document.getElementById("mm-icon-open");
+        var ci = document.getElementById("mm-icon-close");
+        if (!mt || !mm) return;
+        function setOpen(open) {
+          mm.classList.toggle("hidden", !open);
+          if (oi) oi.classList.toggle("hidden", open);
+          if (ci) ci.classList.toggle("hidden", !open);
+          mt.setAttribute("aria-expanded", String(open));
+        }
+        mt.addEventListener("click", function (e) {
+          e.stopPropagation();
+          setOpen(mm.classList.contains("hidden"));
+        });
+        document.addEventListener("click", function (e) {
+          if (
+            !mm.classList.contains("hidden") &&
+            !mm.contains(e.target) &&
+            !mt.contains(e.target)
+          ) {
+            setOpen(false);
+          }
+        });
+      })();
     </script>
   </body>
 </html>

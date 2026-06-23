@@ -135,7 +135,7 @@ export default function TaxonomyManager() {
   };
 
   return (
-    <div className="text-foreground flex h-full min-h-0 flex-col gap-4 p-6">
+    <div className="text-foreground flex flex-col gap-4 p-6 lg:h-full lg:min-h-0">
       <header className="flex shrink-0 items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Atributos</h1>
@@ -151,7 +151,7 @@ export default function TaxonomyManager() {
       <Tabs
         value={active}
         onValueChange={(v) => setActive(v as TaxType)}
-        className="flex min-h-0 flex-1 flex-col"
+        className="flex flex-col lg:min-h-0 lg:flex-1"
       >
         <TabsList className="shrink-0">
           {TABS.map((t) => (
@@ -164,7 +164,7 @@ export default function TaxonomyManager() {
           <TabsContent
             key={t.type}
             value={t.type}
-            className="mt-3 min-h-0 flex-1 overflow-y-auto"
+            className="mt-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
           >
             <Card className="gap-0 divide-y py-0">
               {data[t.type].length === 0 ? (
