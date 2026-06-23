@@ -1,0 +1,289 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import CheckoutForm from "@/components/CheckoutForm";
+import { countries } from "@/data/countries";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+
+interface Props {
+  lang?: string;
+}
+const { lang = "es" } = Astro.props;
+const t = useTranslations(lang as any);
+
+const navLinks = [
+  { href: getTranslatedPath("/", lang), label: t("nav.home") },
+  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
+];
+
+// Plain strings object for the React island.
+const CK_KEYS = [
+  "checkout.contact.title",
+  "checkout.name",
+  "checkout.name.ph",
+  "checkout.email",
+  "checkout.email.ph",
+  "checkout.phone",
+  "checkout.phone.ph",
+  "checkout.country",
+  "checkout.shipping.title",
+  "checkout.department",
+  "checkout.department.ph",
+  "checkout.city",
+  "checkout.city.ph",
+  "checkout.address",
+  "checkout.address.ph",
+  "checkout.notes",
+  "checkout.notes.ph",
+  "checkout.summary.title",
+  "checkout.total",
+  "checkout.pay",
+  "checkout.securenote",
+  "checkout.empty.title",
+  "checkout.empty.cta",
+  "checkout.processing",
+  "checkout.err.name",
+  "checkout.err.email",
+  "checkout.err.city",
+  "checkout.err.address",
+  "checkout.err.generic",
+];
+const strings = Object.fromEntries(CK_KEYS.map((k) => [k, t(k as any)]));
+
+const countryStrings = {
+  placeholder: t("join.form.country.select"),
+  search: t("join.country.search"),
+  empty: t("join.country.error"),
+};
+
+const successPath = getTranslatedPath("/pedido", lang);
+const storePath = getTranslatedPath("/tienda", lang);
+---
+
+<Layout title={`${t("checkout.title")} | AFRO IN`}>
+  <Header navLinks={navLinks} />
+
+  <main class="checkout-page">
+    <div class="container">
+      <header class="checkout-head">
+        <h1>{t("checkout.title")}</h1>
+        <p>{t("checkout.subtitle")}</p>
+      </header>
+
+      <CheckoutForm
+        client:only="react"
+        lang={lang as any}
+        countries={countries}
+        successPath={successPath}
+        storePath={storePath}
+        countryStrings={countryStrings}
+        t={strings}
+      />
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style is:global>
+  .checkout-page {
+    background: var(--color-cream);
+    min-height: 70vh;
+    padding: calc(var(--space-xl) + 80px) 0 var(--space-xl);
+  }
+  .checkout-head {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+  }
+  .checkout-head h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-xs);
+  }
+  .checkout-head p {
+    color: var(--color-text-light);
+  }
+
+  .checkout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: var(--space-lg);
+    align-items: start;
+  }
+  @media (max-width: 880px) {
+    .checkout-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .checkout-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .checkout-card {
+    background: var(--color-white);
+    border: 1px solid var(--color-cream-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+  }
+  .checkout-card legend {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-secondary);
+    padding: 0 var(--space-xs);
+  }
+
+  .ck-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+  }
+  @media (max-width: 520px) {
+    .ck-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ck-field {
+    margin-top: var(--space-md);
+    display: flex;
+    flex-direction: column;
+  }
+  .ck-field > label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: var(--space-xs);
+    color: var(--color-text);
+  }
+  .ck-field input,
+  .ck-field textarea {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-cream-dark);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 1rem;
+    background: var(--color-white);
+    color: var(--color-secondary);
+    transition: all var(--transition-fast);
+  }
+  .ck-field textarea {
+    resize: vertical;
+  }
+  .ck-field input:focus,
+  .ck-field textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+  }
+
+  .checkout-summary {
+    background: var(--color-white);
+    border: 1px solid var(--color-cream-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    position: sticky;
+    top: 90px;
+  }
+  .checkout-summary h3 {
+    font-family: var(--font-heading);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+  }
+  .ck-items {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin: 0 0 var(--space-md);
+    padding: 0;
+  }
+  .ck-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+  .ck-item-img {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--color-cream);
+  }
+  .ck-item-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+  }
+  .ck-item-name {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--color-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ck-item-meta {
+    font-size: 0.78rem;
+    color: var(--color-text-light);
+  }
+  .ck-item-price {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--color-secondary);
+    white-space: nowrap;
+  }
+  .ck-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-cream-dark);
+    font-size: 1.1rem;
+    color: var(--color-secondary);
+  }
+  .ck-total strong {
+    font-family: var(--font-heading);
+    color: var(--color-primary);
+    font-size: 1.3rem;
+  }
+  .ck-pay {
+    width: 100%;
+    margin-top: var(--space-md);
+  }
+  .ck-pay:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .ck-secure {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--color-text-light);
+    margin-top: var(--space-sm);
+  }
+  .ck-error {
+    margin-top: var(--space-sm);
+    color: var(--color-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .checkout-empty {
+    text-align: center;
+    padding: var(--space-xl) 0;
+  }
+  .checkout-empty p {
+    color: var(--color-text-light);
+    margin-bottom: var(--space-md);
+  }
+  .checkout-loading {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--color-text-light);
+  }
+</style>

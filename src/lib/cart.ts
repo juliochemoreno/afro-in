@@ -3,6 +3,7 @@
 
 export interface CartItem {
   id: string;
+  slug?: string; // canonical product slug — used server-side to re-price at checkout
   sku?: string;
   name: string;
   price: number;
@@ -70,6 +71,7 @@ export function addToCart(item: Omit<CartItem, 'quantity'> & { quantity?: number
     cart.items[existingIndex].price = item.price;
     if (item.image) cart.items[existingIndex].image = item.image;
     if (item.sku) cart.items[existingIndex].sku = item.sku;
+    if (item.slug) cart.items[existingIndex].slug = item.slug;
   } else {
     cart.items.push({ ...item, quantity: item.quantity || 1 });
   }
@@ -160,32 +162,6 @@ export function onCartOpen(callback: () => void): () => void {
   if (typeof window === 'undefined') return () => { };
   window.addEventListener(CART_OPEN_EVENT, callback);
   return () => window.removeEventListener(CART_OPEN_EVENT, callback);
-}
-
-// Generate WhatsApp checkout URL
-export function getWhatsAppCheckoutUrl(customerName?: string): string {
-  const cart = getCart();
-  const WHATSAPP_NUMBER = '41782231433';
-
-  if (cart.items.length === 0) return '';
-
-  let message = '🛒 *NUEVO PEDIDO AFRO IN*\n';
-  if (customerName) message += `👤 *Cliente:* ${customerName}\n`;
-  message += '\n';
-
-  cart.items.forEach(item => {
-    const sizeText = item.size ? ` (${item.size})` : '';
-    const colorText = item.color ? ` - ${item.color}` : '';
-    const skuText = item.sku ? ` [SKU: ${item.sku}]` : '';
-    message += `${item.quantity}x ${item.name}${sizeText}${colorText}${skuText} - ${formatPrice(item.price * item.quantity)}\n`;
-  });
-
-  message += `\n💰 *Total: ${formatPrice(cart.totalPrice)}*\n\n`;
-  message += 'Por favor confirmar disponibilidad y coordinar envío. 🙏\n\n';
-  message += '--- \n';
-  message += '🛒 Realizado desde https://afroin.org';
-
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
 // Show toast notification
