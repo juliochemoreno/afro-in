@@ -64,10 +64,10 @@ const generatedAt = new Date().toISOString();
 ---
 
 <AdminLayout title="Aportes | AFRO IN Admin">
-  <main class="mx-auto max-w-[1180px] px-6 py-10">
+  <main class="flex h-full flex-col overflow-hidden">
     {
       error && (
-        <div class="mb-6 rounded-xl bg-amber-100 px-5 py-3 font-medium text-amber-800">
+        <div class="mx-6 mt-4 shrink-0 rounded-xl bg-amber-100 px-5 py-3 font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
           ⚠️ {error}
         </div>
       )
