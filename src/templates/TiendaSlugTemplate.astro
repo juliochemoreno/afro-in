@@ -2,24 +2,25 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import { Image } from "astro:assets";
+import ImagePlaceholder from "@/components/ImagePlaceholder.astro";
 import {
-  getProductBySlug,
   getRelatedProducts,
   formatPrice,
-  type Product,
+  type DbProduct,
   getLocalizedProduct,
-} from "@/data/products";
+} from "@/lib/products";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 
 interface Props {
-  product: Product;
+  product: DbProduct;
   lang?: string;
 }
 
 const { product, lang = "es" } = Astro.props;
 const localizedProduct = getLocalizedProduct(product, lang);
-const relatedProducts = getRelatedProducts(product.slug, 4);
+const db = (Astro.locals as any).runtime?.env?.DB;
+const relatedProducts = db ? await getRelatedProducts(db, product.slug, 4) : [];
+const mainImage = product.images[0]?.url ?? "";
 
 // Store-specific navigation
 const t = useTranslations(lang as any);
@@ -69,17 +70,21 @@ const storeCta = {
         <!-- Gallery -->
         <div class="product-gallery">
           <div class="main-image">
-            <Image
-              src={product.images[0]}
-              alt={localizedProduct.name}
-              class="gallery-img"
-              loading="eager"
-            />
             {
-              product.badge && (
-                <span class={`product-badge ${product.badge.toLowerCase()}`}>
-                  {product.badge}
-                </span>
+              mainImage ? (
+                <img
+                  src={mainImage}
+                  alt={localizedProduct.name}
+                  class="gallery-img"
+                  loading="eager"
+                />
+              ) : (
+                <ImagePlaceholder class="gallery-img" />
+              )
+            }
+            {
+              localizedProduct.badge && (
+                <span class="product-badge">{localizedProduct.badge}</span>
               )
             }
           </div>
@@ -91,7 +96,7 @@ const storeCta = {
                     class={`thumb ${i === 0 ? "active" : ""}`}
                     data-index={i}
                   >
-                    <Image src={img} alt={`${product.name} ${i + 1}`} />
+                    <img src={img.url} alt={`${localizedProduct.name} ${i + 1}`} />
                   </button>
                 ))}
               </div>
@@ -123,10 +128,12 @@ const storeCta = {
             data-product-sku={product.sku}
             data-product-name={localizedProduct.name}
             data-product-price={product.price}
-            data-product-image={product.images[0].src}
+            data-product-image={mainImage}
             data-product-instock={product.inStock}
             data-product-sizes={product.sizes?.join(",") || ""}
-            data-product-colors={product.colors?.join(",") || ""}
+            data-product-colors={localizedProduct.colors
+              .map((c) => c.name)
+              .join(",")}
           >
             {
               product.sizes && product.sizes.length > 0 && (
@@ -155,17 +162,23 @@ const storeCta = {
             }
 
             {
-              product.colors && product.colors.length > 0 && (
+              localizedProduct.colors.length > 0 && (
                 <div class="variant-selector">
                   <label>{t("store.product.color")}</label>
                   <div class="variant-options color-options">
-                    {product.colors.map((color) => (
+                    {localizedProduct.colors.map((color) => (
                       <button
                         class="variant-btn"
-                        data-color={color}
+                        data-color={color.name}
                         type="button"
                       >
-                        {color}
+                        {color.hex && (
+                          <span
+                            class="color-swatch"
+                            style={`background:${color.hex}`}
+                          />
+                        )}
+                        {color.name}
                       </button>
                     ))}
                   </div>
@@ -211,7 +224,11 @@ const storeCta = {
                     class="related-card"
                   >
                     <div class="related-image">
-                      <Image src={related.images[0]} alt={locRelated.name} />
+                      {related.images[0]?.url ? (
+                        <img src={related.images[0].url} alt={locRelated.name} />
+                      ) : (
+                        <ImagePlaceholder />
+                      )}
                     </div>
                     <h3>{locRelated.name}</h3>
                     <span class="related-price">
@@ -288,16 +305,23 @@ const storeCta = {
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-  }
-
-  .product-badge.popular {
     background: var(--color-primary);
     color: var(--color-white);
   }
 
-  .product-badge.nuevo {
-    background: var(--color-success);
-    color: var(--color-white);
+  .color-swatch {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 1px solid var(--color-cream-dark);
+    flex-shrink: 0;
+  }
+
+  .color-options .variant-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
   }
 
   .thumbnail-strip {

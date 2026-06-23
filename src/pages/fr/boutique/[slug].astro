@@ -1,15 +1,12 @@
 ---
-import { products } from "@/data/products";
+export const prerender = false;
+import { getProductBySlug } from "@/lib/products";
 import TiendaSlugTemplate from "@/templates/TiendaSlugTemplate.astro";
 
-export function getStaticPaths() {
-  return products.map((product) => ({
-    params: { slug: product.slug },
-    props: { product },
-  }));
-}
-
-const { product } = Astro.props;
+const { slug } = Astro.params;
+const db = (Astro.locals as any).runtime?.env?.DB;
+const product = db && slug ? await getProductBySlug(db, slug) : null;
+if (!product) return Astro.redirect("/fr/boutique", 302);
 ---
 
 <TiendaSlugTemplate product={product} lang="fr" />

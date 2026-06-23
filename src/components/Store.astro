@@ -1,5 +1,5 @@
 ---
-import { products } from "@/data/products";
+import { getProducts } from "@/lib/products";
 import ProductCard from "./ProductCard.astro";
 import {
   getLangFromUrl,
@@ -9,6 +9,14 @@ import {
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+
+// Read the catalog from D1 so the home respects CMS visibility (visible=1) and
+// shows up to 8 products, featured first. Requires the home pages to be SSR
+// (prerender=false).
+const db = (Astro.locals as any).runtime?.env?.DB;
+const featured = db
+  ? (await getProducts(db, { visibleOnly: true })).slice(0, 8)
+  : [];
 ---
 
 <section class="store section" id="tienda">
@@ -26,12 +34,9 @@ const t = useTranslations(lang);
 
     <div class="products-grid animate-fade-in-up" style="animation-delay: 0.3s">
       {
-        products
-          .sort((a, b) => b.id - a.id)
-          .slice(0, 8)
-          .map((product) => (
-            <ProductCard product={product} showQuickAdd={false} />
-          ))
+        featured.map((product) => (
+          <ProductCard product={product} showQuickAdd={false} />
+        ))
       }
     </div>
 

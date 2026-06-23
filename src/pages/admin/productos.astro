@@ -1,0 +1,13 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import ProductsDashboard from "@/components/ProductsDashboard";
+
+// Access is protected via the session cookie (middleware guards /admin).
+---
+
+<AdminLayout title="Productos | AFRO IN Admin">
+  <main class="flex h-full flex-col overflow-hidden">
+    <ProductsDashboard client:only="react" />
+  </main>
+</AdminLayout>

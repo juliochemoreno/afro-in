@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import { products, getLocalizedProduct } from "@/data/products";
+import { getProducts, getLocalizedProduct } from "@/lib/products";
 import ProductCard from "@/components/ProductCard.astro";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 
@@ -12,12 +12,13 @@ interface Props {
 
 const { lang = "es" } = Astro.props;
 
-// Sort products by ID descending (newest first)
-const sortedProducts = [...products].sort((a, b) => b.id - a.id);
+// Read the catalog from D1 (ordered featured first, then sort_order).
+const db = (Astro.locals as any).runtime?.env?.DB;
+const sortedProducts = db ? await getProducts(db) : [];
 
 // Get unique categories
 const categories = [
-  ...new Set(products.map((p) => getLocalizedProduct(p, lang).category)),
+  ...new Set(sortedProducts.map((p) => getLocalizedProduct(p, lang).category)),
 ];
 
 // Store-specific navigation

@@ -1,0 +1,51 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import ProductForm from "@/components/admin/ProductForm";
+import { getAllTaxonomies, getProductRelations } from "@/lib/taxonomy";
+
+// Access is protected via the session cookie (middleware guards /admin).
+const { id } = Astro.params;
+const db = (Astro.locals as any).runtime?.env?.DB;
+
+let product: any = null;
+let relations = { tags: [], sizes: [], colors: [] };
+const taxonomies = db
+  ? await getAllTaxonomies(db)
+  : { categories: [], tags: [], sizes: [], colors: [] };
+
+if (db && id) {
+  const row = await db
+    .prepare("SELECT * FROM products WHERE id = ?")
+    .bind(Number(id))
+    .first();
+  if (!row) return Astro.redirect("/admin/productos", 302);
+  const imgs = await db
+    .prepare(
+      "SELECT id, r2_key, content_type, alt, position FROM product_images WHERE product_id = ? ORDER BY position ASC, id ASC"
+    )
+    .bind(Number(id))
+    .all();
+  product = {
+    ...row,
+    images: ((imgs.results as any[]) || []).map((im) => ({
+      id: im.id,
+      r2_key: im.r2_key,
+      content_type: im.content_type,
+      url: `/media/${im.r2_key}`,
+    })),
+  };
+  relations = await getProductRelations(db, Number(id));
+}
+---
+
+<AdminLayout title="Editar producto | AFRO IN Admin">
+  <main class="h-full overflow-y-auto">
+    <ProductForm
+      client:only="react"
+      product={product}
+      taxonomies={taxonomies}
+      relations={relations}
+    />
+  </main>
+</AdminLayout>

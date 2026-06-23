@@ -1,0 +1,23 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import ProductForm from "@/components/admin/ProductForm";
+import { getAllTaxonomies } from "@/lib/taxonomy";
+
+// Access is protected via the session cookie (middleware guards /admin).
+const db = (Astro.locals as any).runtime?.env?.DB;
+const taxonomies = db
+  ? await getAllTaxonomies(db)
+  : { categories: [], tags: [], sizes: [], colors: [] };
+---
+
+<AdminLayout title="Nuevo producto | AFRO IN Admin">
+  <main class="h-full overflow-y-auto">
+    <ProductForm
+      client:only="react"
+      product={null}
+      taxonomies={taxonomies}
+      relations={{ tags: [], sizes: [], colors: [] }}
+    />
+  </main>
+</AdminLayout>
