@@ -162,6 +162,7 @@ function StatCard({
   action,
   hint,
   hero = false,
+  className,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -169,12 +170,14 @@ function StatCard({
   action?: React.ReactNode;
   hint?: React.ReactNode;
   hero?: boolean;
+  className?: string;
 }) {
   return (
     <Card
       className={cn(
         "relative gap-0 p-4",
-        hero && "border bg-neutral-900 text-white shadow-lg dark:border-border"
+        hero && "border bg-neutral-900 text-white shadow-lg dark:border-border",
+        className
       )}
     >
       {action ? <div className="absolute top-3 right-3">{action}</div> : null}
@@ -475,6 +478,7 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
       <div className="grid shrink-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           hero
+          className="col-span-2 lg:col-span-1"
           icon={<DollarSign className="size-5" />}
           label="Total recaudado"
           action={
@@ -504,6 +508,7 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
         </StatCard>
 
         <StatCard
+          className="col-span-2 lg:col-span-1"
           icon={<Users className="size-5" />}
           label="Personas unidas"
           hint={
