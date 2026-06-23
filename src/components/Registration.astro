@@ -239,7 +239,7 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
                 </div>
 
                 <label class="fee-cover">
-                  <input type="checkbox" id="boldCoverFee" />
+                  <input type="checkbox" id="boldCoverFee" checked />
                   <span class="fee-cover-text">
                     {t("join.fee.cover")}
                     <span class="fee-cover-amount" id="boldFeeAmount"></span>
@@ -1210,6 +1210,15 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
             integritySignature: data.integritySignature,
             description: "Aporte AFRO IN - Millón de Corazones",
           };
+
+          // Prefill the Bold checkout with the details we already collected.
+          const customerData: Record<string, string> = {
+            fullName: nameInput.value.trim(),
+            email: emailInput.value.trim(),
+          };
+          const phoneValue = (phoneInput.value || "").trim();
+          if (phoneValue) customerData.phone = phoneValue;
+          boldConfig.customerData = JSON.stringify(customerData);
 
           // Bold only accepts a public HTTPS redirect URL. On localhost (http)
           // we omit it — the payment still processes and is confirmed via the
