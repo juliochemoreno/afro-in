@@ -455,7 +455,7 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
   };
 
   return (
-    <div className="text-foreground flex h-full min-h-0 flex-col gap-4 p-6">
+    <div className="text-foreground flex flex-col gap-4 p-6 lg:h-full lg:min-h-0">
       {/* Header */}
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-4">
         <div>
@@ -472,7 +472,7 @@ export default function DonorsDashboard({ donors, generatedAt }: Props) {
       </header>
 
       {/* Stats */}
-      <div className="grid shrink-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid shrink-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           hero
           icon={<DollarSign className="size-5" />}

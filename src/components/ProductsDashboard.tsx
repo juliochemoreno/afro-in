@@ -174,7 +174,7 @@ export default function ProductsDashboard() {
   );
 
   return (
-    <div className="text-foreground flex h-full min-h-0 flex-col gap-4 p-6">
+    <div className="text-foreground flex flex-col gap-4 p-6 lg:h-full lg:min-h-0">
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Productos</h1>

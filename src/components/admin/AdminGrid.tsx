@@ -47,13 +47,12 @@ export default function AdminGrid<T>({ className, ...props }: Props<T>) {
   const dark = useIsDark();
   return (
     <div
-      className={cn("min-h-0 flex-1", className)}
+      className={cn("h-[70vh] lg:h-auto lg:min-h-0 lg:flex-1", className)}
       data-ag-theme-mode={dark ? "dark" : "light"}
     >
       <AgGridReact<T>
         theme={adminTheme}
         animateRows
-        autoSizeStrategy={{ type: "fitGridWidth" }}
         {...props}
         defaultColDef={{
           sortable: true,
