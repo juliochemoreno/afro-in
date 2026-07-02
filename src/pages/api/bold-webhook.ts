@@ -3,7 +3,9 @@ import {
   confirmBoldOrder,
   extractOrderId,
   confirmTargetForOrder,
+  orderKindFromId,
 } from "@/lib/bold";
+import { issueTicketsForOrder } from "@/lib/tickets";
 
 export const prerender = false;
 
@@ -44,6 +46,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
       orderId,
       confirmTargetForOrder(orderId)
     );
+
+    // Ticket orders issue their individual tickets once paid. Idempotent, and
+    // not gated on `changed` (the browser confirm may have flipped the row
+    // first). Failure here must not fail the webhook — Bold would retry and the
+    // idempotent issuance re-runs harmlessly.
+    if (
+      orderKindFromId(orderId) === "ticket" &&
+      result.donorStatus === "completed"
+    ) {
+      try {
+        await issueTicketsForOrder(env.DB, orderId);
+      } catch (e) {
+        console.error("Bold webhook: ticket issuance failed", orderId, e);
+      }
+    }
 
     return json(
       {
