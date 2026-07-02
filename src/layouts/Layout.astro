@@ -7,6 +7,7 @@ interface Props {
   description?: string;
   image?: string;
   canonicalURL?: string;
+  noindex?: boolean;
 }
 
 const {
@@ -14,6 +15,7 @@ const {
   description = "AFRO IN - 1 Millón de Corazones. Apoyando el arte afro independiente y la cultura en el Caribe Colombiano.",
   image = "/img/og-image.jpg?v=4",
   canonicalURL = new URL(Astro.url.pathname, Astro.site).toString(),
+  noindex = false,
 } = Astro.props;
 
 import { ClientRouter } from "astro:transitions";
@@ -23,6 +25,8 @@ const lang = getLangFromUrl(Astro.url);
 
 // Localized thank-you path (used by the global Bold-return handler below).
 const graciasUrl = getTranslatedPath("/gracias", lang);
+// Localized tickets path — ticket returns (AFROIN-TIX-) land here, not /gracias.
+const entradasUrl = getTranslatedPath("/entradas", lang);
 
 // Generate hreflang URLs for SEO
 const siteUrl =
@@ -65,11 +69,17 @@ const locale = lang === "en" ? "en_US" : lang === "fr" ? "fr_FR" : "es_CO";
       content="AFRO IN, cultura afro, música afro, danza afro, Colombia, Caribe, festival, Santa Marta, Palenque, arte afro-colombiano"
     />
     <meta name="author" content="AFRO IN" />
-    <meta
-      name="robots"
-      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-    />
-    <meta name="googlebot" content="index, follow" />
+    {
+      noindex ? (
+        <meta name="robots" content="noindex, nofollow" />
+      ) : (
+        <meta
+          name="robots"
+          content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+        />
+      )
+    }
+    {!noindex && <meta name="googlebot" content="index, follow" />}
     <link rel="canonical" href={canonicalURL} />
 
     <!-- Open Graph / Facebook -->
@@ -304,19 +314,24 @@ const locale = lang === "en" ? "en_US" : lang === "fr" ? "fr_FR" : "es_CO";
     <!-- Global Bold return handler: route any page that Bold redirects to
          (e.g. the site root in local/dev) to the localized thank-you page,
          which confirms the payment server-side and shows the confirmation. -->
-    <script define:vars={{ graciasUrl }}>
+    <script define:vars={{ graciasUrl, entradasUrl }}>
       document.addEventListener("astro:page-load", () => {
         const params = new URLSearchParams(window.location.search);
         const boldOrderId = params.get("bold-order-id");
         if (!boldOrderId) return;
 
+        // Ticket returns (AFROIN-TIX-) have their own receipt at /entradas;
+        // everything else (donations, store orders) keeps routing to /gracias.
+        const isTicket = boldOrderId.startsWith("AFROIN-TIX-");
+        const destination = isTicket ? entradasUrl : graciasUrl;
+
         const here = window.location.pathname.replace(/\/$/, "");
-        const target = graciasUrl.replace(/\/$/, "");
-        // Already on the thank-you page — let it handle the confirmation.
+        const target = destination.replace(/\/$/, "");
+        // Already on the destination page — let it handle the confirmation.
         if (here === target) return;
 
-        // Preserve Bold's query params and route to the thank-you page.
-        window.location.replace(graciasUrl + window.location.search);
+        // Preserve Bold's query params and route to the receipt page.
+        window.location.replace(destination + window.location.search);
       });
     </script>
   </body>

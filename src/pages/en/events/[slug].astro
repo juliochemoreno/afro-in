@@ -1,0 +1,12 @@
+---
+export const prerender = false;
+import { getEventBySlug } from "@/lib/tickets";
+import EventoSlugTemplate from "@/templates/EventoSlugTemplate.astro";
+
+const { slug } = Astro.params;
+const db = (Astro.locals as any).runtime?.env?.DB;
+const event = db && slug ? await getEventBySlug(db, slug) : null;
+if (!event) return Astro.redirect("/en/events", 302);
+---
+
+<EventoSlugTemplate event={event} lang="en" />
