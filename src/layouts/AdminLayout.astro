@@ -10,6 +10,9 @@ import {
   Package,
   ShoppingBag,
   Tags,
+  CalendarDays,
+  Ticket,
+  ScanLine,
   LogOut,
   Sun,
   Moon,
@@ -29,6 +32,9 @@ const navItems = [
   { href: "/admin/productos", label: "Productos", icon: Package },
   { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
   { href: "/admin/atributos", label: "Atributos", icon: Tags },
+  { href: "/admin/eventos", label: "Eventos", icon: CalendarDays },
+  { href: "/admin/entradas", label: "Entradas", icon: Ticket },
+  { href: "/admin/checkin", label: "Check-in", icon: ScanLine },
 ];
 const isActive = (href: string) =>
   href === "/admin"
