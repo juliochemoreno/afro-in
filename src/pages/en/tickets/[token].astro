@@ -1,0 +1,12 @@
+---
+export const prerender = false;
+import { getTicketOrderByToken } from "@/lib/tickets";
+import EntradasTemplate from "@/templates/EntradasTemplate.astro";
+
+const { token } = Astro.params;
+const db = (Astro.locals as any).runtime?.env?.DB;
+const view = db && token ? await getTicketOrderByToken(db, token) : null;
+if (!view || !view.order) return Astro.redirect("/en/events", 302);
+---
+
+<EntradasTemplate lang="en" tokenOrder={view} permalink={Astro.url.href} />
