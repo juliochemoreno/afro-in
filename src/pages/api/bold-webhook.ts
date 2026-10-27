@@ -4,6 +4,7 @@ import {
   extractOrderId,
   confirmTargetForOrder,
   orderKindFromId,
+  verifyWebhookSignature,
 } from "@/lib/bold";
 import { issueTicketsForOrder } from "@/lib/tickets";
 
@@ -11,20 +12,27 @@ export const prerender = false;
 
 // Bold payment webhook.
 //
-// SECURITY NOTE: Bold's exact webhook signature scheme is not yet confirmed for
-// this integration, so we do NOT trust the payload's reported status. Instead we
-// use the webhook only as a trigger and re-query Bold server-side (payment-voucher)
-// for the authoritative status. This makes a forged payload harmless: an attacker
-// cannot mark a donation as completed without a real Bold transaction.
-//
-// TODO(bold-webhook-signature): once the signature header/scheme is confirmed from
-// the Bold panel, add HMAC verification of the raw body and reject (401) invalid
-// signatures before processing.
+// SECURITY NOTE: We now verify the Bold webhook HMAC signature if the secret key
+// is configured. We also re-query Bold server-side (payment-voucher) for the
+// authoritative status as a defense-in-depth measure. This makes a forged payload
+// harmless: an attacker cannot mark a donation as completed without a real Bold transaction.
 export const POST: APIRoute = async ({ request, locals }) => {
   const env = locals.runtime.env;
 
   try {
     const raw = await request.text();
+    const signature = request.headers.get("bold-signature");
+
+    if (env.BOLD_SECRET_KEY && signature) {
+      const isValid = await verifyWebhookSignature(raw, signature, env.BOLD_SECRET_KEY);
+      if (!isValid) {
+        console.error("Bold webhook: invalid HMAC signature");
+        return json({ error: "Invalid signature" }, 401);
+      }
+    } else if (env.BOLD_SECRET_KEY && !signature) {
+      console.warn("Bold webhook: missing signature header, proceeding without verification");
+    }
+
     const orderId = extractOrderId(raw);
 
     if (!orderId) {

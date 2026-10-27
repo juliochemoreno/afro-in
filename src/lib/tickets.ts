@@ -48,6 +48,8 @@ export interface EventRow {
   description_fr: string | null;
   venue: string | null;
   city: string | null;
+  department?: string | null;
+  country?: string | null;
   event_date: string;
   price: number;
   capacity: number;
@@ -120,10 +122,12 @@ export interface CreatedTicketOrder {
   currency: string;
   quantity: number;
   eventName: string;
+  accessToken: string;
+  isFree?: boolean;
 }
 
 /**
- * Validate a ticket checkout and create a pending ticket_orders row.
+ * Validate a ticket checkout and create a pending (or completed if free) ticket_orders row.
  * Throws CheckoutError (with an HTTP status) on any validation failure.
  */
 export async function createPendingTicketOrder(
@@ -164,7 +168,7 @@ export async function createPendingTicketOrder(
     throw new CheckoutError("El evento no está disponible");
 
   const unit = Math.trunc(Number(event.price));
-  if (!Number.isFinite(unit) || unit <= 0)
+  if (!Number.isFinite(unit) || unit < 0)
     throw new CheckoutError("Precio del evento inválido");
 
   // Capacity check. Note: a pending payment does NOT reserve seats, so a small
@@ -179,24 +183,34 @@ export async function createPendingTicketOrder(
   if (qty > remaining)
     throw new CheckoutError(`Solo quedan ${remaining} entradas`);
 
+  const isFree = unit === 0;
   const amount = unit * qty;
-  if (amount < BOLD_MIN_AMOUNT)
+  if (!isFree && amount < BOLD_MIN_AMOUNT)
     throw new CheckoutError(`El total mínimo es ${BOLD_MIN_AMOUNT} COP`);
 
   const currency = "COP";
   const orderId = generateOrderId("ticket");
   const accessToken = crypto.randomUUID();
 
+  const status = isFree ? "completed" : "pending";
+  const provider = isFree ? "free" : "bold";
+  const providerStatus = isFree ? "FREE" : null;
+  const paidAt = isFree ? nowIso() : null;
+
   const res = await db
     .prepare(
       `INSERT INTO ticket_orders
-        (bold_order_id, status, provider, currency, amount,
+        (bold_order_id, status, provider, provider_status, currency, amount,
          event_id, event_name, unit_price, quantity,
-         buyer_name, buyer_email, buyer_phone, access_token)
-       VALUES (?, 'pending', 'bold', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         buyer_name, buyer_email, buyer_phone, access_token,
+         tickets_issued, paid_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       orderId,
+      status,
+      provider,
+      providerStatus,
       currency,
       amount,
       event.id,
@@ -206,17 +220,143 @@ export async function createPendingTicketOrder(
       name,
       email,
       clean(input.buyer?.phone, 40),
-      accessToken
+      accessToken,
+      isFree ? 1 : 0,
+      paidAt
     )
     .run();
 
+  const newOrderId = res.meta.last_row_id as number;
+
+  if (isFree) {
+    const codes: string[] = [];
+    const stmt = db.prepare(
+      `INSERT INTO tickets (ticket_order_id, event_id, code, status) VALUES (?, ?, ?, 'valid')`
+    );
+    const inserts = [];
+    for (let i = 0; i < qty; i++) {
+      const code = generateTicketCode();
+      codes.push(code);
+      inserts.push(stmt.bind(newOrderId, event.id, code));
+    }
+    await db.batch(inserts);
+  }
+
   return {
-    id: res.meta.last_row_id as number,
+    id: newOrderId,
     orderId,
     amount,
     currency,
     quantity: qty,
     eventName: event.name_es,
+    accessToken,
+    isFree,
+  };
+}
+
+export interface CourtesyTicketInput {
+  eventId?: number | string;
+  quantity?: number | string;
+  buyer?: { name?: string; email?: string; phone?: string | null };
+}
+
+export interface CreatedCourtesyOrder {
+  id: number;
+  orderId: string;
+  eventName: string;
+  quantity: number;
+  accessToken: string;
+  ticketCodes: string[];
+}
+
+/**
+ * Issue complimentary / courtesy tickets directly (admin only).
+ * Bypasses payment gateway, sets status='completed' and immediately emits ticket codes.
+ */
+export async function createCourtesyTicketOrder(
+  db: D1Database,
+  input: CourtesyTicketInput
+): Promise<CreatedCourtesyOrder> {
+  const eventId = Number(input.eventId);
+  if (!Number.isFinite(eventId) || eventId <= 0) {
+    throw new CheckoutError("ID de evento inválido");
+  }
+
+  const name = clean(input.buyer?.name, 100);
+  const email = clean(input.buyer?.email, 120);
+  if (!name) throw new CheckoutError("El nombre es obligatorio");
+  if (!email || !EMAIL_RE.test(email))
+    throw new CheckoutError("Se requiere un email válido");
+
+  const qty = Math.trunc(Number(input.quantity));
+  if (!Number.isFinite(qty) || qty < 1 || qty > 50)
+    throw new CheckoutError("Cantidad inválida (1 a 50)");
+
+  const event = await db
+    .prepare(`SELECT id, slug, name_es, capacity FROM events WHERE id = ?`)
+    .bind(eventId)
+    .first<{ id: number; slug: string; name_es: string; capacity: number } | null>();
+
+  if (!event) throw new CheckoutError("El evento no existe");
+
+  const soldRow = await db
+    .prepare(`SELECT COUNT(*) AS sold FROM tickets WHERE event_id = ?`)
+    .bind(event.id)
+    .first<{ sold: number }>();
+  const sold = Number(soldRow?.sold ?? 0);
+  const remaining = event.capacity - sold;
+  if (remaining < qty) {
+    throw new CheckoutError(`Solo quedan ${Math.max(0, remaining)} cupos disponibles`);
+  }
+
+  const orderId = generateOrderId("ticket");
+  const accessToken = crypto.randomUUID();
+
+  const res = await db
+    .prepare(
+      `INSERT INTO ticket_orders
+        (bold_order_id, status, provider, provider_status, currency, amount,
+         event_id, event_name, unit_price, quantity,
+         buyer_name, buyer_email, buyer_phone, access_token,
+         tickets_issued, paid_at)
+       VALUES (?, 'completed', 'courtesy', 'COMPLIMENTARY', 'COP', 0,
+               ?, ?, 0, ?,
+               ?, ?, ?, ?,
+               1, CURRENT_TIMESTAMP)`
+    )
+    .bind(
+      orderId,
+      event.id,
+      event.name_es,
+      qty,
+      name,
+      email,
+      clean(input.buyer?.phone, 40),
+      accessToken
+    )
+    .run();
+
+  const newOrderId = Number(res.meta.last_row_id);
+
+  const codes: string[] = [];
+  const stmt = db.prepare(
+    `INSERT INTO tickets (ticket_order_id, event_id, code, status) VALUES (?, ?, ?, 'valid')`
+  );
+  const inserts = [];
+  for (let i = 0; i < qty; i++) {
+    const code = generateTicketCode();
+    codes.push(code);
+    inserts.push(stmt.bind(newOrderId, event.id, code));
+  }
+  await db.batch(inserts);
+
+  return {
+    id: newOrderId,
+    orderId,
+    eventName: event.name_es,
+    quantity: qty,
+    accessToken,
+    ticketCodes: codes,
   };
 }
 

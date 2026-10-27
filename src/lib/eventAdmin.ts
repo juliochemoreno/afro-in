@@ -13,6 +13,8 @@ export const EVENT_COLUMNS = [
   "description_fr",
   "venue",
   "city",
+  "department",
+  "country",
   "event_date",
   "price",
   "capacity",
@@ -34,8 +36,10 @@ export function validateEventInput(body: any): string | null {
   if (!str(body.name_es, 200)) return "El nombre (ES) es obligatorio";
   if (!str(body.event_date, 40)) return "La fecha es obligatoria";
   const price = Math.trunc(Number(body.price));
-  if (!Number.isFinite(price) || price < BOLD_MIN_AMOUNT)
-    return `El precio mínimo es ${BOLD_MIN_AMOUNT} COP`;
+  if (!Number.isFinite(price) || price < 0)
+    return "El precio debe ser un número mayor o igual a 0";
+  if (price > 0 && price < BOLD_MIN_AMOUNT)
+    return `El precio mínimo para eventos pagos es ${BOLD_MIN_AMOUNT} COP (o 0 para evento gratuito)`;
   const capacity = Math.trunc(Number(body.capacity));
   if (!Number.isFinite(capacity) || capacity < 1)
     return "El cupo debe ser al menos 1";
@@ -54,6 +58,8 @@ export function eventValues(body: any): unknown[] {
     str(body.description_fr, 4000),
     str(body.venue, 200),
     str(body.city, 120),
+    str(body.department, 120),
+    str(body.country, 120) || "Colombia",
     str(body.event_date, 40),
     Math.trunc(Number(body.price)),
     Math.trunc(Number(body.capacity)),

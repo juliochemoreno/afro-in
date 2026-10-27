@@ -92,6 +92,11 @@ export default function TicketCheckoutForm({
         return;
       }
 
+      if (data.free) {
+        window.location.href = `${successPath}/${data.accessToken}`;
+        return;
+      }
+
       sessionStorage.setItem("tix_order_id", data.orderId);
 
       if (!window.BoldCheckout) {
@@ -198,7 +203,7 @@ export default function TicketCheckoutForm({
 
       <div className="tix-total">
         <span>{t["tix.form.total"]}</span>
-        <strong>{formatPrice(total)}</strong>
+        <strong>{price === 0 ? "Entrada Libre (Gratis)" : formatPrice(total)}</strong>
       </div>
 
       {error && <p className="ck-error">{error}</p>}
@@ -209,7 +214,11 @@ export default function TicketCheckoutForm({
         onClick={submit}
         disabled={loading}
       >
-        {loading ? t["tix.form.processing"] : t["tix.form.pay"]}
+        {loading
+          ? t["tix.form.processing"]
+          : price === 0
+            ? "Reservar entradas gratis"
+            : t["tix.form.pay"]}
       </button>
       <p className="tix-secure">{t["tix.form.securenote"]}</p>
     </div>
