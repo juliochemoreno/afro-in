@@ -13,29 +13,29 @@ Until D0 revives it, `dev` is stale (Jan 2026, 31 commits behind `main`): do not
 ## Work list
 
 - Path: `.agents/plans/2026-10-27-work-list.md` — the ONLY list. Update its *In flight* section when a worker starts or lands, and tick an item in the same commit that lands the work.
-- Suggested order: D0 (dev environment) first, every later Level 5 runs on it → D1 (ticketing), with D5 beside it if files do not overlap → D2/D3 → D4.
+- Suggested order: D0 (dev environment) first, every later Level 5 runs on it → D1 (ticketing) → D5 (after D0: both may touch dependencies) → D2/D3 → D4.
 
 ## Workers
 
 - Worktree base: `origin/dev` (after D0).
-- Validation the worker reports: `npm run check` (astro build + tsc + wrangler dry-run) · curl matrix against `astro dev` (NOT `wrangler dev`: `MessageChannel is not defined` crash in the local worker runtime) · Level 5 on dev.afroin.org. No lint or unit tests exist (tests deferred, see work list).
+- Validation the worker reports: `npm run check` (astro build + tsc + wrangler dry-run) · curl matrix against `astro dev` (NOT `wrangler dev`: `MessageChannel is not defined` crash in the local worker runtime) · Level 5 on the branch's Worker Preview URL. No lint or unit tests exist (tests deferred, see work list).
 - Extra rigor: money paths (Bold payments, store orders, tickets, donations, admin auth) → code review per phase + one fresh-context branch review before the PR, strongest model. UI-only items with a closed design → cheaper model.
 - Model overrides: none.
 
 ## Release and deploy
 
 - Integration → production: PR `dev` → `main`; Julio approves and merges.
-- Deploys: Cloudflare Workers Builds (Julio's personal AFRO IN account) deploys automatically: `main` → afroin.org, `dev` → dev.afroin.org (once D0 lands). Merging to `main` IS a production deploy. Never deploy production by hand.
-- Branch preview builds (if enabled) use the PRODUCTION bindings (D1, Bold keys): never test there as if it were a sandbox.
-- Migrations: manual, numbered `migrations/NNNN_*.sql`, no tracking table. Dev: `--env dev --remote` (pre-approved). Production: Julio's OK, applied BEFORE merging the code that needs it, additive only (the old code keeps running for minutes against the new schema). Record each one in the work list's *Applied in production*.
+- Deploys: Cloudflare Workers Builds (Julio's personal AFRO IN account) deploys automatically: `main` → afroin.org. Every other branch → its own Worker Preview (once D0 lands); the `dev` branch's Preview is the dev environment. Merging to `main` IS a production deploy. Never deploy production by hand.
+- Until D0's one-time dashboard switch to Worker Previews, branch preview builds (if enabled) use the PRODUCTION bindings (D1, Bold keys): never test there as if it were a sandbox.
+- Migrations: manual, numbered `migrations/NNNN_*.sql`, no tracking table. Staging D1 shared by all Previews: `wrangler.preview-migrations.jsonc` (pre-approved). Production: Julio's OK, applied BEFORE merging the code that needs it, additive only (the old code keeps running for minutes against the new schema). Record each one in the work list's *Applied in production*.
 - Checks before a release: list migrations not yet in production; confirm production uses the production Bold keys/webhook and dev the test ones.
 
 ## Approvals
 
 | Action | Who approves |
 |---|---|
-| Merge a worker into `dev` (deploys dev) | orchestrator, after the worker's validation + its own `npm run check` on the merge + Level 5 on dev |
-| Dev migrations and dev deploys | orchestrator (standing approval) |
+| Merge a worker into `dev` (updates the dev Preview) | orchestrator, after the worker's validation + its own `npm run check` on the merge + Level 5 on the branch's Preview |
+| Staging D1 migrations and Preview deploys | orchestrator (standing approval) |
 | Release `dev` → `main` (production deploy) | Julio |
 | Production migrations, production data, secrets and keys | Julio |
 | Cloudflare dashboard, Bold panel, Google Cloud console | Julio (no agent access) |
