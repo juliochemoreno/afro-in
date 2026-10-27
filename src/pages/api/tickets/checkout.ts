@@ -28,17 +28,30 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return json({ error: "Invalid JSON body" }, 400);
     }
 
-    if (!env.BOLD_API_KEY || !env.BOLD_SECRET_KEY) {
-      console.error("ticket checkout: Bold keys are not configured");
-      return json({ error: "Payment provider not configured" }, 500);
-    }
-
     let order;
     try {
       order = await createPendingTicketOrder(env.DB, body as any);
     } catch (e) {
       if (e instanceof CheckoutError) return json({ error: e.message }, e.status);
       throw e;
+    }
+
+    if (order.isFree || order.amount === 0) {
+      return json(
+        {
+          free: true,
+          orderId: order.orderId,
+          accessToken: order.accessToken,
+          quantity: order.quantity,
+          eventName: order.eventName,
+        },
+        201
+      );
+    }
+
+    if (!env.BOLD_API_KEY || !env.BOLD_SECRET_KEY) {
+      console.error("ticket checkout: Bold keys are not configured");
+      return json({ error: "Payment provider not configured" }, 500);
     }
 
     const amountStr = String(order.amount);

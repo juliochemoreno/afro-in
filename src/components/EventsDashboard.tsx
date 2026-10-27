@@ -8,6 +8,7 @@ import {
   Trash2,
   Ticket,
   CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
 
 import type { ColDef } from "ag-grid-community";
@@ -118,9 +119,21 @@ function ActionsCell(p: any) {
   return (
     <div className="flex h-full items-center justify-end gap-1">
       <a
+        href={`/eventos/${d.slug}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        aria-label="Ver página pública del evento"
+        title="Ver página pública"
+        className="hover:bg-muted text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md"
+      >
+        <ExternalLink className="size-4" />
+      </a>
+      <a
         href={`/admin/eventos/${d.id}`}
         onClick={(e) => e.stopPropagation()}
         aria-label="Editar"
+        title="Editar evento"
         className="hover:bg-muted text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md"
       >
         <Pencil className="size-4" />
@@ -132,6 +145,7 @@ function ActionsCell(p: any) {
           onDelete?.(d);
         }}
         aria-label="Eliminar"
+        title="Eliminar evento"
         className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex size-8 items-center justify-center rounded-md"
       >
         <Trash2 className="size-4" />
@@ -266,7 +280,7 @@ export default function EventsDashboard() {
       {
         headerName: "",
         colId: "actions",
-        width: 100,
+        width: 130,
         sortable: false,
         filter: false,
         resizable: false,

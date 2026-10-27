@@ -92,18 +92,20 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
               <span class="fact-value">{fmtDate}</span>
             </li>
             {
-              (event.venue || event.city) && (
+              (event.venue || event.city || event.department) && (
                 <li>
                   <span class="fact-label">{t("tix.detail.where")}</span>
                   <span class="fact-value">
-                    {[event.venue, event.city].filter(Boolean).join(" · ")}
+                    {[event.venue, event.city, event.department].filter(Boolean).join(" · ")}
                   </span>
                 </li>
               )
             }
             <li>
               <span class="fact-label">{t("tix.detail.price")}</span>
-              <span class="fact-value price">{formatPrice(event.price)}</span>
+              <span class="fact-value price">
+                {event.price === 0 ? "Entrada Libre" : formatPrice(event.price)}
+              </span>
             </li>
             {
               showRemaining && (
@@ -122,7 +124,7 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
         </div>
 
         <aside class="evento-buy">
-          <h2>{t("tix.detail.buy")}</h2>
+          <h2>{event.price === 0 ? "Reservar Entradas" : t("tix.detail.buy")}</h2>
           <TicketCheckoutForm
             client:load
             lang={lang as any}
