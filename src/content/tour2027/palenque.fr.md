@@ -15,16 +15,21 @@ days:
       - title: "Fête au bord de la rivière"
         kind: "Fête"
   - date: "2027-01-18"
+    photo: "../../assets/img/afro-in-palenque-1/received_373416019886759.jpeg"
+    photoPosition: "55% 50%"
     activities:
       - title: "Cours de danse avec les instructeurs internationaux"
         kind: "Atelier"
         note: "Pour les enfants et les jeunes de Palenque"
   - date: "2027-01-19"
+    photo: "../../assets/img/afro-in-palenque-1/DSC_0460.JPG"
     activities:
       - title: "Cours de danse avec les instructeurs internationaux"
         kind: "Atelier"
         note: "Pour les enfants et les jeunes de Palenque"
   - date: "2027-01-20"
+    photo: "../../assets/img/afro-in-palenque-1/DSC_0434.JPG"
+    photoPosition: "78% 50%"
     activities:
       - title: "Clôture d'AFRO IN Palenque"
         kind: "Clôture"

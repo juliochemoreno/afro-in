@@ -11,6 +11,7 @@ import {
   formatCop,
   isComingSoon,
   joinList,
+  journeyDays,
   parseIsoDate,
 } from "../src/lib/programacion.ts";
 
@@ -123,4 +124,12 @@ test("country codes become flag emoji", () => {
   assert.equal(flagEmoji("CO"), "🇨🇴");
   assert.equal(flagEmoji("GB"), "🇬🇧");
   assert.throws(() => flagEmoji("co"));
+});
+
+test("journey merges stops day by day", () => {
+  const santaMarta = { order: 1, days: [{ date: "2027-01-16" }, { date: "2027-01-17" }] };
+  const palenque = { order: 2, days: [{ date: "2027-01-17" }, { date: "2027-01-18" }] };
+  const journey = journeyDays([palenque, santaMarta]);
+  assert.deepEqual(journey.map((d) => d.date), ["2027-01-16", "2027-01-17", "2027-01-18"]);
+  assert.deepEqual(journey[1].entries.map((e) => e.stop.order), [1, 2]);
 });

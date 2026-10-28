@@ -6,6 +6,7 @@ import FestivalFont from "@/components/FestivalFont.astro";
 import EditionTickets from "@/components/EditionTickets.astro";
 import EditionCountries from "@/components/EditionCountries.astro";
 import EditionHeadliner from "@/components/EditionHeadliner.astro";
+import EditionJourney, { type JourneyStep } from "@/components/EditionJourney.astro";
 import { getCollection } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
@@ -19,6 +20,7 @@ import {
   flagEmoji,
   isComingSoon,
   joinList,
+  journeyDays,
   type Lang,
 } from "@/lib/programacion";
 import heroPhoto from "@/assets/img/2017/2017-afroin-img-7.jpg";
@@ -54,6 +56,30 @@ const stopCards = stops.map((stop) => {
 });
 
 const allDays = stops.flatMap((stop) => stop.data.days);
+
+const artistsById = new Map(artists.map((artist) => [artist.id, artist.data]));
+const journey: JourneyStep[] = journeyDays(
+  stops.map((stop) => ({ ...stop.data, slug: baseSlug(stop.filePath!) }))
+).map(({ date, entries }) => {
+  const label = dayLabel(date, lang);
+  const withPhoto = entries.find((entry) => entry.day.photo);
+  const firstArtist = entries
+    .flatMap((entry) => entry.day.activities)
+    .map((activity) => (activity.artist ? artistsById.get(activity.artist.id) : undefined))
+    .find(Boolean);
+  return {
+    ...label,
+    city: joinList([...new Set(entries.map((entry) => entry.stop.name))], lang),
+    photo: withPhoto?.day.photo ?? firstArtist?.photo ?? entries[0].stop.cardImage,
+    photoPosition: withPhoto?.day.photoPosition ?? "center",
+    entries: entries.map(({ stop, day }) => ({
+      stopName: stop.name,
+      venue: day.venue,
+      href: `${getTranslatedPath(`/programacion/2027/${stop.slug}`, lang)}#d-${label.dayNumber}`,
+      items: day.activities.map((activity) => [activity.time, activity.title].filter(Boolean).join(" · ")),
+    })),
+  };
+});
 const headliner = artists.find((artist) => artist.data.featured);
 const headlinerAppearances = headliner
   ? artistAppearances(
@@ -114,6 +140,8 @@ const { navLinks, ctaLink } = editionNav(lang);
         </div>
       </div>
     </section>
+
+    <EditionJourney steps={journey} lang={lang} />
 
     {headliner && (
       <div class="fz-wrap edition-block">

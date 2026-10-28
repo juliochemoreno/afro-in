@@ -15,16 +15,21 @@ days:
       - title: "Fiesta en el arroyo"
         kind: "Fiesta"
   - date: "2027-01-18"
+    photo: "../../assets/img/afro-in-palenque-1/received_373416019886759.jpeg"
+    photoPosition: "55% 50%"
     activities:
       - title: "Clases de baile con los instructores internacionales"
         kind: "Taller"
         note: "Para niños, niñas y jóvenes de Palenque"
   - date: "2027-01-19"
+    photo: "../../assets/img/afro-in-palenque-1/DSC_0460.JPG"
     activities:
       - title: "Clases de baile con los instructores internacionales"
         kind: "Taller"
         note: "Para niños, niñas y jóvenes de Palenque"
   - date: "2027-01-20"
+    photo: "../../assets/img/afro-in-palenque-1/DSC_0434.JPG"
+    photoPosition: "78% 50%"
     activities:
       - title: "Cierre AFRO IN Palenque"
         kind: "Cierre"

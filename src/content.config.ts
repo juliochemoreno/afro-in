@@ -104,6 +104,9 @@ const tour2027 = defineCollection({
       days: z.array(
         z.object({
           date: isoDate,
+          // Photo for this day in the listing's journey (else the first artist's).
+          photo: image().optional(),
+          photoPosition: z.string().default("center"),
           venue: z.string().optional(),
           venueArea: z.string().optional(),
           venueLogo: image().optional(),

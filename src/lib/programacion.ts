@@ -140,3 +140,19 @@ export function flagEmoji(countryCode: string): string {
   if (!/^[A-Z]{2}$/.test(countryCode)) throw new Error(`Invalid country code: ${countryCode}`);
   return String.fromCodePoint(...[...countryCode].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
 }
+
+// The edition day by day across stops (a date shared by two stops lists both),
+// sorted by date then stop order. Used by the listing's journey section.
+export function journeyDays<Stop extends { order: number; days: Day[] }, Day extends { date: string }>(
+  stops: Stop[]
+): { date: string; entries: { stop: Stop; day: Day }[] }[] {
+  const byDate = new Map<string, { stop: Stop; day: Day }[]>();
+  for (const stop of [...stops].sort((a, b) => a.order - b.order)) {
+    for (const day of stop.days) {
+      byDate.set(day.date, [...(byDate.get(day.date) ?? []), { stop, day }]);
+    }
+  }
+  return [...byDate.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, entries]) => ({ date, entries }));
+}

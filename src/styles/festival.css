@@ -317,3 +317,176 @@
     grid-row: auto;
   }
 }
+
+/* Journey: steps scroll, the framed photo stays (sticky) and follows them. */
+.fz-journey {
+  padding-top: 24px;
+  padding-bottom: 72px;
+}
+
+.fz-journey-title {
+  margin: 0;
+  font-size: 64px;
+  line-height: 1;
+}
+
+.fz-journey-lead {
+  margin: 8px 0 0;
+  font-size: 18px;
+  max-width: 60ch;
+}
+
+.fz-journey-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  gap: 64px;
+  margin-top: 24px;
+}
+
+.fz-journey-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fz-journey-step {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  border-top: 1px solid var(--fz-line);
+}
+
+.fz-journey-step-photo {
+  display: none;
+}
+
+.fz-journey-count {
+  margin: 0;
+  font-weight: 600;
+  color: var(--fz-gold);
+}
+
+.fz-journey-date {
+  margin: 0;
+  font-size: clamp(48px, 6vw, 80px);
+  line-height: 0.95;
+}
+
+.fz-journey-entry {
+  margin-top: 8px;
+}
+
+.fz-journey-entry p {
+  margin: 0;
+}
+
+.fz-journey-where {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.fz-journey-items {
+  margin: 6px 0 0;
+  padding-left: 1.1em;
+  color: var(--fz-muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.fz-journey-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-weight: 600;
+  text-underline-offset: 4px;
+}
+
+.fz-journey-stage {
+  position: relative;
+}
+
+.fz-journey-frame {
+  position: sticky;
+  top: 112px;
+}
+
+.fz-journey-photos {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+
+.fz-journey-panel {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.fz-journey-panel[data-active] {
+  opacity: 1;
+}
+
+.fz-journey-panel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fz-journey-panel figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 64px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, transparent 0%, rgba(22, 22, 22, 0.9) 70%);
+}
+
+.fz-journey-panel-day {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.fz-journey-panel-city {
+  font-size: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fz-journey-panel {
+    transition: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .fz-journey-title {
+    font-size: 48px;
+  }
+
+  .fz-journey-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .fz-journey-stage {
+    display: none;
+  }
+
+  .fz-journey-step {
+    min-height: 0;
+    padding: 28px 0;
+  }
+
+  .fz-journey-step-photo {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    margin-bottom: 8px;
+  }
+}

@@ -381,5 +381,8 @@
   "edition.artistsPastLink": "Ver los artistas 2026",
   "edition.countriesTitle": "Artistas de {n} países",
   "edition.headliner": "Artista estrella",
-  "edition.seeAllArtists": "Ver todos los artistas"
+  "edition.seeAllArtists": "Ver todos los artistas",
+  "edition.journeyTitle": "El recorrido",
+  "edition.journeyText": "Seis días entre Santa Marta y Palenque: así se vive AFRO IN 2027.",
+  "edition.journeyDayLink": "Ver el día en {name}"
 }
