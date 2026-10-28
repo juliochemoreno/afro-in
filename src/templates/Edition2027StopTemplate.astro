@@ -5,10 +5,12 @@ import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
 import EditionTickets from "@/components/EditionTickets.astro";
 import FestivalScrolly from "@/components/FestivalScrolly.astro";
+import EditionDayHead from "@/components/EditionDayHead.astro";
+import EditionActivities from "@/components/EditionActivities.astro";
 import { getEntries, type CollectionEntry } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
-import { baseSlug, dateRange, dayLabel, flagEmoji, isComingSoon, type Lang } from "@/lib/programacion";
+import { activityByline, baseSlug, dateRange, dayLabel, isComingSoon, type Lang } from "@/lib/programacion";
 import { editionNav } from "@/lib/editionNav";
 import "@/styles/festival.css";
 
@@ -32,23 +34,15 @@ const artistRefs = data.days.flatMap((day) =>
 const artistEntries = await getEntries(artistRefs);
 const artistsById = new Map(artistEntries.map((artist) => [artist.id, artist.data]));
 
-const days = data.days.map((day, index) => {
+const days = data.days.map((day) => {
   const label = dayLabel(day.date, lang);
   return {
     ...day,
     ...label,
     anchor: `d-${label.dayNumber}`,
-    heart: index % 2 === 0 ? "var(--fz-red)" : "var(--fz-teal)",
     activities: day.activities.map((activity) => {
       const artist = activity.artist ? artistsById.get(activity.artist.id) : undefined;
-      return {
-        ...activity,
-        photo: artist?.photo,
-        flag: artist ? flagEmoji(artist.countryCode) : undefined,
-        byline: artist && !activity.title.includes(artist.name)
-          ? `${artist.name} (${artist.country[lang]})`
-          : artist?.country[lang],
-      };
+      return { ...activity, photo: artist?.photo, ...activityByline(activity.title, artist, lang) };
     }),
   };
 });
@@ -126,62 +120,28 @@ const { navLinks, ctaLink } = editionNav(lang);
 
     <div class="fz-wrap stop-days">
       {comingSoon ? (
-        <div class="stop-tba">
-          <p class="fz-display stop-tba-title">{t("edition.agendaTba")}</p>
+        <div class="fz-tba">
+          <p class="fz-display fz-tba-title">{t("edition.agendaTba")}</p>
           <p class="fz-muted">{t("edition.agendaTbaText")}</p>
         </div>
       ) : (
         <FestivalScrolly panels={panels}>
           {days.map((day, index) => (
             <section id={day.anchor} class="fz-scrolly-step stop-day" data-step={String(index)}>
-              <header class="stop-dayhead">
-                <p class="stop-count">{index + 1} / {days.length}</p>
-                <div class="stop-weekday">
-                  <svg width="24" height="22" viewBox="0 0 24 22" aria-hidden="true">
-                    <path d="M12 21s-9-5.6-9-12a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.4-9 12-9 12z" fill={day.heart} />
-                  </svg>
-                  <span class="fz-display fz-gold">{day.weekdayLong}</span>
-                </div>
-                <h2 class="fz-display stop-daydate">{day.dayMonth}</h2>
-                {day.venue && (
-                  <p class="stop-venue">
-                    <span class="fz-display stop-venue-name">{day.venue}</span>
-                    {day.venueArea && <span class="fz-muted stop-venue-area">{day.venueArea}</span>}
-                  </p>
-                )}
-              </header>
-
-              <div class="stop-activities">
-                {day.activities.length === 0 ? (
-                  <div class="stop-tba">
-                    <p class="fz-display stop-tba-title">{t("edition.agendaTba")}</p>
-                    <p class="fz-muted">{t("edition.agendaTbaText")}</p>
-                  </div>
-                ) : (
-                  day.activities.map((activity) => (
-                    <article class="stop-activity">
-                      <p class:list={["fz-display", "fz-gold", "stop-time", { "stop-time-tba": !activity.time }]}>
-                        {activity.time ?? t("edition.timeTba")}
-                      </p>
-                      <div>
-                        {activity.kind && <p class="stop-kind">{activity.kind}</p>}
-                        <h3 class="fz-display stop-title">{activity.title}</h3>
-                        {activity.byline && (
-                          <p class="fz-muted stop-byline">
-                            <span class="fz-flag" aria-hidden="true">{activity.flag}</span> {activity.byline}
-                          </p>
-                        )}
-                        {activity.note && <p class="fz-muted stop-note">{activity.note}</p>}
-                        {activity.signupUrl && (
-                          <a class="fz-button fz-button-solid stop-signup" href={activity.signupUrl}>
-                            {t("edition.signup")}
-                          </a>
-                        )}
-                      </div>
-                    </article>
-                  ))
-                )}
-              </div>
+              <EditionDayHead
+                index={index}
+                total={days.length}
+                weekdayLong={day.weekdayLong}
+                dayMonth={day.dayMonth}
+                headingLevel="h2"
+              />
+              {day.venue && (
+                <p class="fz-venue">
+                  <span class="fz-display fz-venue-name">{day.venue}</span>
+                  {day.venueArea && <span class="fz-muted fz-venue-area">{day.venueArea}</span>}
+                </p>
+              )}
+              <EditionActivities activities={day.activities} lang={lang} />
             </section>
           ))}
         </FestivalScrolly>
@@ -266,114 +226,6 @@ const { navLinks, ctaLink } = editionNav(lang);
     scroll-margin-top: 96px;
   }
 
-  .stop-dayhead {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 8px;
-  }
-
-  .stop-count {
-    margin: 0;
-    font-weight: 600;
-    color: var(--fz-gold);
-  }
-
-  .stop-weekday {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 22px;
-  }
-
-  .stop-daydate {
-    margin: 0;
-    font-size: clamp(44px, 5vw, 64px);
-    line-height: 0.95;
-  }
-
-  .stop-venue {
-    margin: 4px 0 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 12px;
-  }
-
-  .stop-venue-name {
-    font-size: 26px;
-    line-height: 1.1;
-    color: var(--fz-gold);
-  }
-
-  .stop-venue-area {
-    font-size: 15px;
-  }
-
-  .stop-activities {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .stop-activity {
-    display: grid;
-    grid-template-columns: 110px minmax(0, 1fr);
-    gap: 24px;
-    align-items: start;
-    padding: 20px 0;
-    border-bottom: 1px solid rgba(244, 234, 213, 0.12);
-  }
-
-  .stop-activity p,
-  .stop-activity h3 {
-    margin: 0;
-  }
-
-  .stop-time {
-    font-size: 30px;
-  }
-
-  .stop-time-tba {
-    font-family: var(--font-heading, "Outfit"), sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-  }
-
-  .stop-kind {
-    margin-bottom: 4px !important;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--fz-heliconia);
-  }
-
-  .stop-title {
-    font-size: 34px;
-    line-height: 1.05;
-  }
-
-  .stop-byline,
-  .stop-note {
-    margin-top: 6px !important;
-    font-size: 16px;
-  }
-
-  .stop-signup {
-    margin-top: 12px;
-  }
-
-  .stop-tba {
-    padding: 28px 0;
-  }
-
-  .stop-tba p {
-    margin: 0;
-  }
-
-  .stop-tba-title {
-    font-size: 34px;
-    margin-bottom: 8px !important;
-  }
-
   .stop-tickets {
     padding-top: 32px;
     padding-bottom: 56px;
@@ -401,21 +253,5 @@ const { navLinks, ctaLink } = editionNav(lang);
       scroll-margin-top: calc(120px + 38vh);
     }
 
-    .stop-activity {
-      grid-template-columns: 72px minmax(0, 1fr);
-      gap: 14px;
-    }
-
-    .stop-time {
-      font-size: 22px;
-    }
-
-    .stop-time-tba {
-      font-size: 13px;
-    }
-
-    .stop-title {
-      font-size: 28px;
-    }
   }
 </style>

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  activityByline,
   artistAppearances,
   baseSlug,
   dateRange,
@@ -132,4 +133,11 @@ test("journey merges stops day by day", () => {
   const journey = journeyDays([palenque, santaMarta]);
   assert.deepEqual(journey.map((d) => d.date), ["2027-01-16", "2027-01-17", "2027-01-18"]);
   assert.deepEqual(journey[1].entries.map((e) => e.stop.order), [1, 2]);
+});
+
+test("activity byline names the artist only when the title does not", () => {
+  const artist = { name: "Fafoman", countryCode: "CO", country: { es: "Colombia", en: "Colombia", fr: "Colombie" } };
+  assert.deepEqual(activityByline("Afro Batalla · Filtro", artist, "es"), { flag: "🇨🇴", byline: "Fafoman (Colombia)" });
+  assert.deepEqual(activityByline("Fafoman", artist, "fr"), { flag: "🇨🇴", byline: "Colombie" });
+  assert.deepEqual(activityByline("Fiesta", undefined, "es"), {});
 });

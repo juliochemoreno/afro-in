@@ -1,0 +1,57 @@
+---
+// One day's activities (time, kind, title, artist with flag, note, sign-up),
+// or "to be announced" when there are none. Shared by the listing journey
+// and the stop pages.
+import { useTranslations } from "@/i18n/utils";
+import type { Lang } from "@/lib/programacion";
+
+export interface EditionActivity {
+  time?: string;
+  kind?: string;
+  title: string;
+  flag?: string;
+  byline?: string;
+  note?: string;
+  signupUrl?: string;
+}
+
+interface Props {
+  activities: EditionActivity[];
+  lang: Lang;
+}
+
+const { activities, lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+{activities.length === 0 ? (
+  <div class="fz-tba">
+    <p class="fz-display fz-tba-title">{t("edition.agendaTba")}</p>
+    <p class="fz-muted">{t("edition.agendaTbaText")}</p>
+  </div>
+) : (
+  <div class="fz-activities">
+    {activities.map((activity) => (
+      <article class="fz-activity">
+        <p class:list={["fz-display", "fz-gold", "fz-activity-time", { "fz-activity-time-tba": !activity.time }]}>
+          {activity.time ?? t("edition.timeTba")}
+        </p>
+        <div>
+          {activity.kind && <p class="fz-activity-kind">{activity.kind}</p>}
+          <h4 class="fz-display fz-activity-title">{activity.title}</h4>
+          {activity.byline && (
+            <p class="fz-muted fz-activity-byline">
+              <span class="fz-flag" aria-hidden="true">{activity.flag}</span> {activity.byline}
+            </p>
+          )}
+          {activity.note && <p class="fz-muted fz-activity-note">{activity.note}</p>}
+          {activity.signupUrl && (
+            <a class="fz-button fz-button-solid fz-activity-signup" href={activity.signupUrl}>
+              {t("edition.signup")}
+            </a>
+          )}
+        </div>
+      </article>
+    ))}
+  </div>
+)}

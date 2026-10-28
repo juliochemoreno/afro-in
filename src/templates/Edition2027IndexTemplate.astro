@@ -15,6 +15,7 @@ import {
   dateRange,
   dayLabel,
   entryLang,
+  activityByline,
   artistAppearances,
   firstAppearance,
   flagEmoji,
@@ -76,7 +77,10 @@ const journey: JourneyStep[] = journeyDays(
       stopName: stop.name,
       venue: day.venue,
       href: `${getTranslatedPath(`/programacion/2027/${stop.slug}`, lang)}#d-${label.dayNumber}`,
-      items: day.activities.map((activity) => [activity.time, activity.title].filter(Boolean).join(" · ")),
+      activities: day.activities.map((activity) => ({
+        ...activity,
+        ...activityByline(activity.title, activity.artist ? artistsById.get(activity.artist.id) : undefined, lang),
+      })),
     })),
   };
 });

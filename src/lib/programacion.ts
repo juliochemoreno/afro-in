@@ -156,3 +156,17 @@ export function journeyDays<Stop extends { order: number; days: Day[] }, Day ext
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, entries]) => ({ date, entries }));
 }
+
+// Artist line under an activity: the country when the title already names
+// the artist ("Chichi Banana"), else "Name (Country)".
+export function activityByline(
+  title: string,
+  artist: { name: string; countryCode: string; country: Record<Lang, string> } | undefined,
+  lang: Lang
+): { flag?: string; byline?: string } {
+  if (!artist) return {};
+  return {
+    flag: flagEmoji(artist.countryCode),
+    byline: title.includes(artist.name) ? artist.country[lang] : `${artist.name} (${artist.country[lang]})`,
+  };
+}

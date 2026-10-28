@@ -238,6 +238,7 @@
 .fz-flag {
   font-size: 1.25em;
   line-height: 1;
+  margin-right: 6px;
 }
 
 /* Headliner (the edition's star artist). */
@@ -363,37 +364,12 @@
   border-top: 1px solid var(--fz-line);
 }
 
-.fz-journey-count {
-  margin: 0;
-  font-weight: 600;
-  color: var(--fz-gold);
-}
-
-.fz-journey-date {
-  margin: 0;
-  font-size: clamp(48px, 6vw, 80px);
-  line-height: 0.95;
-}
-
 .fz-journey-entry {
   margin-top: 8px;
 }
 
-.fz-journey-entry p {
-  margin: 0;
-}
-
-.fz-journey-where {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.fz-journey-items {
-  margin: 6px 0 0;
-  padding-left: 1.1em;
-  color: var(--fz-muted);
-  font-size: 16px;
-  line-height: 1.6;
+.fz-journey-entry + .fz-journey-entry {
+  margin-top: 28px;
 }
 
 .fz-journey-link {
@@ -509,5 +485,134 @@
   .fz-scrolly-step {
     min-height: 52vh;
     padding: 24px 0;
+  }
+}
+
+/* A day: heading, venue line, activities (journey and stop pages). */
+.fz-dayhead {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fz-day-count {
+  margin: 0;
+  font-weight: 600;
+  color: var(--fz-gold);
+}
+
+.fz-day-weekday {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+}
+
+.fz-day-date {
+  margin: 0;
+  font-size: clamp(44px, 5vw, 64px);
+  line-height: 0.95;
+}
+
+.fz-venue {
+  margin: 12px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.fz-venue-name {
+  font-size: 26px;
+  line-height: 1.1;
+  color: var(--fz-gold);
+}
+
+.fz-venue-area {
+  font-size: 15px;
+}
+
+.fz-activities {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+
+.fz-activity {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(244, 234, 213, 0.12);
+}
+
+.fz-activity p,
+.fz-activity h4 {
+  margin: 0;
+}
+
+.fz-activity-time {
+  font-size: 30px;
+}
+
+.fz-activity-time-tba {
+  font-family: var(--font-heading, "Outfit"), sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.fz-activity-kind {
+  margin-bottom: 4px !important;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fz-heliconia);
+}
+
+.fz-activity-title {
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.fz-activity-byline,
+.fz-activity-note {
+  margin-top: 6px !important;
+  font-size: 16px;
+}
+
+.fz-activity-signup {
+  margin-top: 12px;
+}
+
+.fz-tba {
+  padding: 20px 0;
+}
+
+.fz-tba p {
+  margin: 0;
+}
+
+.fz-tba-title {
+  font-size: 34px;
+  margin-bottom: 8px !important;
+}
+
+@media (max-width: 720px) {
+  .fz-activity {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .fz-activity-time {
+    font-size: 22px;
+  }
+
+  .fz-activity-time-tba {
+    font-size: 13px;
+  }
+
+  .fz-activity-title {
+    font-size: 28px;
   }
 }
