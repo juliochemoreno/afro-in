@@ -152,7 +152,10 @@
   font-weight: 500;
   color: var(--color-primary-dark);
 }
-.is-invalid input:not([type="hidden"]):not(.ph-number),
+/* Two classes on the group: beats the donation form's scoped
+   `.form-group[data-astro-cid] input[data-astro-cid]`. */
+.form-group.is-invalid input:not([type="hidden"]):not(.ph-number),
+.ck-field.is-invalid input:not([type="hidden"]):not(.ph-number),
 .is-invalid textarea,
 .is-invalid .cc-trigger:not(.ph-dial),
 .is-invalid .ph-field {
