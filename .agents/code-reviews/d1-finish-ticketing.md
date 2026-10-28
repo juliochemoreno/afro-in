@@ -63,3 +63,15 @@ New agent, no prior context, read the whole branch (the July–October ticketing
 | — | info | SRI hash of `qrcode-generator@1.4.4` not verified by the reviewer | — | Verified: hash computed from the CDN file; QR renders in the browser with `integrity` set, no console errors |
 
 Evidence after fixes: auth 65/65, tickets/webhook/regression 57/57, review-fix checks 15/15 against `astro dev`; `npm run check` green.
+
+## Store return routing fix (Level 5 finding, Julio's OK)
+
+Scope: `src/layouts/Layout.astro` (Bold return handler), `src/pages/api/bold-confirmar.ts`. Bug pre-existing in production since June 2026 (33f5c7a): store returns were redirected from `/pedido` to `/gracias`, cancelling `/api/store/confirm` (Workers `outcome: canceled`), and `/api/bold-confirmar` only updated `donors`.
+Reviewer bundled `src/i18n/utils.ts` + `src/lib/bold.ts` to check routing for es/en/fr, trailing slashes, loops, attacker-chosen ids and the whitelist. Verdict: **pass**.
+
+| # | Sev | Finding | Outcome |
+|---|---|---|---|
+| 1 | low | Header comment of the handler still said "thank-you page" | Fixed |
+
+Checked clean: localized destinations (9 paths), no loops (one hop at most), no open redirect (destinations are server-computed relative paths), donation flow and `/api/bold-confirmar` response shape unchanged, table names only from `CONFIRM_TARGETS`, ticket ids refused before any DB access.
+Evidence: 8/8 endpoint checks with real Bold-test-APPROVED donation and store ids (local D1); 6 browser routing cases on `astro dev` (`/pedido` keeps its page and completes its own confirmation; `/en/store` → `/en/order`; donation → `/gracias`, `/fr/merci`; ticket → `/entradas`); ticket regression 57/57 (one transient `astro dev` ECONNRESET on a page fetch, 200 on retry).
