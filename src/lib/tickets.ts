@@ -5,6 +5,7 @@
 
 import { generateOrderId } from "@/lib/bold";
 import { BOLD_MIN_AMOUNT, CheckoutError } from "@/lib/orders";
+import { normalizeStoredPhone } from "@/lib/checkoutFields";
 
 const MAX_QTY = 10;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -194,6 +195,10 @@ export async function createPendingTicketOrder(
   if (!name) throw new CheckoutError("El nombre es obligatorio");
   if (!email || !EMAIL_RE.test(email))
     throw new CheckoutError("Se requiere un email válido");
+  const rawPhone = clean(input.buyer?.phone, 40);
+  if (!rawPhone) throw new CheckoutError("El teléfono es obligatorio");
+  const phone = normalizeStoredPhone(rawPhone);
+  if (!phone) throw new CheckoutError("Teléfono inválido");
 
   const qty = Math.trunc(Number(input.quantity));
   if (!Number.isFinite(qty) || qty < 1 || qty > MAX_QTY)
@@ -274,7 +279,7 @@ export async function createPendingTicketOrder(
       qty,
       name,
       email,
-      clean(input.buyer?.phone, 40),
+      phone,
       accessToken,
       isFree ? 1 : 0,
       paidAt

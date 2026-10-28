@@ -1,0 +1,64 @@
+---
+// "The journey": the edition day by day, with the photo of each day following
+// the scroll (FestivalScrolly).
+import type { ImageMetadata } from "astro";
+import FestivalScrolly from "@/components/FestivalScrolly.astro";
+import EditionDayHead from "@/components/EditionDayHead.astro";
+import EditionActivities, { type EditionActivity } from "@/components/EditionActivities.astro";
+import { useTranslations } from "@/i18n/utils";
+import type { Lang } from "@/lib/programacion";
+
+export interface JourneyStep {
+  weekdayShort: string;
+  weekdayLong: string;
+  dayNumber: string;
+  dayMonth: string;
+  city: string;
+  photo: ImageMetadata;
+  photoPosition: string;
+  entries: { stopName: string; venue?: string; href: string; activities: EditionActivity[] }[];
+}
+
+interface Props {
+  steps: JourneyStep[];
+  lang: Lang;
+}
+
+const { steps, lang } = Astro.props;
+const t = useTranslations(lang);
+const panels = steps.map((step) => ({
+  photo: step.photo,
+  photoPosition: step.photoPosition,
+  title: `${step.weekdayShort} ${step.dayNumber}`,
+  subtitle: step.city,
+}));
+---
+
+<section class="fz-wrap fz-journey" aria-labelledby="fz-journey-title">
+  <header class="fz-journey-head">
+    <h2 id="fz-journey-title" class="fz-display fz-journey-title">{t("edition.journeyTitle")}</h2>
+    <p class="fz-muted fz-journey-lead">{t("edition.journeyText").replace("{n}", String(steps.length))}</p>
+  </header>
+
+  <FestivalScrolly panels={panels}>
+    <ol class="fz-journey-list">
+      {steps.map((step, index) => (
+        <li class="fz-scrolly-step fz-journey-day" data-step={String(index)}>
+          <EditionDayHead index={index} total={steps.length} weekdayLong={step.weekdayLong} dayMonth={step.dayMonth} />
+          {step.entries.map((entry) => (
+            <div class="fz-journey-entry">
+              <p class="fz-venue">
+                <span class="fz-display fz-venue-name">{entry.venue ?? entry.stopName}</span>
+                {entry.venue && <span class="fz-muted fz-venue-area">{entry.stopName}</span>}
+              </p>
+              <EditionActivities activities={entry.activities} lang={lang} />
+              <a class="fz-journey-link" href={entry.href}>
+                {t("edition.journeyDayLink").replace("{name}", entry.stopName)}
+              </a>
+            </div>
+          ))}
+        </li>
+      ))}
+    </ol>
+  </FestivalScrolly>
+</section>

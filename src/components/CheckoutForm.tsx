@@ -1,14 +1,18 @@
 "use client";
 
 import * as React from "react";
-import CountryCombobox from "@/components/CountryCombobox";
+import PhoneField from "@/components/checkout/PhoneField";
+import LocationFields, {
+  type LocationValue,
+  type RegionMode,
+} from "@/components/checkout/LocationFields";
+import {
+  fetchGeoCountry,
+  type CountryEntry,
+} from "@/components/CountryCombobox";
 import { getCart, formatPrice, type Cart } from "@/lib/cart";
-
-interface CountryEntry {
-  code: string;
-  emoji: string;
-  name: string;
-}
+import { buildBillingAddress, buildCustomerData } from "@/lib/boldPrefill";
+import { isValidEmail, normalizeStoredPhone } from "@/lib/checkoutFields";
 
 interface Props {
   lang: "es" | "en" | "fr";
@@ -29,7 +33,6 @@ declare global {
 }
 
 const BOLD_SDK = "https://checkout.bold.co/library/boldPaymentButton.js";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 let boldSdkPromise: Promise<void> | null = null;
 function loadBoldSDK(): Promise<void> {
@@ -44,6 +47,29 @@ function loadBoldSDK(): Promise<void> {
   });
   return boldSdkPromise;
 }
+
+// Fields in screen order: the first invalid one gets the focus.
+const FIELDS = [
+  "name",
+  "email",
+  "phone",
+  "country",
+  "department",
+  "city",
+  "address",
+] as const;
+type Field = (typeof FIELDS)[number];
+type Errors = Partial<Record<Field, string>>;
+
+const FIELD_IDS: Record<Field, string> = {
+  name: "ck-name",
+  email: "ck-email",
+  phone: "ck-phone",
+  country: "ck-country",
+  department: "ck-department",
+  city: "ck-city",
+  address: "ck-address",
+};
 
 export default function CheckoutForm({
   lang,
@@ -65,36 +91,76 @@ export default function CheckoutForm({
     name: "",
     email: "",
     phone: "",
-    department: "",
-    city: "",
     address: "",
     notes: "",
   });
+  const [location, setLocation] = React.useState<LocationValue>({
+    country: "CO",
+    department: "",
+    city: "",
+  });
+  const [regionMode, setRegionMode] = React.useState<RegionMode | null>(null);
+  const [attempted, setAttempted] = React.useState(false);
+  const countryTouched = React.useRef(false);
 
   React.useEffect(() => {
     setCart(getCart());
     setReady(true);
     loadBoldSDK();
-  }, []);
+    // Preselect the visitor's country unless they already picked one.
+    fetchGeoCountry().then((code) => {
+      if (countryTouched.current || !code || code === "CO") return;
+      if (countries.some((c) => c.code === code))
+        setLocation({ country: code, department: "", city: "" });
+    });
+  }, [countries]);
+
+  const validate = (
+    f: typeof form,
+    loc: LocationValue,
+    mode: RegionMode | null,
+  ): Errors => {
+    const e: Errors = {};
+    if (!f.name.trim()) e.name = t["checkout.err.name"];
+    if (!isValidEmail(f.email)) e.email = t["checkout.err.email"];
+    if (!normalizeStoredPhone(f.phone)) e.phone = t["phone.err"];
+    if (!loc.country) e.country = t["checkout.err.country"];
+    // Colombia always needs a department (the server checks it too), even if
+    // the DIVIPOLA list failed to load and the field fell back to text.
+    if ((mode !== "text" || loc.country === "CO") && !loc.department.trim())
+      e.department = t["checkout.err.department"];
+    if (!loc.city.trim()) e.city = t["checkout.err.city"];
+    if (!f.address.trim()) e.address = t["checkout.err.address"];
+    return e;
+  };
+
+  // Errors show from the first Pay attempt on and follow the fields as they change.
+  const errors: Errors = attempted ? validate(form, location, regionMode) : {};
 
   const set =
     (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  const focusField = (field: Field) => {
+    const el = document.getElementById(FIELD_IDS[field]);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus({ preventScroll: true });
+  };
+
   const submit = async () => {
     setError(null);
-    if (!form.name.trim()) return setError(t["checkout.err.name"]);
-    if (!EMAIL_RE.test(form.email.trim()))
-      return setError(t["checkout.err.email"]);
-    if (!form.city.trim()) return setError(t["checkout.err.city"]);
-    if (!form.address.trim()) return setError(t["checkout.err.address"]);
+    setAttempted(true);
+    const found = validate(form, location, regionMode);
+    const first = FIELDS.find((f) => found[f]);
+    if (first) return focusField(first);
     if (cart.items.length === 0) return;
 
-    const code =
-      (document.getElementById("checkout-country") as HTMLInputElement | null)
-        ?.value || "";
-    const country = countries.find((c) => c.code === code)?.name || code;
+    const phone = normalizeStoredPhone(form.phone)!;
+    const countryName =
+      countries.find((c) => c.code === location.country)?.name ||
+      location.country;
 
     const items = cart.items.map((i) => ({
       slug: i.slug || i.id,
@@ -115,12 +181,13 @@ export default function CheckoutForm({
           customer: {
             name: form.name,
             email: form.email,
-            phone: form.phone || null,
+            phone,
           },
           shipping: {
-            country,
-            department: form.department,
-            city: form.city,
+            country: countryName,
+            countryCode: location.country,
+            department: location.department,
+            city: location.city,
             address: form.address,
             notes: form.notes,
           },
@@ -148,13 +215,19 @@ export default function CheckoutForm({
         apiKey: data.apiKey,
         integritySignature: data.integritySignature,
         description: "Pedido tienda AFRO IN",
+        customerData: buildCustomerData({
+          name: form.name,
+          email: form.email,
+          phone,
+        }),
       };
-      const customerData: Record<string, string> = {
-        fullName: form.name.trim(),
-        email: form.email.trim(),
-      };
-      if (form.phone.trim()) customerData.phone = form.phone.trim();
-      boldConfig.customerData = JSON.stringify(customerData);
+      const billingAddress = buildBillingAddress({
+        address: form.address,
+        city: location.city,
+        state: location.department,
+        country: location.country,
+      });
+      if (billingAddress) boldConfig.billingAddress = billingAddress;
 
       // Bold only accepts a public HTTPS redirect URL.
       const origin = window.location.origin;
@@ -185,101 +258,130 @@ export default function CheckoutForm({
     );
   }
 
+  const fieldClass = (f: Field) =>
+    errors[f] ? "ck-field is-invalid" : "ck-field";
+  const errId = (f: Field) => `${FIELD_IDS[f]}-error`;
+  const describedBy = (f: Field) => (errors[f] ? errId(f) : undefined);
+  const errorText = (f: Field) =>
+    errors[f] ? (
+      <p className="ck-field-error" id={errId(f)}>
+        {errors[f]}
+      </p>
+    ) : null;
+
   return (
     <div className="checkout-grid">
       <div className="checkout-main">
         <fieldset className="checkout-card">
           <legend>{t["checkout.contact.title"]}</legend>
-          <div className="ck-field">
+          <div className={fieldClass("name")}>
             <label htmlFor="ck-name">{t["checkout.name"]}</label>
             <input
               id="ck-name"
               type="text"
               autoComplete="name"
+              maxLength={100}
               placeholder={t["checkout.name.ph"]}
               value={form.name}
               onChange={set("name")}
+              aria-invalid={!!errors.name || undefined}
+              aria-describedby={describedBy("name")}
             />
+            {errorText("name")}
           </div>
-          <div className="ck-row">
-            <div className="ck-field">
-              <label htmlFor="ck-email">{t["checkout.email"]}</label>
-              <input
-                id="ck-email"
-                type="email"
-                autoComplete="email"
-                placeholder={t["checkout.email.ph"]}
-                value={form.email}
-                onChange={set("email")}
-              />
-            </div>
-            <div className="ck-field">
-              <label htmlFor="ck-phone">{t["checkout.phone"]}</label>
-              <input
-                id="ck-phone"
-                type="tel"
-                autoComplete="tel"
-                placeholder={t["checkout.phone.ph"]}
-                value={form.phone}
-                onChange={set("phone")}
-              />
-            </div>
+          <div className={fieldClass("email")}>
+            <label htmlFor="ck-email">{t["checkout.email"]}</label>
+            <input
+              id="ck-email"
+              type="email"
+              autoComplete="email"
+              maxLength={120}
+              placeholder={t["checkout.email.ph"]}
+              value={form.email}
+              onChange={set("email")}
+              aria-invalid={!!errors.email || undefined}
+              aria-describedby={describedBy("email")}
+            />
+            {errorText("email")}
+          </div>
+          <div className={fieldClass("phone")}>
+            <label htmlFor="ck-phone">{t["checkout.phone"]}</label>
+            <PhoneField
+              lang={lang}
+              countries={countries}
+              country={location.country}
+              inputId="ck-phone"
+              onChange={(phone) => setForm((f) => ({ ...f, phone }))}
+              invalid={!!errors.phone}
+              ariaDescribedBy={describedBy("phone")}
+              placeholder={t["phone.ph"]}
+              dialLabel={t["phone.dial.label"]}
+              searchPlaceholder={t["phone.dial.search"]}
+              emptyText={t["phone.dial.empty"]}
+            />
+            {errorText("phone")}
           </div>
         </fieldset>
 
         <fieldset className="checkout-card">
           <legend>{t["checkout.shipping.title"]}</legend>
-          <div className="ck-field">
-            <label>{t["checkout.country"]}</label>
-            <CountryCombobox
-              lang={lang}
-              countries={countries}
-              inputId="checkout-country"
-              name="checkout-country"
-              placeholder={countryStrings.placeholder}
-              searchPlaceholder={countryStrings.search}
-              emptyText={countryStrings.empty}
-            />
-          </div>
-          <div className="ck-row">
-            <div className="ck-field">
-              <label htmlFor="ck-department">{t["checkout.department"]}</label>
-              <input
-                id="ck-department"
-                type="text"
-                placeholder={t["checkout.department.ph"]}
-                value={form.department}
-                onChange={set("department")}
-              />
-            </div>
-            <div className="ck-field">
-              <label htmlFor="ck-city">{t["checkout.city"]}</label>
-              <input
-                id="ck-city"
-                type="text"
-                autoComplete="address-level2"
-                placeholder={t["checkout.city.ph"]}
-                value={form.city}
-                onChange={set("city")}
-              />
-            </div>
-          </div>
-          <div className="ck-field">
+          <LocationFields
+            lang={lang}
+            countries={countries}
+            value={location}
+            onChange={(next) => {
+              // Any address edit means a late geo answer must not reset it.
+              countryTouched.current = true;
+              setLocation(next);
+            }}
+            onModeChange={setRegionMode}
+            errors={{
+              country: errors.country,
+              department: errors.department,
+              city: errors.city,
+            }}
+            idPrefix="ck"
+            strings={{
+              country: t["checkout.country"],
+              department: t["checkout.department"],
+              city: t["checkout.city"],
+              countryPlaceholder: countryStrings.placeholder,
+              departmentPlaceholder:
+                regionMode === "text"
+                  ? t["checkout.department.ph"]
+                  : regionMode === "list"
+                    ? t["checkout.state.select"]
+                    : t["checkout.department.select"],
+              cityPlaceholder:
+                regionMode === "divipola"
+                  ? t["checkout.city.select"]
+                  : t["checkout.city.ph"],
+              cityPickDepartmentFirst: t["checkout.city.pickDepartmentFirst"],
+              search: t["checkout.list.search"],
+              empty: t["checkout.list.empty"],
+            }}
+          />
+          <div className={fieldClass("address")}>
             <label htmlFor="ck-address">{t["checkout.address"]}</label>
             <input
               id="ck-address"
               type="text"
               autoComplete="street-address"
+              maxLength={200}
               placeholder={t["checkout.address.ph"]}
               value={form.address}
               onChange={set("address")}
+              aria-invalid={!!errors.address || undefined}
+              aria-describedby={describedBy("address")}
             />
+            {errorText("address")}
           </div>
           <div className="ck-field">
             <label htmlFor="ck-notes">{t["checkout.notes"]}</label>
             <textarea
               id="ck-notes"
               rows={2}
+              maxLength={300}
               placeholder={t["checkout.notes.ph"]}
               value={form.notes}
               onChange={set("notes")}

@@ -1,0 +1,37 @@
+---
+// Ticket tiers of an edition stop, as information only (no sale here).
+import { useTranslations } from "@/i18n/utils";
+import { formatCop, type Lang } from "@/lib/programacion";
+
+interface Props {
+  tickets: {
+    tiers: { period: string; price: number; note?: string }[];
+    includes?: string;
+  };
+  lang: Lang;
+  heading?: string;
+  // Inside another block (the headliner): no frame of its own.
+  bare?: boolean;
+}
+
+const { tickets, lang, heading, bare = false } = Astro.props;
+const t = useTranslations(lang);
+const Heading = bare ? "h3" : "h2";
+---
+
+<section class:list={[{ "fz-frame": !bare }]} aria-label={heading ?? t("edition.ticketsTitle")}>
+  <div class:list={["fz-tickets", { "fz-frame-inner": !bare, "fz-tickets-bare": bare }]}>
+    <Heading class="fz-display">{heading ?? t("edition.ticketsTitle")}</Heading>
+    <ul class="fz-tiers">
+      {tickets.tiers.map((tier) => (
+        <li>
+          <span>{tier.period}</span>
+          <span class="fz-display fz-tier-price">{formatCop(tier.price, lang)}</span>
+          {tier.note && <span class="fz-muted">{tier.note}</span>}
+        </li>
+      ))}
+    </ul>
+    {tickets.includes && <p class="fz-tickets-foot">{tickets.includes}</p>}
+    <p class="fz-muted">{t("edition.ticketsSoon")}</p>
+  </div>
+</section>

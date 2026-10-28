@@ -1,0 +1,82 @@
+---
+// Scroll-driven layout of the edition pages: the steps (default slot) scroll
+// while a framed photo stays in place (sticky; pinned on top on phones) and
+// switches to the step crossing the screen. Each step needs data-step="<index>".
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+export interface ScrollyPanel {
+  photo: ImageMetadata;
+  photoPosition: string;
+  title: string;
+  subtitle?: string;
+}
+
+interface Props {
+  panels: ScrollyPanel[];
+}
+
+const { panels } = Astro.props;
+---
+
+<div class="fz-scrolly" data-scrolly>
+  <div class="fz-scrolly-steps">
+    <slot />
+  </div>
+
+  <div class="fz-scrolly-stage" aria-hidden="true">
+    <div class="fz-frame fz-scrolly-frame">
+      <div class="fz-scrolly-photos">
+        {panels.map((panel, index) => (
+          <figure class="fz-scrolly-panel" data-panel={String(index)} data-active={index === 0 ? "" : undefined}>
+            <Image
+              src={panel.photo}
+              alt=""
+              widths={[480, 960]}
+              sizes="(max-width: 900px) 100vw, 440px"
+              class="fz-scrolly-panel-img"
+              style={`object-position: ${panel.photoPosition}`}
+            />
+            <figcaption>
+              <span class="fz-display fz-scrolly-panel-day">{panel.title}</span>
+              {panel.subtitle && <span class="fz-display fz-gold fz-scrolly-panel-city">{panel.subtitle}</span>}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let observers: IntersectionObserver[] = [];
+
+  function disconnectScrolly() {
+    observers.forEach((observer) => observer.disconnect());
+    observers = [];
+  }
+
+  function initScrolly() {
+    disconnectScrolly();
+    document.querySelectorAll<HTMLElement>("[data-scrolly]").forEach((root) => {
+      const panels = root.querySelectorAll<HTMLElement>("[data-panel]");
+      const show = (index: string) =>
+        panels.forEach((panel) => panel.toggleAttribute("data-active", panel.dataset.panel === index));
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) show((entry.target as HTMLElement).dataset.step ?? "0");
+          });
+        },
+        // A step is "current" while it crosses a line just below the middle
+        // of the screen (below the pinned photo on phones).
+        { rootMargin: "-55% 0px -40% 0px" }
+      );
+      root.querySelectorAll("[data-step]").forEach((step) => observer.observe(step));
+      observers.push(observer);
+    });
+  }
+
+  document.addEventListener("astro:page-load", initScrolly);
+  document.addEventListener("astro:before-swap", disconnectScrolly);
+</script>

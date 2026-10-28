@@ -22,6 +22,8 @@ interface Props {
   currentPage?: string;
   navLinks?: NavLink[];
   ctaLink?: { href: string; label: string };
+  // "festival": dark header for the edition programming pages (D9).
+  variant?: "default" | "festival";
 }
 
 // Default navigation for home page
@@ -39,11 +41,11 @@ const defaultNavLinks: NavLink[] = [
         label: t("nav.program"),
       },
       {
-        href: getTranslatedPath("/programacion/santa-marta", lang),
+        href: getTranslatedPath("/programacion/2027/santa-marta", lang),
         label: "Santa Marta",
       },
       {
-        href: getTranslatedPath("/programacion/palenque", lang),
+        href: getTranslatedPath("/programacion/2027/palenque", lang),
         label: "Palenque",
       },
       { href: getTranslatedPath("/artistas", lang), label: t("nav.artists") },
@@ -62,6 +64,7 @@ const {
   currentPage = "home",
   navLinks = defaultNavLinks,
   ctaLink = defaultCta,
+  variant = "default",
 } = Astro.props;
 
 // Get current URL path for active state
@@ -86,7 +89,10 @@ function isActive(href: string): boolean {
 ---
 
 <header
-  class="header fixed top-0 left-0 right-0 z-1000 backdrop-blur-md transition-all duration-300"
+  class:list={[
+    "header fixed top-0 left-0 right-0 z-1000 backdrop-blur-md transition-all duration-300",
+    { "header--festival": variant === "festival" },
+  ]}
 >
   <nav class="nav container flex items-center justify-between h-20">
     <a
@@ -212,6 +218,44 @@ function isActive(href: string): boolean {
 
   .header.scrolled {
     box-shadow: var(--shadow-sm);
+  }
+
+  /* Festival variant: dark bar matching the edition pages and the footer. */
+  .header.header--festival {
+    background: rgba(22, 22, 22, 0.94);
+    border-bottom-color: rgba(242, 193, 78, 0.25);
+  }
+
+  .header--festival .nav-link,
+  .header--festival .dropdown-link,
+  .header--festival :global(.current-lang-btn),
+  .header--festival :global(.cart-icon-button) {
+    color: #f4ead5;
+  }
+
+  .header--festival .nav-link.active,
+  .header--festival .nav-link:hover {
+    color: #f2c14e;
+  }
+
+  .header--festival .hamburger,
+  .header--festival .hamburger::before,
+  .header--festival .hamburger::after {
+    background: #f4ead5;
+  }
+
+  .header--festival .dropdown-menu {
+    background: #1f1f1f;
+  }
+
+  @media (max-width: 768px) {
+    .header--festival .nav-links {
+      background: rgba(22, 22, 22, 0.97);
+    }
+
+    .header--festival .dropdown-menu {
+      background: transparent;
+    }
   }
 
   .nav {

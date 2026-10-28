@@ -24,6 +24,19 @@ export default defineConfig({
   },
 
 
+  // The 2026 edition moved under /2026/ when the 2027 programming launched.
+  redirects: {
+    "/programacion/santa-marta": { status: 301, destination: "/programacion/2026/santa-marta" },
+    "/programacion/palenque": { status: 301, destination: "/programacion/2026/palenque" },
+    "/en/program/santa-marta": { status: 301, destination: "/en/program/2026/santa-marta" },
+    "/en/program/palenque": { status: 301, destination: "/en/program/2026/palenque" },
+    "/fr/programme/santa-marta": { status: 301, destination: "/fr/programme/2026/santa-marta" },
+    "/fr/programme/palenque": { status: 301, destination: "/fr/programme/2026/palenque" },
+    "/programacion/2027": { status: 301, destination: "/programacion" },
+    "/en/program/2027": { status: 301, destination: "/en/program" },
+    "/fr/programme/2027": { status: 301, destination: "/fr/programme" },
+  },
+
   prefetch: {
     prefetchAll: true,
     defaultStrategy: "hover",

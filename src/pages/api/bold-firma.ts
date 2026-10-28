@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { generateOrderId, generateIntegritySignature } from "@/lib/bold";
+import { normalizeStoredPhone } from "@/lib/checkoutFields";
 
 export const prerender = false;
 
@@ -47,6 +48,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!email || !EMAIL_RE.test(email)) {
       return json({ error: "A valid email is required" }, 400);
     }
+    const phone = normalizeStoredPhone(
+      typeof data.phone === "string" ? data.phone : null
+    );
+    if (!phone) {
+      return json({ error: "A valid phone is required" }, 400);
+    }
     if (!Number.isFinite(amount) || amount < BOLD_MIN_AMOUNT) {
       return json(
         { error: `Amount must be an integer >= ${BOLD_MIN_AMOUNT} COP` },
@@ -77,7 +84,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .bind(
         name,
         email,
-        data.phone?.trim() || null,
+        phone,
         data.country?.trim() || null,
         amount,
         orderId
