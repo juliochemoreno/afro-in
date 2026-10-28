@@ -4,3 +4,7 @@
 # Credentials for the /admin area (HTTP Basic Auth)
 ADMIN_USER="admin"
 ADMIN_PASSWORD="change-me-in-local"
+
+# Bold.co keys: TEST mode keys only (local dev and Worker Previews)
+BOLD_API_KEY=""
+BOLD_SECRET_KEY=""
