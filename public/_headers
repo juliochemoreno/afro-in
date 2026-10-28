@@ -1,0 +1,13 @@
+# Non-production hosts must not be indexed. Cloudflare only adds noindex to
+# workers.dev Previews, not to custom-domain Previews (<name>.afroin.org).
+# Production (afroin.org) matches none of these rules.
+# Worker-generated (SSR) responses get the header in src/middleware.ts.
+https://:sub.afroin.org/*
+  X-Robots-Tag: noindex
+
+# :sub also matches www; keep it identical to production.
+https://www.afroin.org/*
+  ! X-Robots-Tag
+
+https://:name.:subdomain.workers.dev/*
+  X-Robots-Tag: noindex
