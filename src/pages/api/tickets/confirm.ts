@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { confirmBoldOrder, CONFIRM_TARGETS } from "@/lib/bold";
+import { confirmBoldOrder, CONFIRM_TARGETS, type ConfirmResult } from "@/lib/bold";
 import { issueTicketsForOrder, getTicketOrderByBoldId } from "@/lib/tickets";
 
 export const prerender = false;
@@ -16,7 +16,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const env = locals.runtime.env;
 
   try {
-    const { orderId } = (await request.json()) as ConfirmRequest;
+    let body: ConfirmRequest;
+    try {
+      body = (await request.json()) as ConfirmRequest;
+    } catch {
+      return json({ error: "Invalid JSON body" }, 400);
+    }
+    const orderId = body?.orderId;
     if (!orderId || typeof orderId !== "string" || !orderId.startsWith("AFROIN-TIX-")) {
       return json({ error: "valid ticket orderId required" }, 400);
     }
@@ -25,25 +31,43 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return json({ error: "Provider not configured" }, 500);
     }
 
-    const result = await confirmBoldOrder(
-      env.DB,
-      env.BOLD_API_KEY,
-      orderId,
-      CONFIRM_TARGETS.ticket
-    );
-
-    // Issue tickets after confirmation regardless of `changed`: the webhook may
-    // have flipped the row first. issueTicketsForOrder is idempotent.
-    if (result.donorStatus === "completed") {
-      await issueTicketsForOrder(env.DB, orderId);
+    // A Bold outage (fetch throws) must not hide tickets of an order the
+    // webhook already completed: treat it as "no answer yet" and read D1.
+    let result: ConfirmResult;
+    try {
+      result = await confirmBoldOrder(
+        env.DB,
+        env.BOLD_API_KEY,
+        orderId,
+        CONFIRM_TARGETS.ticket
+      );
+    } catch (e) {
+      console.error("ticket confirm: Bold voucher query failed", orderId, e);
+      result = { donorStatus: "pending", providerStatus: "UNREACHABLE", changed: false };
     }
 
-    const view = await getTicketOrderByBoldId(env.DB, orderId);
+    // Issue tickets after confirmation regardless of `changed` or of what the
+    // voucher said: the webhook may have completed the row first, or an older
+    // version may have left it claimed without tickets. issueTicketsForOrder is
+    // idempotent and does nothing unless the order is completed in D1.
+    await issueTicketsForOrder(env.DB, orderId);
 
-    const completed = result.donorStatus === "completed";
+    let view = await getTicketOrderByBoldId(env.DB, orderId);
+    // The webhook may have completed the order between our issuance call and
+    // this read: issue (idempotent) and read again so the buyer gets tickets.
+    if (view.order?.status === "completed" && view.tickets.length === 0) {
+      await issueTicketsForOrder(env.DB, orderId);
+      view = await getTicketOrderByBoldId(env.DB, orderId);
+    }
+
+    // D1 is the source of truth once an order is completed (by the webhook, or
+    // as a free/courtesy order): a failed or late voucher query must not show a
+    // paid buyer "pending" and hide their tickets.
+    const completed =
+      view.order?.status === "completed" || result.donorStatus === "completed";
     return json(
       {
-        status: result.donorStatus,
+        status: completed ? "completed" : result.donorStatus,
         providerStatus: result.providerStatus,
         order: view.order
           ? {
