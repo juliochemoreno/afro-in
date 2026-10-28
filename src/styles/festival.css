@@ -358,10 +358,6 @@
   border-top: 1px solid var(--fz-line);
 }
 
-.fz-journey-step-photo {
-  display: none;
-}
-
 .fz-journey-count {
   margin: 0;
   font-weight: 600;
@@ -472,21 +468,41 @@
     gap: 0;
   }
 
+  /* Phones: the photo stays pinned under the header while the days scroll. */
   .fz-journey-stage {
-    display: none;
+    order: -1;
+    position: sticky;
+    top: 80px;
+    z-index: 1;
+    padding: 8px 0 12px;
+    background: var(--fz-night);
+  }
+
+  .fz-journey-frame {
+    position: static;
+    padding: 4px;
+  }
+
+  .fz-journey-photos {
+    aspect-ratio: 16 / 10;
+    max-height: 38vh;
+    width: 100%;
+  }
+
+  .fz-journey-panel figcaption {
+    padding: 40px 14px 10px;
+  }
+
+  .fz-journey-panel-day {
+    font-size: 34px;
+  }
+
+  .fz-journey-panel-city {
+    font-size: 16px;
   }
 
   .fz-journey-step {
-    min-height: 0;
-    padding: 28px 0;
-  }
-
-  .fz-journey-step-photo {
-    display: block;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    margin-bottom: 8px;
+    min-height: 52vh;
+    padding: 24px 0;
   }
 }

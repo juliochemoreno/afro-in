@@ -1,7 +1,6 @@
 ---
 // "The journey": the edition day by day. On wide screens a framed photo stays
-// in place (sticky) and changes as each day scrolls past; on phones every day
-// shows its own photo inline.
+// in place (sticky, pinned on top on phones) and changes as each day scrolls past.
 import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
 import { useTranslations } from "@/i18n/utils";
@@ -36,14 +35,6 @@ const t = useTranslations(lang);
     <ol class="fz-journey-steps">
       {steps.map((step, index) => (
         <li class="fz-journey-step" data-step={String(index)}>
-          <Image
-            src={step.photo}
-            alt=""
-            widths={[480, 800]}
-            sizes="100vw"
-            class="fz-journey-step-photo"
-            style={`object-position: ${step.photoPosition}`}
-          />
           <p class="fz-journey-count">{index + 1} / {steps.length}</p>
           <h3 class="fz-display fz-journey-date">{step.dayMonth}</h3>
           {step.entries.map((entry) => (
@@ -108,8 +99,9 @@ const t = useTranslations(lang);
             if (entry.isIntersecting) show((entry.target as HTMLElement).dataset.step ?? "0");
           });
         },
-        // A step is "current" while it crosses the middle of the screen.
-        { rootMargin: "-45% 0px -50% 0px" }
+        // A step is "current" while it crosses a line just below the middle
+        // of the screen (below the pinned photo on phones).
+        { rootMargin: "-55% 0px -40% 0px" }
       );
       root.querySelectorAll("[data-step]").forEach((step) => observer.observe(step));
       observers.push(observer);
