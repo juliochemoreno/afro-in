@@ -1,0 +1,13 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import EventsDashboard from "@/components/EventsDashboard";
+
+// Access is protected via the session cookie (middleware guards /admin).
+---
+
+<AdminLayout title="Eventos | AFRO IN Admin">
+  <main class="flex flex-col lg:h-full lg:overflow-hidden">
+    <EventsDashboard client:only="react" />
+  </main>
+</AdminLayout>

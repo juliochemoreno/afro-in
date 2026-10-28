@@ -1,7 +1,7 @@
 ---
 export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
-import { Lock } from "lucide-astro";
+import Lock from "lucide-astro/Lock";
 
 // If already authenticated, bounce straight to the dashboard.
 import { ADMIN_COOKIE, isValidAdminSession } from "@/lib/adminAuth";
@@ -11,7 +11,9 @@ if (await isValidAdminSession(env, cookie)) {
   return Astro.redirect("/admin/donadores", 302);
 }
 
-const nextParam = Astro.url.searchParams.get("next") || "/admin/donadores";
+// Only same-site admin paths: `next` ends up in window.location after login.
+const rawNext = Astro.url.searchParams.get("next") || "";
+const nextParam = /^\/admin(\/|$)/.test(rawNext) ? rawNext : "/admin/donadores";
 ---
 
 <Layout title="Acceso Admin | AFRO IN">

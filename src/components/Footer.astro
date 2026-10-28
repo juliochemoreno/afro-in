@@ -1,5 +1,7 @@
 ---
-import { Instagram, Facebook, Youtube } from "lucide-astro";
+import Instagram from "lucide-astro/Instagram";
+import Facebook from "lucide-astro/Facebook";
+import Youtube from "lucide-astro/Youtube";
 import {
   getLangFromUrl,
   useTranslations,
@@ -15,6 +17,7 @@ const currentYear = new Date().getFullYear();
 const quickLinks = [
   { href: getTranslatedPath("/#sobre", lang), label: t("nav.about") },
   { href: getTranslatedPath("/#galeria", lang), label: t("nav.gallery") },
+  { href: getTranslatedPath("/eventos", lang), label: t("nav.events") },
   { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
   { href: getTranslatedPath("/programacion", lang), label: t("nav.tour") },
   { href: getTranslatedPath("/#aliados", lang), label: t("nav.allies") },
