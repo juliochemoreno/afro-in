@@ -37,7 +37,7 @@ const panels = steps.map((step) => ({
 <section class="fz-wrap fz-journey" aria-labelledby="fz-journey-title">
   <header class="fz-journey-head">
     <h2 id="fz-journey-title" class="fz-display fz-journey-title">{t("edition.journeyTitle")}</h2>
-    <p class="fz-muted fz-journey-lead">{t("edition.journeyText")}</p>
+    <p class="fz-muted fz-journey-lead">{t("edition.journeyText").replace("{n}", String(steps.length))}</p>
   </header>
 
   <FestivalScrolly panels={panels}>

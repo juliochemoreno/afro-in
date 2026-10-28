@@ -13,6 +13,7 @@ import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 import {
   baseSlug,
   dateRange,
+  dayAnchor,
   dayLabel,
   entryLang,
   activityByline,
@@ -76,7 +77,7 @@ const journey: JourneyStep[] = journeyDays(
     entries: entries.map(({ stop, day }) => ({
       stopName: stop.name,
       venue: day.venue,
-      href: `${getTranslatedPath(`/programacion/2027/${stop.slug}`, lang)}#d-${label.dayNumber}`,
+      href: `${getTranslatedPath(`/programacion/2027/${stop.slug}`, lang)}#${dayAnchor(date)}`,
       activities: day.activities.map((activity) => ({
         ...activity,
         ...activityByline(activity.title, activity.artist ? artistsById.get(activity.artist.id) : undefined, lang),
@@ -95,7 +96,7 @@ const headlinerAppearances = headliner
         when: `${label.weekdayShort} ${label.dayMonth}`,
         where: [a.venue, a.stopName].filter(Boolean).join(", "),
         title: a.title,
-        href: `${getTranslatedPath(`/programacion/2027/${a.stopSlug}`, lang)}#d-${label.dayNumber}`,
+        href: `${getTranslatedPath(`/programacion/2027/${a.stopSlug}`, lang)}#${dayAnchor(a.date)}`,
       };
     })
   : [];
@@ -179,7 +180,7 @@ const { navLinks, ctaLink } = editionNav(lang);
 
     <section class="fz-wrap edition-block" aria-labelledby="edition-artists">
       <h2 id="edition-artists" class="fz-display edition-h2">{t("edition.artistsTitle")}</h2>
-      <p class="fz-muted edition-lead">{t("edition.artistsText")}</p>
+      <p class="fz-muted edition-lead">{t("edition.artistsText").replace("{n}", String(new Set(artists.map((a) => a.data.countryCode)).size))}</p>
       <div class="edition-artists">
         {artistCards.map((artist) => (
           <article class="edition-artist">

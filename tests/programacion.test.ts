@@ -5,6 +5,7 @@ import {
   artistAppearances,
   baseSlug,
   dateRange,
+  dayAnchor,
   dayLabel,
   entryLang,
   firstAppearance,
@@ -140,4 +141,9 @@ test("activity byline names the artist only when the title does not", () => {
   assert.deepEqual(activityByline("Afro Batalla · Filtro", artist, "es"), { flag: "🇨🇴", byline: "Fafoman (Colombia)" });
   assert.deepEqual(activityByline("Fafoman", artist, "fr"), { flag: "🇨🇴", byline: "Colombie" });
   assert.deepEqual(activityByline("Fiesta", undefined, "es"), {});
+});
+
+test("day anchors use the full date", () => {
+  assert.equal(dayAnchor("2027-01-16"), "d-2027-01-16");
+  assert.throws(() => dayAnchor("16"));
 });

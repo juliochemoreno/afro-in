@@ -93,6 +93,17 @@ export function formatCop(amount: number, lang: Lang): string {
   }).format(amount);
 }
 
+// Anchor of a day on its stop page; the full date keeps ids unique even when
+// a stop spans two months.
+export function dayAnchor(iso: string): string {
+  parseIsoDate(iso);
+  return `d-${iso}`;
+}
+
+function artistIdOf(artist: string | { id: string } | undefined): string | undefined {
+  return typeof artist === "string" ? artist : artist?.id;
+}
+
 export function isComingSoon(days: { activities: unknown[] }[]): boolean {
   return days.every((day) => day.activities.length === 0);
 }
@@ -109,7 +120,7 @@ export function firstAppearance(
   days: DayWithArtists[]
 ): { date: string; venue?: string } | undefined {
   const day = days.find((d) =>
-    d.activities.some((a) => (typeof a.artist === "string" ? a.artist : a.artist?.id) === artistId)
+    d.activities.some((a) => artistIdOf(a.artist) === artistId)
   );
   return day ? { date: day.date, venue: day.venue } : undefined;
 }
@@ -129,7 +140,7 @@ export function artistAppearances(artistId: string, stops: StopForAppearances[])
   return stops.flatMap((stop) =>
     stop.days.flatMap((day) =>
       day.activities
-        .filter((a) => (typeof a.artist === "string" ? a.artist : a.artist?.id) === artistId)
+        .filter((a) => artistIdOf(a.artist) === artistId)
         .map((a) => ({ stopSlug: stop.slug, stopName: stop.name, date: day.date, venue: day.venue, title: a.title }))
     )
   );

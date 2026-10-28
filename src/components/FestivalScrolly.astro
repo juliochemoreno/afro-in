@@ -51,9 +51,13 @@ const { panels } = Astro.props;
 <script>
   let observers: IntersectionObserver[] = [];
 
-  function initScrolly() {
+  function disconnectScrolly() {
     observers.forEach((observer) => observer.disconnect());
     observers = [];
+  }
+
+  function initScrolly() {
+    disconnectScrolly();
     document.querySelectorAll<HTMLElement>("[data-scrolly]").forEach((root) => {
       const panels = root.querySelectorAll<HTMLElement>("[data-panel]");
       const show = (index: string) =>
@@ -74,4 +78,5 @@ const { panels } = Astro.props;
   }
 
   document.addEventListener("astro:page-load", initScrolly);
+  document.addEventListener("astro:before-swap", disconnectScrolly);
 </script>

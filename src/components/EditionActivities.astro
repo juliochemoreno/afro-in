@@ -18,9 +18,11 @@ export interface EditionActivity {
 interface Props {
   activities: EditionActivity[];
   lang: Lang;
+  headingLevel?: "h3" | "h4";
 }
 
-const { activities, lang } = Astro.props;
+const { activities, lang, headingLevel = "h4" } = Astro.props;
+const Heading = headingLevel;
 const t = useTranslations(lang);
 ---
 
@@ -38,7 +40,7 @@ const t = useTranslations(lang);
         </p>
         <div>
           {activity.kind && <p class="fz-activity-kind">{activity.kind}</p>}
-          <h4 class="fz-display fz-activity-title">{activity.title}</h4>
+          <Heading class="fz-display fz-activity-title">{activity.title}</Heading>
           {activity.byline && (
             <p class="fz-muted fz-activity-byline">
               <span class="fz-flag" aria-hidden="true">{activity.flag}</span> {activity.byline}

@@ -10,7 +10,7 @@ import EditionActivities from "@/components/EditionActivities.astro";
 import { getEntries, type CollectionEntry } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
-import { activityByline, baseSlug, dateRange, dayLabel, isComingSoon, type Lang } from "@/lib/programacion";
+import { activityByline, baseSlug, dateRange, dayAnchor, dayLabel, isComingSoon, type Lang } from "@/lib/programacion";
 import { editionNav } from "@/lib/editionNav";
 import "@/styles/festival.css";
 
@@ -39,7 +39,7 @@ const days = data.days.map((day) => {
   return {
     ...day,
     ...label,
-    anchor: `d-${label.dayNumber}`,
+    anchor: dayAnchor(day.date),
     activities: day.activities.map((activity) => {
       const artist = activity.artist ? artistsById.get(activity.artist.id) : undefined;
       return { ...activity, photo: artist?.photo, ...activityByline(activity.title, artist, lang) };
@@ -141,7 +141,7 @@ const { navLinks, ctaLink } = editionNav(lang);
                   {day.venueArea && <span class="fz-muted fz-venue-area">{day.venueArea}</span>}
                 </p>
               )}
-              <EditionActivities activities={day.activities} lang={lang} />
+              <EditionActivities activities={day.activities} lang={lang} headingLevel="h3" />
             </section>
           ))}
         </FestivalScrolly>
