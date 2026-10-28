@@ -49,6 +49,19 @@ const CK_KEYS = [
   "checkout.err.city",
   "checkout.err.address",
   "checkout.err.generic",
+  "checkout.err.country",
+  "checkout.err.department",
+  "checkout.department.select",
+  "checkout.state.select",
+  "checkout.city.select",
+  "checkout.city.pickDepartmentFirst",
+  "checkout.list.search",
+  "checkout.list.empty",
+  "phone.err",
+  "phone.ph",
+  "phone.dial.label",
+  "phone.dial.search",
+  "phone.dial.empty",
 ];
 const strings = Object.fromEntries(CK_KEYS.map((k) => [k, t(k as any)]));
 
@@ -114,7 +127,7 @@ const storePath = getTranslatedPath("/tienda", lang);
   }
   @media (max-width: 880px) {
     .checkout-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
@@ -125,6 +138,9 @@ const storePath = getTranslatedPath("/tienda", lang);
   }
 
   .checkout-card {
+    /* Fieldsets default to min-inline-size: min-content, which lets long
+       combobox labels push the card over the order summary. */
+    min-inline-size: 0;
     background: var(--color-white);
     border: 1px solid var(--color-cream-dark);
     border-radius: var(--radius-lg);

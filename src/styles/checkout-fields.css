@@ -66,6 +66,9 @@
    Tailwind's layered padding utilities, so we restore spacing explicitly
    via the higher-specificity [data-slot] attribute selectors. */
 [data-slot="popover-content"] {
+  /* Long names (e.g. "Archipiélago de San Andrés…") need more room than a
+     half-width trigger. */
+  min-width: min(18rem, calc(100vw - 2rem));
   padding: 0;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
@@ -158,4 +161,10 @@
 }
 .is-invalid .ph-field .cc-trigger.ph-dial {
   background-color: transparent;
+}
+
+/* Grid cells holding comboboxes must be allowed to shrink below the
+   trigger's text width. */
+.ck-row > .ck-field {
+  min-width: 0;
 }
