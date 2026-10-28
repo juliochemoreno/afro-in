@@ -125,7 +125,9 @@ export default function CheckoutForm({
     if (!isValidEmail(f.email)) e.email = t["checkout.err.email"];
     if (!normalizeStoredPhone(f.phone)) e.phone = t["phone.err"];
     if (!loc.country) e.country = t["checkout.err.country"];
-    if (mode !== "text" && !loc.department.trim())
+    // Colombia always needs a department (the server checks it too), even if
+    // the DIVIPOLA list failed to load and the field fell back to text.
+    if ((mode !== "text" || loc.country === "CO") && !loc.department.trim())
       e.department = t["checkout.err.department"];
     if (!loc.city.trim()) e.city = t["checkout.err.city"];
     if (!f.address.trim()) e.address = t["checkout.err.address"];
@@ -328,8 +330,8 @@ export default function CheckoutForm({
             countries={countries}
             value={location}
             onChange={(next) => {
-              if (next.country !== location.country)
-                countryTouched.current = true;
+              // Any address edit means a late geo answer must not reset it.
+              countryTouched.current = true;
               setLocation(next);
             }}
             onModeChange={setRegionMode}

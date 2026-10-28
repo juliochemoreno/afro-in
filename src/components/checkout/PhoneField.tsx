@@ -13,6 +13,37 @@ import { formatPhone, normalizeDigits } from "@/lib/checkoutFields";
 
 const MAX_DIGITS = 14;
 
+// Dial codes shared by several countries: the one a pasted number most
+// likely belongs to.
+const PREFERRED: Record<string, string> = {
+  "+1": "US",
+  "+7": "RU",
+  "+39": "IT",
+  "+44": "GB",
+  "+47": "NO",
+  "+61": "AU",
+  "+212": "MA",
+  "+262": "RE",
+  "+358": "FI",
+  "+590": "GP",
+  "+599": "CW",
+};
+
+/** Country whose dial code opens a pasted "+NN…" number (longest match). */
+function countryForPastedNumber(digits: string): string | null {
+  let dial: string | null = null;
+  for (const d of Object.values(dialCodes)) {
+    if (digits.startsWith(d.slice(1)) && (!dial || d.length > dial.length))
+      dial = d;
+  }
+  if (!dial) return null;
+  return (
+    PREFERRED[dial] ??
+    Object.keys(dialCodes).find((code) => dialCodes[code] === dial) ??
+    null
+  );
+}
+
 interface PhoneFieldProps {
   lang: string;
   countries: CountryEntry[];
@@ -74,14 +105,18 @@ export default function PhoneField({
   const [digits, setDigits] = React.useState(
     () => /^\+\d{1,4} (\d+)$/.exec(defaultValue || "")?.[1] ?? ""
   );
-  // Once the buyer picks a dial code by hand, the country no longer drives it.
+  // Once the buyer picks a dial code by hand or starts typing the number, the
+  // country no longer drives it (a typed number belongs to its dial code).
   const dialTouched = React.useRef(false);
+  const digitsRef = React.useRef(digits);
+  digitsRef.current = digits;
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
   const hiddenRef = React.useRef<HTMLInputElement>(null);
 
   const followCountry = React.useCallback((code: string | null | undefined) => {
-    if (!dialTouched.current && code && dialCodes[code]) setDialCountry(code);
+    if (!dialTouched.current && !digitsRef.current && code && dialCodes[code])
+      setDialCountry(code);
   }, []);
 
   React.useEffect(() => {
@@ -136,10 +171,17 @@ export default function PhoneField({
   const onNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     let next = normalizeDigits(raw);
-    // A pasted "+57 300…" carries the dial code: drop it from the number.
-    const dialDigits = dial.slice(1);
-    if (raw.trim().startsWith("+") && next.startsWith(dialDigits))
-      next = next.slice(dialDigits.length);
+    // A pasted "+44 7911…" carries its dial code: switch to it and drop it
+    // from the number.
+    if (raw.trim().startsWith("+")) {
+      const pasted = countryForPastedNumber(next);
+      if (pasted) {
+        dialTouched.current = true;
+        // Keep the chosen country when it already has that dial code.
+        if (dialCodes[pasted] !== dial) setDialCountry(pasted);
+        next = next.slice(dialCodes[pasted].length - 1);
+      }
+    }
     setDigits(next.slice(0, MAX_DIGITS));
   };
 

@@ -89,26 +89,33 @@ export default function CountryCombobox({
   const hiddenRef = React.useRef<HTMLInputElement>(null);
   const localized = useLocalizedCountries(lang, countries);
 
-  const select = React.useCallback(
-    (code: string) => {
-      setOwnValue(code);
-      onChange?.(code);
-    },
-    [onChange]
-  );
+  const onChangeRef = React.useRef(onChange);
+  onChangeRef.current = onChange;
+  // A manual pick wins over a geo answer that arrives later.
+  const touched = React.useRef(false);
+
+  const select = (code: string) => {
+    touched.current = true;
+    setOwnValue(code);
+    onChangeRef.current?.(code);
+  };
 
   // Preselect the visitor's country (only while uncontrolled).
+  const uncontrolled = controlledValue === undefined;
   React.useEffect(() => {
-    if (!geoDefault || controlledValue !== undefined) return;
+    if (!geoDefault || !uncontrolled) return;
     let cancelled = false;
     fetchGeoCountry().then((code) => {
-      if (cancelled || !code) return;
-      if (countries.some((c) => c.code === code)) select(code);
+      if (cancelled || touched.current || !code) return;
+      if (countries.some((c) => c.code === code)) {
+        setOwnValue(code);
+        onChangeRef.current?.(code);
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [countries, geoDefault, controlledValue, select]);
+  }, [countries, geoDefault, uncontrolled]);
 
   // Let vanilla-JS forms (donation) react to changes of the hidden input.
   React.useEffect(() => {
