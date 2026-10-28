@@ -1,11 +1,24 @@
-import { defineMiddleware } from "astro:middleware";
+import { defineMiddleware, sequence } from "astro:middleware";
 import { ADMIN_COOKIE, isValidAdminSession } from "./lib/adminAuth";
 
 const SUPPORTED_LANGS = ["es", "en", "fr"] as const;
 const DEFAULT_LANG = "es";
 const COOKIE_NAME = "preferred-lang";
+const PRODUCTION_HOSTS = new Set(["afroin.org", "www.afroin.org"]);
 
-export const onRequest = defineMiddleware(async (context, next) => {
+// Cloudflare adds noindex only to workers.dev Previews, not to custom-domain
+// Previews (<name>.afroin.org). Any host outside production gets it here;
+// static assets get it from public/_headers. Runs outermost so redirects
+// returned by handleRequest carry it too.
+const noindexOutsideProduction = defineMiddleware(async (context, next) => {
+  const response = await next();
+  if (!PRODUCTION_HOSTS.has(new URL(context.request.url).hostname)) {
+    response.headers.set("X-Robots-Tag", "noindex");
+  }
+  return response;
+});
+
+const handleRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
   const pathname = url.pathname;
 
@@ -80,3 +93,5 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   return next();
 });
+
+export const onRequest = sequence(noindexOutsideProduction, handleRequest);
