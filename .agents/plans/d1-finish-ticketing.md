@@ -292,3 +292,8 @@ Local setup: `.dev.vars` in the worktree with the Bold TEST keys copied from the
 > **UI Styling Note:** No new UI. Only `AdminsDashboard.tsx` password-length text changes.
 >
 > **Expected UX iterations: 1** — admin password rule text and any copy Julio adjusts after Level 5.
+
+## Execution notes (2026-10-28)
+
+- **Store return bug fixed here (Julio's OK, 2026-10-28: "Si, hay que corregir el fallo de la tienda").** Since June 2026 (33f5c7a, the Bold donation return handler in `src/layouts/Layout.astro`), every page opened with `?bold-order-id=` except `/gracias` was redirected to `/gracias`. A store buyer returning to `/pedido` was sent to the donation thank-you page; the navigation cancelled the in-flight `/api/store/confirm` (Workers log `outcome: canceled`), and `/api/bold-confirmar` only updated `donors`. In production store orders were completed only by the Bold webhook, and buyers never saw their order receipt. Found in Level 5 (staging order 1 stayed `pending` with Bold `APPROVED`). Fix: the handler routes by prefix (`AFROIN-TIX-` → `/entradas`, `AFROIN-ORD-` → `/pedido`, donations → `/gracias` as before) and `/api/bold-confirmar` picks the table through `CONFIRM_TARGETS` (ticket ids → 400). Donation flow unchanged.
+- Review fixes beyond the plan: see `.agents/code-reviews/d1-finish-ticketing.md` (open redirect in `/admin/login`, CSV formula injection, confirm hardening, event delete order, bearer-page headers).
