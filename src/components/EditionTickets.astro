@@ -10,15 +10,18 @@ interface Props {
   };
   lang: Lang;
   heading?: string;
+  // Inside another block (the headliner): no frame of its own.
+  bare?: boolean;
 }
 
-const { tickets, lang, heading } = Astro.props;
+const { tickets, lang, heading, bare = false } = Astro.props;
 const t = useTranslations(lang);
+const Heading = bare ? "h3" : "h2";
 ---
 
-<section class="fz-frame" aria-label={heading ?? t("edition.ticketsTitle")}>
-  <div class="fz-frame-inner fz-tickets">
-    <h2 class="fz-display">{heading ?? t("edition.ticketsTitle")}</h2>
+<section class:list={[{ "fz-frame": !bare }]} aria-label={heading ?? t("edition.ticketsTitle")}>
+  <div class:list={["fz-tickets", { "fz-frame-inner": !bare, "fz-tickets-bare": bare }]}>
+    <Heading class="fz-display">{heading ?? t("edition.ticketsTitle")}</Heading>
     <ul class="fz-tiers">
       {tickets.tiers.map((tier) => (
         <li>

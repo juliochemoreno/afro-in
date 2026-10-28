@@ -384,5 +384,9 @@
   "edition.seeAllArtists": "See all artists",
   "edition.journeyTitle": "The journey",
   "edition.journeyText": "Six days between Santa Marta and Palenque: this is AFRO IN 2027.",
-  "edition.journeyDayLink": "See the day in {name}"
+  "edition.journeyDayLink": "See the day in {name}",
+  "edition.introTitle": "From the sea to Palenque",
+  "edition.introText": "AFRO IN 2027 opens in Santa Marta with three days of music, dance and battles at partner venues in the city, and ends in San Basilio de Palenque, the first free town in the Americas, with a party by the stream, dance classes for Palenque's children and young people, and the festival's closing.",
+  "edition.stopsTitle": "Two places",
+  "edition.stopsText": "Pick your stop, or live both."
 }

@@ -384,5 +384,9 @@
   "edition.seeAllArtists": "Ver todos los artistas",
   "edition.journeyTitle": "El recorrido",
   "edition.journeyText": "Seis días entre Santa Marta y Palenque: así se vive AFRO IN 2027.",
-  "edition.journeyDayLink": "Ver el día en {name}"
+  "edition.journeyDayLink": "Ver el día en {name}",
+  "edition.introTitle": "Del mar a Palenque",
+  "edition.introText": "AFRO IN 2027 arranca en Santa Marta con tres días de música, baile y batallas en casas aliadas de la ciudad, y termina en San Basilio de Palenque, el primer pueblo libre de América, con fiesta en el arroyo, clases de baile para niños, niñas y jóvenes palenqueros y el cierre del festival.",
+  "edition.stopsTitle": "Dos territorios",
+  "edition.stopsText": "Elige tu parada o vívelas las dos."
 }

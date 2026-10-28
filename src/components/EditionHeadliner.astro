@@ -47,5 +47,10 @@ const t = useTranslations(lang);
       )}
       {moreHref && <a class="fz-button fz-headliner-more" href={moreHref}>{t("edition.seeAllArtists")}</a>}
     </div>
+    {Astro.slots.has("default") && (
+      <div class="fz-headliner-extra">
+        <slot />
+      </div>
+    )}
   </div>
 </section>

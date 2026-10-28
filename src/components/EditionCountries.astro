@@ -15,14 +15,14 @@ const countries = [...new Map(artists.map((a) => [a.countryCode, a.country[lang]
 ---
 
 <div class="fz-countries">
-  <p class="fz-countries-title">
+  <p class="fz-display fz-countries-title">
     {t("edition.countriesTitle").replace("{n}", String(countries.length))}
   </p>
   <ul class="fz-countries-list">
     {countries.map(([code, name]) => (
       <li>
-        <span class="fz-flag" aria-hidden="true">{flagEmoji(code)}</span>
-        {name}
+        <span class="fz-countries-flag" aria-hidden="true">{flagEmoji(code)}</span>
+        <span class="fz-countries-name">{name}</span>
       </li>
     ))}
   </ul>

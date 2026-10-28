@@ -85,7 +85,8 @@
   padding: 32px;
 }
 
-.fz-tickets h2 {
+.fz-tickets h2,
+.fz-tickets h3 {
   margin: 0 0 20px;
   font-size: 40px;
   line-height: 1;
@@ -204,14 +205,14 @@
   }
 }
 
-/* Countries strip (international reach). */
+/* Countries strip (international reach): big flags, names under, gold dots. */
 .fz-countries {
-  margin-top: 28px;
+  margin-top: 32px;
 }
 
 .fz-countries-title {
-  margin: 0 0 12px;
-  font-weight: 600;
+  margin: 0 0 14px;
+  font-size: 24px;
   color: var(--fz-gold);
 }
 
@@ -221,18 +222,70 @@
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 14px 0;
 }
 
 .fz-countries-list li {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  min-height: 40px;
+  gap: 6px;
+  min-width: 76px;
   padding: 0 14px;
-  border: 1px solid var(--fz-line);
-  background: rgba(22, 22, 22, 0.55);
-  font-size: 15px;
+}
+
+.fz-countries-list li + li {
+  position: relative;
+}
+
+.fz-countries-list li + li::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 20px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fz-gold);
+}
+
+.fz-countries-list li:first-child {
+  padding-left: 0;
+}
+
+.fz-countries-flag {
+  font-size: 44px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.fz-countries-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fz-cream);
+}
+
+@media (max-width: 720px) {
+  .fz-countries-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 8px;
+  }
+
+  .fz-countries-list li,
+  .fz-countries-list li:first-child {
+    min-width: 0;
+    padding: 0;
+  }
+
+  .fz-countries-list li + li::before {
+    display: none;
+  }
+
+  .fz-countries-flag {
+    font-size: 36px;
+  }
 }
 
 .fz-flag {
@@ -301,6 +354,15 @@
 
 .fz-headliner-more {
   margin-top: 24px;
+}
+
+.fz-headliner-extra {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--fz-line);
+}
+
+.fz-tickets-bare {
+  padding: 28px 0 0;
 }
 
 @media (max-width: 720px) {
