@@ -9,6 +9,12 @@ import {
 } from "../i18n/utils";
 import afroinLogo from "../assets/img/logos/afroin.png";
 
+interface Props {
+  // "festival": matches the dark edition programming pages (D9).
+  variant?: "default" | "festival";
+}
+
+const { variant = "default" } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 
@@ -24,7 +30,7 @@ const quickLinks = [
 ];
 ---
 
-<footer class="footer py-16 text-white">
+<footer class:list={["footer py-16 text-white", { "footer--festival": variant === "festival" }]}>
   <div class="container">
     <div
       class="footer-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-12 items-start"
@@ -152,6 +158,11 @@ const quickLinks = [
     background: var(--gradient-dark);
     color: var(--color-white);
     padding: var(--space-xl) 0 var(--space-lg);
+  }
+
+  .footer.footer--festival {
+    background: #161616;
+    border-top: 1px solid rgba(242, 193, 78, 0.45);
   }
 
   .footer-grid {

@@ -1,0 +1,419 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import FestivalFont from "@/components/FestivalFont.astro";
+import EditionTickets from "@/components/EditionTickets.astro";
+import EditionCountries from "@/components/EditionCountries.astro";
+import EditionHeadliner from "@/components/EditionHeadliner.astro";
+import EditionJourney, { type JourneyStep } from "@/components/EditionJourney.astro";
+import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+import {
+  baseSlug,
+  dateRange,
+  dayAnchor,
+  dayLabel,
+  entryLang,
+  activityByline,
+  artistAppearances,
+  firstAppearance,
+  flagEmoji,
+  isComingSoon,
+  joinList,
+  journeyDays,
+  type Lang,
+} from "@/lib/programacion";
+import heroPhoto from "@/assets/img/2017/2017-afroin-img-7.jpg";
+import { editionNav } from "@/lib/editionNav";
+import "@/styles/festival.css";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = "es" } = Astro.props;
+const t = useTranslations(lang);
+
+const stops = (await getCollection("tour2027"))
+  .filter((entry) => entryLang(entry.filePath!) === lang)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const artists = (await getCollection("artists2027")).sort((a, b) => a.data.order - b.data.order);
+
+const stopCards = stops.map((stop) => {
+  const venues = [...new Set(stop.data.days.map((d) => d.venue).filter((v): v is string => !!v))];
+  return {
+    id: stop.id,
+    name: stop.data.name,
+    range: dateRange(stop.data.startDate, stop.data.endDate, lang),
+    place: venues.length ? joinList(venues, lang) : stop.data.location,
+    comingSoon: isComingSoon(stop.data.days),
+    href: getTranslatedPath(`/programacion/2027/${baseSlug(stop.filePath!)}`, lang),
+    tickets: stop.data.tickets,
+    cardImage: stop.data.cardImage,
+    cardPosition: stop.data.cardPosition,
+  };
+});
+
+const allDays = stops.flatMap((stop) => stop.data.days);
+
+const artistsById = new Map(artists.map((artist) => [artist.id, artist.data]));
+const journey: JourneyStep[] = journeyDays(
+  stops.map((stop) => ({ ...stop.data, slug: baseSlug(stop.filePath!) }))
+).map(({ date, entries }) => {
+  const label = dayLabel(date, lang);
+  const withPhoto = entries.find((entry) => entry.day.photo);
+  const firstArtist = entries
+    .flatMap((entry) => entry.day.activities)
+    .map((activity) => (activity.artist ? artistsById.get(activity.artist.id) : undefined))
+    .find(Boolean);
+  return {
+    ...label,
+    city: joinList([...new Set(entries.map((entry) => entry.stop.name))], lang),
+    photo: withPhoto?.day.photo ?? firstArtist?.photo ?? entries[0].stop.cardImage,
+    photoPosition: withPhoto?.day.photoPosition ?? "center",
+    entries: entries.map(({ stop, day }) => ({
+      stopName: stop.name,
+      venue: day.venue,
+      href: `${getTranslatedPath(`/programacion/2027/${stop.slug}`, lang)}#${dayAnchor(date)}`,
+      activities: day.activities.map((activity) => ({
+        ...activity,
+        ...activityByline(activity.title, activity.artist ? artistsById.get(activity.artist.id) : undefined, lang),
+      })),
+    })),
+  };
+});
+const headliner = artists.find((artist) => artist.data.featured);
+const headlinerAppearances = headliner
+  ? artistAppearances(
+      headliner.id,
+      stops.map((stop) => ({ slug: baseSlug(stop.filePath!), name: stop.data.name, days: stop.data.days }))
+    ).map((a) => {
+      const label = dayLabel(a.date, lang);
+      return {
+        when: `${label.weekdayShort} ${label.dayMonth}`,
+        where: [a.venue, a.stopName].filter(Boolean).join(", "),
+        title: a.title,
+        href: `${getTranslatedPath(`/programacion/2027/${a.stopSlug}`, lang)}#${dayAnchor(a.date)}`,
+      };
+    })
+  : [];
+const artistCards = artists.filter((artist) => !artist.data.featured).map((artist) => {
+  const first = firstAppearance(artist.id, allDays);
+  const when = first
+    ? [dayLabel(first.date, lang).dayMonth, first.venue].filter(Boolean).join(", ")
+    : t("edition.dateTba");
+  return { ...artist.data, flag: flagEmoji(artist.data.countryCode), meta: `${artist.data.country[lang]} · ${when}` };
+});
+
+const { navLinks, ctaLink } = editionNav(lang);
+---
+
+<Layout title={t("edition.pageTitle")} description={t("edition.tagline")}>
+  <FestivalFont slot="head" />
+  <Header navLinks={navLinks} ctaLink={ctaLink} variant="festival" />
+
+  <main class="fz edition">
+    <section class="fz-photo-hero edition-hero">
+      <Image src={heroPhoto} alt="" widths={[768, 1296]} sizes="100vw" loading="eager" class="fz-photo-hero-img" />
+      <div class="fz-wrap fz-photo-hero-content">
+        <p class="edition-tagline">{t("edition.tagline")}</p>
+        <h1 class="edition-title">
+          <span class="fz-display edition-title-red">AFRO IN</span>
+          <span class="fz-display fz-gold">2027</span>
+        </h1>
+        <EditionCountries artists={artists.map((a) => a.data)} lang={lang} />
+      </div>
+    </section>
+
+    <section class="fz-wrap edition-intro">
+      <h2 class="fz-display edition-intro-title">{t("edition.introTitle")}</h2>
+      <p class="edition-intro-text">{t("edition.introText")}</p>
+    </section>
+
+    {headliner && (
+      <div class="fz-wrap edition-headliner">
+        <EditionHeadliner
+          artist={headliner.data}
+          appearances={headlinerAppearances}
+          lang={lang}
+          moreHref={getTranslatedPath("/artistas", lang)}
+        >
+          {stopCards.filter((stop) => stop.tickets).map((stop) => (
+            <EditionTickets
+              tickets={stop.tickets!}
+              lang={lang}
+              heading={`${t("edition.ticketsTitle")} · ${stop.name}`}
+              bare
+            />
+          ))}
+        </EditionHeadliner>
+      </div>
+    )}
+
+
+    <section class="fz-wrap edition-stops-section" aria-labelledby="edition-stops-title">
+      <header class="edition-section-head">
+        <h2 id="edition-stops-title" class="fz-display edition-h2">{t("edition.stopsTitle")}</h2>
+        <p class="fz-muted edition-lead">{t("edition.stopsText")}</p>
+      </header>
+      <div class="edition-stops">
+        {stopCards.map((stop) => (
+          <a class="edition-stop" href={stop.href}>
+            <Image src={stop.cardImage} alt="" widths={[480, 960]} sizes="(max-width: 720px) 100vw, 580px" class="edition-stop-photo" style={`object-position: ${stop.cardPosition}`} />
+            <span class="fz-display fz-gold edition-stop-range">{stop.range}</span>
+            <span class="fz-display edition-stop-name">{stop.name}</span>
+            <span class="fz-muted">{stop.place}</span>
+            <span class="edition-stop-link">
+              {stop.comingSoon ? t("edition.comingSoon") : t("edition.viewProgram")}
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <EditionJourney steps={journey} lang={lang} />
+
+
+
+    <section class="fz-wrap edition-block" aria-labelledby="edition-artists">
+      <h2 id="edition-artists" class="fz-display edition-h2">{t("edition.artistsTitle")}</h2>
+      <p class="fz-muted edition-lead">{t("edition.artistsText").replace("{n}", String(new Set(artists.map((a) => a.data.countryCode)).size))}</p>
+      <div class="edition-artists">
+        {artistCards.map((artist) => (
+          <article class="edition-artist">
+            <Image
+              src={artist.photo}
+              alt={artist.name}
+              widths={[320, 640]}
+              sizes="(max-width: 720px) 50vw, 380px"
+              class="edition-artist-photo"
+            />
+            <div>
+              <h3 class="fz-display edition-artist-name">{artist.name}</h3>
+              <p class="fz-muted edition-artist-meta"><span class="fz-flag" aria-hidden="true">{artist.flag}</span> {artist.meta}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="fz-band">
+      <div class="fz-wrap">
+        <div>
+          <h2 class="fz-display edition-band-title">{t("edition.pastTitle")}</h2>
+          <p class="fz-muted">{t("edition.pastText")}</p>
+        </div>
+        <a class="fz-button" href={getTranslatedPath("/programacion/2026", lang)}>
+          {t("edition.pastLink")}
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <Footer variant="festival" />
+</Layout>
+
+<style>
+  .edition-hero .fz-photo-hero-content {
+    padding-top: 160px;
+    padding-bottom: 48px;
+  }
+
+  .edition-tagline {
+    margin: 0 0 12px;
+    font-size: 18px;
+    color: var(--fz-cream);
+  }
+
+  .edition-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 48px;
+    align-items: start;
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+
+  .edition-intro-title {
+    margin: 0;
+    font-size: clamp(48px, 6vw, 88px);
+    line-height: 0.95;
+    color: var(--fz-gold);
+  }
+
+  .edition-intro-text {
+    margin: 0;
+    font-size: clamp(19px, 1.6vw, 24px);
+    line-height: 1.55;
+    max-width: 52ch;
+  }
+
+  .edition-section-head {
+    margin-bottom: 32px;
+  }
+
+  .edition-headliner {
+    padding-bottom: 24px;
+  }
+
+  .edition-stops-section {
+    padding-top: 40px;
+    padding-bottom: 56px;
+  }
+
+  .edition-stop-photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .edition-title {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 28px;
+    align-items: baseline;
+    font-weight: 400;
+    line-height: 0.9;
+    font-size: clamp(88px, 13vw, 184px);
+  }
+
+  .edition-title-red {
+    color: var(--fz-red);
+  }
+
+  .edition-stops {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px;
+  }
+
+  .edition-stop {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .fz .edition-stop {
+    color: var(--fz-cream);
+  }
+
+  .edition-stop-range {
+    font-size: 26px;
+  }
+
+  .edition-stop-name {
+    font-size: 48px;
+    line-height: 1;
+  }
+
+  .edition-stop-link {
+    margin-top: 8px;
+    font-weight: 600;
+    color: var(--fz-gold);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .fz .edition-stop:hover .edition-stop-link {
+    color: var(--fz-cream);
+  }
+
+  .edition-block {
+    padding-bottom: 72px;
+  }
+
+  .edition-h2 {
+    margin: 0 0 8px;
+    font-size: 64px;
+    line-height: 1;
+  }
+
+  .edition-lead {
+    margin: 0 0 36px;
+    font-size: 18px;
+    max-width: 60ch;
+  }
+
+  .edition-artists {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
+  }
+
+  .edition-artist {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .edition-artist-photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    display: block;
+    outline: 1px solid rgba(242, 193, 78, 0.6);
+    outline-offset: 5px;
+  }
+
+  .edition-artist-name {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.05;
+  }
+
+  .edition-artist-meta {
+    margin: 4px 0 0;
+    font-size: 15px;
+  }
+
+  .edition-band-title {
+    font-size: 36px;
+  }
+
+  @media (max-width: 720px) {
+    .edition-hero .fz-photo-hero-content {
+      padding-top: 96px;
+    }
+
+    .edition-stops {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .edition-stops {
+      gap: 32px;
+    }
+
+    .edition-intro {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+      padding-top: 48px;
+      padding-bottom: 48px;
+    }
+
+    .edition-stop-name {
+      font-size: 40px;
+    }
+
+    .edition-h2 {
+      font-size: 48px;
+    }
+
+    .edition-artists {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .edition-artist-name {
+      font-size: 22px;
+    }
+  }
+</style>

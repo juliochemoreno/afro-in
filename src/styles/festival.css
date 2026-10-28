@@ -1,0 +1,681 @@
+/* "Festival zone" look of the edition programming pages (D9, AFRO IN 2027).
+   Dark like the edition posters; header, footer and brand red stay the site's. */
+
+.fz {
+  --fz-night: #161616; /* the footer's black */
+  --fz-jungle: #123326;
+  --fz-jungle-2: #1a4a35;
+  --fz-gold: #f2c14e;
+  --fz-cream: #f4ead5;
+  --fz-muted: #c9bfa8;
+  --fz-heliconia: #e8742a;
+  --fz-teal: #47c1b0;
+  --fz-red: var(--color-primary, #e31c25);
+  --fz-line: rgba(242, 193, 78, 0.45);
+
+  background: var(--fz-night);
+  color: var(--fz-cream);
+  font-family: var(--font-heading, "Outfit"), sans-serif;
+  padding-top: 80px; /* fixed site header */
+}
+
+.fz a {
+  color: var(--fz-gold);
+}
+
+.fz a:hover {
+  color: var(--fz-cream);
+}
+
+.fz a:focus-visible {
+  outline: 2px solid var(--fz-gold);
+  outline-offset: 3px;
+}
+
+.fz-display {
+  font-family: "Anton", var(--font-heading, "Outfit"), sans-serif;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.fz-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+}
+
+.fz-muted {
+  color: var(--fz-muted);
+}
+
+.fz-gold {
+  color: var(--fz-gold);
+}
+
+/* The posters' thin gold double frame. */
+.fz-frame {
+  border: 1px solid var(--fz-gold);
+  padding: 8px;
+}
+
+.fz-frame-inner {
+  border: 1px solid var(--fz-line);
+}
+
+.fz-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1px solid var(--fz-gold);
+  color: var(--fz-gold);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.fz a.fz-button-solid {
+  background: var(--fz-red);
+  border-color: var(--fz-red);
+  color: #fff;
+}
+
+/* Tickets (information only). */
+.fz-tickets {
+  padding: 32px;
+}
+
+.fz-tickets h2,
+.fz-tickets h3 {
+  margin: 0 0 20px;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.fz-tiers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.fz-tiers li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fz-line);
+}
+
+.fz-tier-price {
+  font-size: 40px;
+  line-height: 1.05;
+  color: var(--fz-gold);
+}
+
+.fz-tickets p {
+  margin: 0;
+}
+
+.fz-tickets-foot {
+  margin-top: 24px !important;
+}
+
+.fz-band {
+  border-top: 1px solid rgba(242, 193, 78, 0.35);
+}
+
+.fz-band .fz-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 40px;
+  padding-bottom: 56px;
+}
+
+.fz-band h2,
+.fz-band p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .fz-wrap {
+    padding: 0 16px;
+  }
+
+  .fz-frame {
+    padding: 6px;
+  }
+
+  .fz-tickets {
+    padding: 24px 20px;
+  }
+
+  .fz-tiers {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Photo hero: an archive photo under a dark wash, text on top. */
+.fz-photo-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.fz-photo-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.fz-photo-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(22, 22, 22, 0.45) 0%, rgba(22, 22, 22, 0.72) 60%, var(--fz-night) 100%);
+}
+
+.fz-photo-hero-content {
+  position: relative;
+}
+
+.fz-photo-hero {
+  min-height: min(78vh, 720px);
+  display: flex;
+  align-items: flex-end;
+}
+
+.fz-photo-hero > .fz-photo-hero-content {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .fz-photo-hero {
+    min-height: 64vh;
+  }
+}
+
+/* Countries strip (international reach): big flags, names under, gold dots. */
+.fz-countries {
+  margin-top: 32px;
+}
+
+.fz-countries-title {
+  margin: 0 0 14px;
+  font-size: 24px;
+  color: var(--fz-gold);
+}
+
+.fz-countries-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px 0;
+}
+
+.fz-countries-list li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 76px;
+  padding: 0 14px;
+}
+
+.fz-countries-list li + li {
+  position: relative;
+}
+
+.fz-countries-list li + li::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 20px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fz-gold);
+}
+
+.fz-countries-list li:first-child {
+  padding-left: 0;
+}
+
+.fz-countries-flag {
+  font-size: 44px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.fz-countries-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fz-cream);
+}
+
+@media (max-width: 720px) {
+  .fz-countries-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 8px;
+  }
+
+  .fz-countries-list li,
+  .fz-countries-list li:first-child {
+    min-width: 0;
+    padding: 0;
+  }
+
+  .fz-countries-list li + li::before {
+    display: none;
+  }
+
+  .fz-countries-flag {
+    font-size: 36px;
+  }
+}
+
+.fz-flag {
+  font-size: 1.25em;
+  line-height: 1;
+  margin-right: 6px;
+}
+
+/* Headliner (the edition's star artist). */
+.fz-headliner-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+  padding: 32px;
+}
+
+.fz-headliner-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+.fz-headliner-kicker {
+  margin: 0;
+  font-size: 24px;
+  color: var(--fz-red);
+}
+
+.fz-headliner-name {
+  margin: 4px 0 0;
+  font-size: clamp(56px, 8vw, 112px);
+  line-height: 0.95;
+}
+
+.fz-headliner-country {
+  margin: 12px 0 0;
+  font-size: 18px;
+}
+
+.fz-headliner-dates {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+
+.fz-headliner-dates li {
+  border-top: 1px solid var(--fz-line);
+}
+
+.fz .fz-headliner-dates a {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 2px 16px;
+  padding: 12px 0;
+  color: var(--fz-cream);
+  text-decoration: none;
+}
+
+.fz-headliner-dates .fz-display {
+  font-size: 22px;
+  grid-row: span 2;
+}
+
+.fz-headliner-more {
+  margin-top: 24px;
+}
+
+.fz-headliner-extra {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--fz-line);
+}
+
+.fz-tickets-bare {
+  padding: 28px 0 0;
+}
+
+@media (max-width: 720px) {
+  .fz-headliner-inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 16px;
+  }
+
+  .fz .fz-headliner-dates a {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fz-headliner-dates .fz-display {
+    grid-row: auto;
+  }
+}
+
+/* Scrolly: steps scroll, the framed photo stays (sticky) and follows them.
+   Used by the listing journey and the stop agendas. */
+.fz-journey {
+  padding-top: 24px;
+  padding-bottom: 72px;
+}
+
+.fz-journey-title {
+  margin: 0;
+  font-size: 64px;
+  line-height: 1;
+}
+
+.fz-journey-lead {
+  margin: 8px 0 0;
+  font-size: 18px;
+  max-width: 60ch;
+}
+
+.fz-scrolly {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  gap: 64px;
+  margin-top: 24px;
+}
+
+.fz-scrolly-steps {
+  min-width: 0;
+}
+
+.fz-journey-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fz-scrolly-step {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  border-top: 1px solid var(--fz-line);
+}
+
+.fz-journey-entry {
+  margin-top: 8px;
+}
+
+.fz-journey-entry + .fz-journey-entry {
+  margin-top: 28px;
+}
+
+.fz-journey-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-weight: 600;
+  text-underline-offset: 4px;
+}
+
+.fz-scrolly-stage {
+  position: relative;
+}
+
+.fz-scrolly-frame {
+  position: sticky;
+  top: 112px;
+}
+
+.fz-scrolly-photos {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+
+.fz-scrolly-panel {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.fz-scrolly-panel[data-active] {
+  opacity: 1;
+}
+
+.fz-scrolly-panel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fz-scrolly-panel figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 64px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, transparent 0%, rgba(22, 22, 22, 0.9) 70%);
+}
+
+.fz-scrolly-panel-day {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.fz-scrolly-panel-city {
+  font-size: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fz-scrolly-panel {
+    transition: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .fz-journey-title {
+    font-size: 48px;
+  }
+
+  .fz-scrolly {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  /* Phones: the photo stays pinned under the header while the days scroll. */
+  .fz-scrolly-stage {
+    order: -1;
+    position: sticky;
+    top: 80px;
+    z-index: 1;
+    padding: 8px 0 12px;
+    background: var(--fz-night);
+  }
+
+  .fz-scrolly-frame {
+    position: static;
+    padding: 4px;
+  }
+
+  .fz-scrolly-photos {
+    aspect-ratio: 16 / 10;
+    max-height: 38vh;
+    width: 100%;
+  }
+
+  .fz-scrolly-panel figcaption {
+    padding: 40px 14px 10px;
+  }
+
+  .fz-scrolly-panel-day {
+    font-size: 34px;
+  }
+
+  .fz-scrolly-panel-city {
+    font-size: 16px;
+  }
+
+  .fz-scrolly-step {
+    min-height: 52vh;
+    padding: 24px 0;
+  }
+}
+
+/* A day: heading, venue line, activities (journey and stop pages). */
+.fz-dayhead {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fz-day-count {
+  margin: 0;
+  font-weight: 600;
+  color: var(--fz-gold);
+}
+
+.fz-day-weekday {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+}
+
+.fz-day-date {
+  margin: 0;
+  font-size: clamp(44px, 5vw, 64px);
+  line-height: 0.95;
+}
+
+.fz-venue {
+  margin: 12px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.fz-venue-name {
+  font-size: 26px;
+  line-height: 1.1;
+  color: var(--fz-gold);
+}
+
+.fz-venue-area {
+  font-size: 15px;
+}
+
+.fz-activities {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+
+.fz-activity {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(244, 234, 213, 0.12);
+}
+
+.fz-activity p,
+.fz-activity h3,
+.fz-activity h4 {
+  margin: 0;
+}
+
+.fz-activity-time {
+  font-size: 30px;
+}
+
+.fz-activity-time-tba {
+  font-family: var(--font-heading, "Outfit"), sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.fz-activity-kind {
+  margin-bottom: 4px !important;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fz-heliconia);
+}
+
+.fz-activity-title {
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.fz-activity-byline,
+.fz-activity-note {
+  margin-top: 6px !important;
+  font-size: 16px;
+}
+
+.fz-activity-signup {
+  margin-top: 12px;
+}
+
+.fz-tba {
+  padding: 20px 0;
+}
+
+.fz-tba p {
+  margin: 0;
+}
+
+.fz-tba-title {
+  font-size: 34px;
+  margin-bottom: 8px !important;
+}
+
+@media (max-width: 720px) {
+  .fz-activity {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .fz-activity-time {
+    font-size: 22px;
+  }
+
+  .fz-activity-time-tba {
+    font-size: 13px;
+  }
+
+  .fz-activity-title {
+    font-size: 28px;
+  }
+}

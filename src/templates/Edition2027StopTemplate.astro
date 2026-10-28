@@ -1,0 +1,257 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import FestivalFont from "@/components/FestivalFont.astro";
+import EditionTickets from "@/components/EditionTickets.astro";
+import FestivalScrolly from "@/components/FestivalScrolly.astro";
+import EditionDayHead from "@/components/EditionDayHead.astro";
+import EditionActivities from "@/components/EditionActivities.astro";
+import { getEntries, type CollectionEntry } from "astro:content";
+import { Image } from "astro:assets";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+import { activityByline, baseSlug, dateRange, dayAnchor, dayLabel, isComingSoon, type Lang } from "@/lib/programacion";
+import { editionNav } from "@/lib/editionNav";
+import "@/styles/festival.css";
+
+interface Props {
+  entry: CollectionEntry<"tour2027">;
+  allStops: CollectionEntry<"tour2027">[];
+  lang?: Lang;
+}
+
+const { entry, allStops, lang = "es" } = Astro.props;
+const { data } = entry;
+const t = useTranslations(lang);
+
+const year = data.startDate.slice(0, 4);
+const range = dateRange(data.startDate, data.endDate, lang, { withYear: true });
+const comingSoon = isComingSoon(data.days);
+
+const artistRefs = data.days.flatMap((day) =>
+  day.activities.flatMap((activity) => (activity.artist ? [activity.artist] : []))
+);
+const artistEntries = await getEntries(artistRefs);
+const artistsById = new Map(artistEntries.map((artist) => [artist.id, artist.data]));
+
+const days = data.days.map((day) => {
+  const label = dayLabel(day.date, lang);
+  return {
+    ...day,
+    ...label,
+    anchor: dayAnchor(day.date),
+    activities: day.activities.map((activity) => {
+      const artist = activity.artist ? artistsById.get(activity.artist.id) : undefined;
+      return { ...activity, photo: artist?.photo, ...activityByline(activity.title, artist, lang) };
+    }),
+  };
+});
+
+// Photo following each day: the day's own, else its first artist's, else the stop's.
+const panels = days.map((day) => {
+  const artistPhoto = day.activities.find((activity) => activity.photo)?.photo;
+  return {
+    photo: day.photo ?? artistPhoto ?? data.cardImage,
+    photoPosition: day.photo ? day.photoPosition : "center",
+    title: `${day.weekdayShort} ${day.dayNumber}`,
+    subtitle: day.venue ?? data.name,
+  };
+});
+
+const nextStop = allStops
+  .filter((stop) => stop.data.order > data.order)
+  .sort((a, b) => a.data.order - b.data.order)[0];
+
+// "<" escaped so content can never close the JSON-LD script tag.
+const eventSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Event",
+  name: `AFRO IN ${year} – ${data.name}`,
+  description: data.intro,
+  startDate: data.startDate,
+  endDate: data.endDate,
+  eventStatus: "https://schema.org/EventScheduled",
+  location: {
+    "@type": "Place",
+    name: data.location,
+    address: { "@type": "PostalAddress", addressLocality: data.name, addressCountry: "CO" },
+  },
+  performer: [...artistsById.values()].map((artist) => ({ "@type": "Person", name: artist.name })),
+  organizer: { "@type": "Organization", name: "AFRO IN", url: "https://afroin.org" },
+}).replace(/</g, "\\u003c");
+
+const { navLinks, ctaLink } = editionNav(lang);
+---
+
+<Layout title={`${data.name} · AFRO IN ${year}`} description={data.intro}>
+  <FestivalFont slot="head" />
+  <script type="application/ld+json" set:html={eventSchema} />
+  <Header navLinks={navLinks} ctaLink={ctaLink} variant="festival" />
+
+  <main class="fz stop">
+    <section class="fz-photo-hero stop-hero">
+      <Image
+        src={data.heroImage}
+        alt=""
+        widths={[768, 1440]}
+        sizes="100vw"
+        loading="eager"
+        class="fz-photo-hero-img"
+        style={`object-position: ${data.heroPosition}`}
+      />
+      <div class="fz-wrap fz-photo-hero-content">
+        <div class="stop-hero-text">
+        <a class="stop-back" href={getTranslatedPath("/programacion", lang)}>{t("edition.backToEdition")}</a>
+        <p class="fz-display fz-gold stop-range">{range}</p>
+        <h1 class="fz-display stop-name">{data.name}</h1>
+        <p class="stop-intro">{data.intro}</p>
+        {!comingSoon && (
+          <nav class="stop-daynav" aria-label={t("edition.days")}>
+            {days.map((day) => (
+              <a class="fz-button stop-daylink" href={`#${day.anchor}`}>
+                {day.weekdayShort} {day.dayNumber}
+              </a>
+            ))}
+          </nav>
+        )}
+        </div>
+      </div>
+    </section>
+
+    <div class="fz-wrap stop-days">
+      {comingSoon ? (
+        <div class="fz-tba">
+          <p class="fz-display fz-tba-title">{t("edition.agendaTba")}</p>
+          <p class="fz-muted">{t("edition.agendaTbaText")}</p>
+        </div>
+      ) : (
+        <FestivalScrolly panels={panels}>
+          {days.map((day, index) => (
+            <section id={day.anchor} class="fz-scrolly-step stop-day" data-step={String(index)}>
+              <EditionDayHead
+                index={index}
+                total={days.length}
+                weekdayLong={day.weekdayLong}
+                dayMonth={day.dayMonth}
+                headingLevel="h2"
+              />
+              {day.venue && (
+                <p class="fz-venue">
+                  <span class="fz-display fz-venue-name">{day.venue}</span>
+                  {day.venueArea && <span class="fz-muted fz-venue-area">{day.venueArea}</span>}
+                </p>
+              )}
+              <EditionActivities activities={day.activities} lang={lang} headingLevel="h3" />
+            </section>
+          ))}
+        </FestivalScrolly>
+      )}
+    </div>
+
+    {data.tickets && (
+      <div class="fz-wrap stop-tickets">
+        <EditionTickets tickets={data.tickets} lang={lang} />
+      </div>
+    )}
+
+    {nextStop && (
+      <section class="fz-band">
+        <div class="fz-wrap">
+          <div>
+            <p class="fz-muted">{t("edition.nextStop")}</p>
+            <p class="fz-display stop-next-name">{nextStop.data.name}</p>
+            <p class="fz-display fz-gold stop-next-range">
+              {dateRange(nextStop.data.startDate, nextStop.data.endDate, lang)}
+            </p>
+          </div>
+          <a class="fz-button" href={getTranslatedPath(`/programacion/2027/${baseSlug(nextStop.filePath!)}`, lang)}>
+            {t("edition.viewStop").replace("{name}", nextStop.data.name)}
+          </a>
+        </div>
+      </section>
+    )}
+  </main>
+
+  <Footer variant="festival" />
+</Layout>
+
+<style>
+  .stop-hero .fz-photo-hero-content {
+    padding-top: 120px;
+    padding-bottom: 48px;
+  }
+
+  .stop-back {
+    font-size: 15px;
+  }
+
+  .stop-range {
+    margin: 28px 0 0;
+    font-size: 30px;
+  }
+
+  .stop-name {
+    margin: 4px 0 0;
+    font-size: clamp(56px, 8vw, 120px);
+    line-height: 0.9;
+    overflow-wrap: anywhere;
+  }
+
+  .stop-intro {
+    margin: 20px 0 0;
+    font-size: 19px;
+    max-width: 56ch;
+  }
+
+  .stop-daynav {
+    margin-top: 32px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .fz .stop-daylink {
+    color: var(--fz-cream);
+    padding: 0 20px;
+  }
+
+  .stop-days {
+    padding-top: 8px;
+    padding-bottom: 40px;
+  }
+
+  .stop-day {
+    justify-content: flex-start;
+    padding: 48px 0;
+    scroll-margin-top: 96px;
+  }
+
+  .stop-tickets {
+    padding-top: 32px;
+    padding-bottom: 56px;
+  }
+
+  .stop-next-name {
+    margin-top: 4px !important;
+    font-size: 44px;
+    line-height: 1;
+  }
+
+  .stop-next-range {
+    margin-top: 6px !important;
+    font-size: 22px;
+  }
+
+  @media (max-width: 720px) {
+    .stop-hero .fz-photo-hero-content {
+      padding-top: 96px;
+    }
+
+    .stop-day {
+      padding: 24px 0;
+      /* Below the header and the pinned photo when jumping to a day. */
+      scroll-margin-top: calc(120px + 38vh);
+    }
+
+  }
+</style>
