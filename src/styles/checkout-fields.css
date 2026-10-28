@@ -1,0 +1,161 @@
+/* Fields shared by the checkout forms (store, tickets, donation): searchable
+   comboboxes, the phone field and the inline error state. Global on purpose:
+   the comboboxes render inside React islands and their popover is portaled
+   to <body>, out of reach of Astro's scoped styles. */
+
+/* Combobox trigger — matches the form inputs' look */
+.cc-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-cream-dark);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  color: var(--color-secondary);
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: left;
+  min-height: 46px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.cc-trigger:hover {
+  border-color: var(--color-primary);
+}
+.cc-trigger:focus-visible,
+.cc-trigger[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+}
+.cc-trigger:disabled {
+  cursor: not-allowed;
+  background: var(--color-cream);
+  border-color: var(--color-cream-dark);
+}
+.cc-trigger .cc-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.cc-trigger .cc-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cc-trigger .cc-placeholder {
+  color: var(--color-text-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cc-flag {
+  font-size: 1.2rem;
+  line-height: 1;
+  width: 1.6rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Dropdown (portaled to body).
+   The project's global reset `* { padding: 0 }` is unlayered and overrides
+   Tailwind's layered padding utilities, so we restore spacing explicitly
+   via the higher-specificity [data-slot] attribute selectors. */
+[data-slot="popover-content"] {
+  padding: 0;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+[data-slot="command-input-wrapper"] {
+  padding: 0 0.85rem;
+}
+[data-slot="command-input"] {
+  padding: 0.6rem 0;
+}
+[data-slot="command-list"] {
+  padding: 0.35rem;
+}
+[data-slot="command-item"] {
+  padding: 0.6rem 0.7rem;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  border-radius: var(--radius-sm);
+}
+[data-slot="command-empty"] {
+  padding: 1.25rem;
+}
+
+/* Phone: dial code and number share one bordered control. */
+.ph-field {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--color-cream-dark);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  transition: all var(--transition-fast);
+}
+.ph-field:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+}
+.ph-field .cc-trigger.ph-dial {
+  width: auto;
+  flex: 0 0 auto;
+  min-height: 0;
+  gap: 0.35rem;
+  padding: 0 0.6rem 0 0.75rem;
+  border: none;
+  border-right: 1px solid var(--color-cream-dark);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  box-shadow: none;
+}
+.ph-field .cc-trigger.ph-dial:hover,
+.ph-field .cc-trigger.ph-dial[aria-expanded="true"] {
+  background: var(--color-cream);
+  box-shadow: none;
+}
+.ph-dial-code {
+  font-variant-numeric: tabular-nums;
+}
+/* Beats `.ck-field input` / `.tix-form .ck-field input` from the templates. */
+.ph-field input.ph-number,
+.ck-field .ph-field input.ph-number,
+.tix-form .ck-field .ph-field input.ph-number {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--color-secondary);
+  outline: none;
+}
+
+/* Inline errors (store/tickets: .ck-field; donation: .form-group). */
+.ck-field-error,
+.field-error {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-primary-dark);
+}
+.is-invalid input:not([type="hidden"]):not(.ph-number),
+.is-invalid textarea,
+.is-invalid .cc-trigger:not(.ph-dial),
+.is-invalid .ph-field {
+  border-color: var(--color-primary);
+  background-color: #fff6f6;
+}
+.is-invalid .ph-field .cc-trigger.ph-dial {
+  background-color: transparent;
+}
