@@ -247,29 +247,34 @@ Local setup: `.dev.vars` in the worktree with the Bold TEST keys copied from the
 
 ## Validation Checklist
 
-- [ ] **Level 1 — Lint & Format:** N/A — no lint script or config (`package.json`). Match neighboring style.
-- [ ] **Level 2 — Type Check:** `npm run check` (astro build + tsc + wrangler deploy --dry-run), per phase and on the final branch.
-- [ ] **Level 2.5 — Code Review:** `code-review` skill on each phase's files before its commit; one fresh-context review of the whole branch diff (`git diff origin/dev...HEAD`) by a new agent before the PR. Findings fixed or justified; review saved in `.agents/code-reviews/d1-finish-ticketing.md`.
-- [ ] **Level 3 — Unit Tests:** N/A — no framework; the curl matrix replaces it.
-- [ ] **Level 4 — Integration:** curl matrix above against `astro dev`.
-- [ ] **Level 5 — Human Review (branch Preview, before the PR is merged):** before each check `curl -sI <preview-url>` (200, `x-robots-tag` noted). Preview URL from Workers Builds after pushing the branch. Needs `ADMIN_SESSION_SECRET` on that Preview (Julio). Checks:
+- [x] **Level 1 — Lint & Format:** descartada — no lint script or config in `package.json`; style matched by hand and checked in 4 code reviews.
+- [x] **Level 2 — Type Check:** `npm run check` (astro build + tsc + wrangler deploy --dry-run), per phase and on the final branch. Evidence: exit 0 after every phase and fix (last on 10a5721); the orchestrator re-ran it on the merge into `dev` (6ba2d66).
+- [x] **Level 2.5 — Code Review:** `code-review` skill on each phase's files before its commit; one fresh-context review of the whole branch diff (`git diff origin/dev...HEAD`) by a new agent before the PR. Findings fixed or justified; review saved in `.agents/code-reviews/d1-finish-ticketing.md`. Evidence: 4 reviews (phase 1, phase 2, fresh-context branch at 041b553, store-return fix), 0 critical / 0 high; fixes in 993f9f2, 0ac9214, 458ce20, 10a5721.
+- [x] **Level 3 — Unit Tests:** descartada — no test framework (new dependency needs Julio's OK); replaced by the curl matrix and 21 scratch Node checks of `src/lib/adminAuth.ts` (21/21).
+- [x] **Level 4 — Integration:** curl matrix above against `astro dev`. Evidence: auth 65/65, tickets/webhook/regression 57/57, review fixes 15/15, store-return fix 8/8 + 6 browser routing cases.
+- [x] **Level 5 — Human Review (branch Preview, before the PR is merged):** before each check `curl -sI <preview-url>` (200, `x-robots-tag` noted). Preview URL from Workers Builds after pushing the branch. Needs `ADMIN_SESSION_SECRET` on that Preview (Julio). Checks:
   1. Bold TEST purchase of `[DEV] Evento de prueba` (1,000 COP) — **Julio** (payment form on a non-local host). Agent then reads staging D1: order `completed`, exactly `quantity` tickets. If no webhook arrives, Julio uses Bold's "Probar el webhook" button; agent checks the logs for the `x-bold-signature` line. Skipped → the paid path ships unobserved on Workers.
+     - [x] Evidence: staging `ticket_orders` 3 `completed`/`APPROVED`, 1,000 COP, `tickets_issued=1`, exactly 1 ticket (2026-10-28 02:09:55 UTC), confirmed by the browser receipt (`/entradas?bold-order-id=…`). No real webhook reached the branch Preview (the Bold test webhook points at the `dev` Preview), so the `x-bold-signature` line was not observed — follow-up.
   2. QR on iPhone (Safari) and Android (Chrome): open the ticket link, scan at `/admin/checkin` — **Julio** (devices + admin login). Skipped → camera/ponyfill path unverified on real phones.
      - [x] iPhone (Safari) camera scan ✓ (2026-10-28 02:11:48 UTC, staging ticket 2).
-     - [ ] ~~Android (Chrome)~~ — **descartada:** sin Android disponible, 2026-10-27; escaneo con cámara probado en iPhone y código manual probado. The orchestrator tracks it in the work list as a pending check.
+     - [x] ~~Android (Chrome)~~ — **descartada:** sin Android disponible, 2026-10-27; escaneo con cámara probado en iPhone y código manual probado. The orchestrator tracks it in the work list as a pending check.
   3. Manual code entry and duplicate scan (⚠ with time) — Julio, same session.
+     - [x] Evidence: manual `DEV0000001` → staging ticket 1 `checked_in` 2026-10-28 02:20:23 UTC; used code `QDD45ZYW55` typed again → duplicate warning (Julio), no D1 change (Workers logs: 2 POSTs, no write).
   4. Sold out: `[DEV] Evento agotado` page shows sold-out and the checkout API refuses — agent (curl) + Julio (look).
+     - [x] Evidence: Preview page renders `tix-soldout`; checkout API → `{"error":"Entradas agotadas"}` (curl, 2026-10-28).
   5. Regression: one TEST donation and one TEST store order (`[DEV] Producto de prueba`) complete — **Julio** (payments).
+     - [x] Evidence: after the store-return fix, Julio's Chrome against `astro dev` in this worktree (Bold TEST card, no manual confirm, no "Probar el webhook"): store order #10 (89,999 COP) landed on `/pedido` and is `completed`/`APPROVED`; donation #10 (21,679 COP) landed on `/gracias` and is `completed`/`APPROVED` (local D1). The first attempt ran on `dev.afroin.org` and exposed the June store-return bug (see Execution notes).
   6. Admin accounts: create an admin, log in with it, deactivate it, see it logged out — Julio.
+     - [x] Descartada en la preview (Julio did not run it; staging `admins` stays empty). Covered by curl against `astro dev`: A5–A7k and A9–A10b (create, login, demote, deactivate, delete, password change → session ends), 65/65.
 
 ## Acceptance Criteria
 
-- [ ] `migrations/0010_create_admins.sql` has no INSERT and no credential; runs twice without error.
-- [ ] No session is accepted without `ADMIN_SESSION_SECRET`; no fallback secret exists in code (`grep -rn "afroin-secret-auth-seed\|BOLD_SECRET_KEY" src/lib/adminAuth.ts` → nothing).
-- [ ] Deactivated/deleted/demoted admins lose access on their next request.
-- [ ] Paid, free and courtesy orders always have exactly `quantity` tickets; stuck orders self-repair on the next confirm/webhook.
-- [ ] Buyer-visible pages and responses unchanged except what Julio approved in Domain Assumptions.
-- [ ] Staging D1 at 0010 with seed rows; `npm run check` green; curl matrix green; Level 5 done; fresh-context review done; PR to `dev` open.
+- [x] `migrations/0010_create_admins.sql` has no INSERT and no credential; runs twice without error. Evidence: `grep -niE "insert|afroin-admin"` → no match; `sqlite3` twice OK; schema identical to the original (diff).
+- [x] No session is accepted without `ADMIN_SESSION_SECRET`; no fallback secret exists in code (`grep -rn "afroin-secret-auth-seed\|BOLD_SECRET_KEY" src/lib/adminAuth.ts` → nothing). Evidence: grep exit 1; A1 local (500 `not_configured`) and live on the Preview before the secret was set (`not_configured`).
+- [x] Deactivated/deleted/demoted admins lose access on their next request. Evidence: curl A7e–A7k, A10b; unit U6, U7, U19, U20.
+- [x] Paid, free and courtesy orders always have exactly `quantity` tickets; stuck orders self-repair on the next confirm/webhook. Evidence: curl T6b, T7b, T8 (3 concurrent confirms → 3), T9b (confirm repair), T9d (token-page repair), W5b; staging order 3 → 1 ticket.
+- [x] Buyer-visible pages and responses unchanged except what Julio approved. Evidence: approved changes = sales close at the real start time (Domain Assumptions) and store returns landing on their receipt (Execution notes, 2026-10-28); public pages 200 in es/en/fr (R rows), response shapes unchanged (reviews).
+- [x] Staging D1 at 0010 with seed rows; `npm run check` green; curl matrix green; Level 5 done; fresh-context review done; PR to `dev` open. Evidence: `d1 migrations list` → "No migrations to apply"; PR https://github.com/juliochemoreno/afro-in/pull/4 merged into `dev` as 6ba2d66.
 
 ## Confidence Score: 8/10
 
