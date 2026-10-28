@@ -7,6 +7,10 @@ import * as React from "react";
 // browser — it never leaves the page — so no secret reaches the CDN.
 const QR_SDK =
   "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
+// Subresource Integrity: the browser refuses the script if the CDN serves
+// anything other than this exact file.
+const QR_SDK_INTEGRITY =
+  "sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k";
 
 declare global {
   interface Window {
@@ -30,6 +34,8 @@ function loadQrSDK(): Promise<void> {
   qrSdkPromise = new Promise<void>((resolve, reject) => {
     const s = document.createElement("script");
     s.src = QR_SDK;
+    s.integrity = QR_SDK_INTEGRITY;
+    s.crossOrigin = "anonymous";
     s.onload = () => resolve();
     s.onerror = () => reject(new Error("qr sdk failed"));
     document.body.appendChild(s);

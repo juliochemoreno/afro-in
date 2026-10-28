@@ -29,7 +29,9 @@ async function getDetector(): Promise<BarcodeDetectorLike | null> {
     /* fall through to ponyfill */
   }
   try {
-    const ponyfillUrl = "https://esm.sh/barcode-detector@2/pure";
+    // Exact version (it pins zxing-wasm 1.3.4 itself): this code runs on an
+    // admin page, so it must not follow a floating range.
+    const ponyfillUrl = "https://esm.sh/barcode-detector@2.3.1/pure";
     const mod: any = await import(/* @vite-ignore */ ponyfillUrl);
     const BD = mod.BarcodeDetector || mod.default?.BarcodeDetector;
     if (BD) return new BD({ formats: ["qr_code"] });

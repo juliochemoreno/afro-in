@@ -32,6 +32,9 @@
   ],
   "preview_urls": true,
   "previews": {
+    "vars": {
+      "PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyB1aVwdMJCEwC5xSaoP31yGgLBoI2sT71U"
+    },
     "d1_databases": [
       {
         "binding": "DB",
