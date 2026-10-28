@@ -1,20 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 
-import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Combobox, type ComboboxOption } from "@/components/checkout/Combobox";
 
-interface CountryEntry {
+export interface CountryEntry {
   code: string;
   emoji: string;
   name: string; // fallback name (Spanish, from data file)
@@ -28,27 +18,28 @@ interface CountryComboboxProps {
   /** Hidden input id the surrounding form reads. */
   inputId?: string;
   defaultValue?: string;
+  /** Controlled value (ISO alpha-2); omit to let the component keep its own. */
+  value?: string;
+  onChange?: (code: string) => void;
+  /** Preselect the visitor's country from a geo lookup (uncontrolled use). */
+  geoDefault?: boolean;
   placeholder: string;
   searchPlaceholder: string;
   emptyText: string;
+  triggerId?: string;
+  invalid?: boolean;
+  ariaDescribedBy?: string;
 }
 
-export default function CountryCombobox({
-  lang,
-  countries,
-  name = "country",
-  inputId = "country",
-  defaultValue = "CO",
-  placeholder,
-  searchPlaceholder,
-  emptyText,
-}: CountryComboboxProps) {
-  const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState(defaultValue);
-
-  // Localize country names from their ISO code for the active language.
-  // Falls back to the bundled (Spanish) name if the runtime can't resolve it.
-  const localized = React.useMemo(() => {
+/**
+ * Country names localized from their ISO code for the active language.
+ * Falls back to the bundled (Spanish) name if the runtime can't resolve it.
+ */
+export function useLocalizedCountries(
+  lang: string,
+  countries: CountryEntry[]
+): (CountryEntry & { label: string })[] {
+  return React.useMemo(() => {
     let display: Intl.DisplayNames | null = null;
     try {
       display = new Intl.DisplayNames([lang], { type: "region" });
@@ -62,92 +53,107 @@ export default function CountryCombobox({
       }))
       .sort((a, b) => a.label.localeCompare(b.label, lang));
   }, [lang, countries]);
+}
 
-  const selected = localized.find((c) => c.code === value);
+let geoPromise: Promise<string | null> | null = null;
 
-  // Best-effort geo detection to preselect the donor's country.
-  React.useEffect(() => {
-    let cancelled = false;
-    fetch("https://ipapi.co/json/")
+/** Best-effort visitor country (ISO alpha-2), fetched once per page. */
+export function fetchGeoCountry(): Promise<string | null> {
+  if (!geoPromise) {
+    geoPromise = fetch("https://ipapi.co/json/")
       .then((r) => r.json() as Promise<{ country_code?: string }>)
-      .then((d) => {
-        if (cancelled || !d.country_code) return;
-        if (countries.some((c) => c.code === d.country_code)) {
-          setValue(d.country_code as string);
-        }
-      })
-      .catch(() => {});
+      .then((d) => d.country_code || null)
+      .catch(() => null);
+  }
+  return geoPromise;
+}
+
+export default function CountryCombobox({
+  lang,
+  countries,
+  name = "country",
+  inputId = "country",
+  defaultValue = "CO",
+  value: controlledValue,
+  onChange,
+  geoDefault = true,
+  placeholder,
+  searchPlaceholder,
+  emptyText,
+  triggerId,
+  invalid,
+  ariaDescribedBy,
+}: CountryComboboxProps) {
+  const [ownValue, setOwnValue] = React.useState(defaultValue);
+  const value = controlledValue ?? ownValue;
+  const hiddenRef = React.useRef<HTMLInputElement>(null);
+  const localized = useLocalizedCountries(lang, countries);
+
+  const onChangeRef = React.useRef(onChange);
+  onChangeRef.current = onChange;
+  // A manual pick wins over a geo answer that arrives later.
+  const touched = React.useRef(false);
+
+  const select = (code: string) => {
+    touched.current = true;
+    setOwnValue(code);
+    onChangeRef.current?.(code);
+  };
+
+  // Preselect the visitor's country (only while uncontrolled).
+  const uncontrolled = controlledValue === undefined;
+  React.useEffect(() => {
+    if (!geoDefault || !uncontrolled) return;
+    let cancelled = false;
+    fetchGeoCountry().then((code) => {
+      if (cancelled || touched.current || !code) return;
+      if (countries.some((c) => c.code === code)) {
+        setOwnValue(code);
+        onChangeRef.current?.(code);
+      }
+    });
     return () => {
       cancelled = true;
     };
-  }, [countries]);
+  }, [countries, geoDefault, uncontrolled]);
+
+  // Let vanilla-JS forms (donation) react to changes of the hidden input.
+  React.useEffect(() => {
+    hiddenRef.current?.dispatchEvent(new Event("change", { bubbles: true }));
+  }, [value]);
+
+  const options: ComboboxOption[] = React.useMemo(
+    () =>
+      localized.map((c) => ({
+        value: c.code,
+        label: c.label,
+        prefix: c.emoji,
+        keywords: c.name,
+      })),
+    [localized]
+  );
 
   return (
     <>
-      <input type="hidden" name={name} id={inputId} value={value} readOnly />
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            role="combobox"
-            aria-expanded={open}
-            className="cc-trigger"
-          >
-            <span className="cc-value">
-              {selected ? (
-                <>
-                  <span className="cc-flag" aria-hidden="true">
-                    {selected.emoji}
-                  </span>
-                  <span>{selected.label}</span>
-                </>
-              ) : (
-                <span className="cc-placeholder">{placeholder}</span>
-              )}
-            </span>
-            <ChevronsUpDownIcon className="size-4 opacity-50" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-(--radix-popover-trigger-width) p-0"
-          align="start"
-        >
-          <Command
-            loop
-            filter={(value, search) =>
-              value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
-            }
-          >
-            <CommandInput placeholder={searchPlaceholder} />
-            <CommandList className="max-h-[320px]">
-              <CommandEmpty>{emptyText}</CommandEmpty>
-              <CommandGroup>
-                {localized.map((c) => (
-                  <CommandItem
-                    key={c.code}
-                    value={`${c.label} ${c.code}`}
-                    onSelect={() => {
-                      setValue(c.code);
-                      setOpen(false);
-                    }}
-                  >
-                    <span className="cc-flag" aria-hidden="true">
-                      {c.emoji}
-                    </span>
-                    <span className="flex-1 truncate">{c.label}</span>
-                    <CheckIcon
-                      className={cn(
-                        "size-4 shrink-0",
-                        value === c.code ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <input
+        ref={hiddenRef}
+        type="hidden"
+        name={name}
+        id={inputId}
+        value={value}
+        readOnly
+      />
+      <Combobox
+        id={triggerId}
+        options={options}
+        value={value}
+        onChange={select}
+        placeholder={placeholder}
+        searchPlaceholder={searchPlaceholder}
+        emptyText={emptyText}
+        invalid={invalid}
+        ariaDescribedBy={ariaDescribedBy}
+      />
     </>
   );
 }

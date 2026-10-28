@@ -1,6 +1,8 @@
 ---
 import { countries } from "../data/countries";
 import CountryCombobox from "./CountryCombobox";
+import PhoneField from "./checkout/PhoneField";
+import "../styles/checkout-fields.css";
 import {
   getLangFromUrl,
   useTranslations,
@@ -63,6 +65,7 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
             data-t-error-name={t("join.error.name")}
             data-t-error-email={t("join.error.email")}
             data-t-error-country={t("join.error.country")}
+            data-t-error-phone={t("phone.err")}
             data-t-error-generic={t("join.error.generic")}
           >
             <!-- STEP 1: CONTACT INFO -->
@@ -95,12 +98,19 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
               </div>
 
               <div class="form-group">
-                <label for="phone">{t("join.form.phone")}</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  placeholder={t("join.form.phone.placeholder")}
+                <label for="phone-number">{t("join.form.phone")}</label>
+                <PhoneField
+                  client:visible
+                  lang={lang}
+                  countries={countries}
+                  inputId="phone-number"
+                  hiddenInputId="phone"
+                  hiddenName="phone"
+                  followCountryInputId="country"
+                  placeholder={t("phone.ph")}
+                  dialLabel={t("phone.dial.label")}
+                  searchPlaceholder={t("phone.dial.search")}
+                  emptyText={t("phone.dial.empty")}
                 />
               </div>
 
@@ -817,80 +827,10 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
       }
     </style>
 
-    <style is:global>
-      /* CountryCombobox trigger — matches the form inputs' look */
-      .cc-trigger {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-sm);
-        padding: var(--space-sm) var(--space-md);
-        border: 1px solid var(--color-cream-dark);
-        border-radius: var(--radius-md);
-        background: var(--color-white);
-        font-family: inherit;
-        font-size: 1rem;
-        min-height: 46px;
-        cursor: pointer;
-        transition: all var(--transition-fast);
-      }
-      .cc-trigger:hover {
-        border-color: var(--color-primary);
-      }
-      .cc-trigger[aria-expanded="true"] {
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
-      }
-      .cc-trigger .cc-value {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-      .cc-trigger .cc-placeholder {
-        color: var(--color-text-light);
-      }
-      .cc-flag {
-        font-size: 1.2rem;
-        line-height: 1;
-        width: 1.6rem;
-        text-align: center;
-        flex-shrink: 0;
-      }
-      /* Country dropdown (portaled to body).
-         The project's global reset `* { padding: 0 }` is unlayered and overrides
-         Tailwind's layered padding utilities, so we restore spacing explicitly
-         via the higher-specificity [data-slot] attribute selectors. */
-      [data-slot="popover-content"] {
-        padding: 0;
-        box-shadow: var(--shadow-lg);
-        overflow: hidden;
-      }
-      [data-slot="command-input-wrapper"] {
-        padding: 0 0.85rem;
-      }
-      [data-slot="command-input"] {
-        padding: 0.6rem 0;
-      }
-      [data-slot="command-list"] {
-        padding: 0.35rem;
-      }
-      [data-slot="command-item"] {
-        padding: 0.6rem 0.7rem;
-        gap: 0.75rem;
-        font-size: 0.95rem;
-        border-radius: var(--radius-sm);
-      }
-      [data-slot="command-empty"] {
-        padding: 1.25rem;
-      }
-    </style>
-
     <script>
       import { showToast } from "../lib/cart";
+      import { buildCustomerData } from "../lib/boldPrefill";
+      import { isValidEmail, normalizeStoredPhone } from "../lib/checkoutFields";
 
       declare global {
         interface Window {
@@ -942,20 +882,92 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         const MIN_USD = 5;
         const MIN_COP = MIN_USD * COP_PER_USD;
 
-        // Shared step-1 validation. Returns a specific localized error message,
-        // or null when the contact details are valid.
-        const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const validateStep1 = (): string | null => {
-          const nameInput = document.getElementById("name") as HTMLInputElement;
-          const emailInput = document.getElementById(
-            "email"
-          ) as HTMLInputElement;
-          if (!nameInput?.value.trim()) return form.dataset.tErrorName || "";
-          if (!EMAIL_RE.test((emailInput?.value || "").trim()))
-            return form.dataset.tErrorEmail || "";
-          if (!getCountry()) return form.dataset.tErrorCountry || "";
-          return null;
+        type Step1Field = "name" | "email" | "phone" | "country";
+        // Where each step-1 field takes the focus when it is invalid (the
+        // phone and country pickers are React islands).
+        const STEP1_FOCUS: Record<Step1Field, string> = {
+          name: "#name",
+          email: "#email",
+          phone: "#phone-number",
+          country: "#country ~ .cc-trigger",
         };
+        const STEP1_HIDDEN: Record<Step1Field, string> = {
+          name: "name",
+          email: "email",
+          phone: "phone",
+          country: "country",
+        };
+        let step1Attempted = false;
+
+        // Shared step-1 validation: the invalid fields in screen order, each
+        // with its localized message.
+        const validateStep1 = (): { field: Step1Field; message: string }[] => {
+          const value = (id: string) =>
+            (document.getElementById(id) as HTMLInputElement | null)?.value ||
+            "";
+          const errors: { field: Step1Field; message: string }[] = [];
+          if (!value("name").trim())
+            errors.push({ field: "name", message: form.dataset.tErrorName || "" });
+          if (!isValidEmail(value("email")))
+            errors.push({ field: "email", message: form.dataset.tErrorEmail || "" });
+          if (!normalizeStoredPhone(value("phone")))
+            errors.push({ field: "phone", message: form.dataset.tErrorPhone || "" });
+          if (!getCountry())
+            errors.push({
+              field: "country",
+              message: form.dataset.tErrorCountry || "",
+            });
+          return errors;
+        };
+
+        // Marks each step-1 field's .form-group and writes its message.
+        const showStep1Errors = (
+          errors: { field: Step1Field; message: string }[]
+        ) => {
+          (Object.keys(STEP1_HIDDEN) as Step1Field[]).forEach((field) => {
+            const group = document
+              .getElementById(STEP1_HIDDEN[field])
+              ?.closest(".form-group");
+            if (!group) return;
+            const error = errors.find((e) => e.field === field);
+            group.classList.toggle("is-invalid", !!error);
+            let msg = group.querySelector<HTMLElement>(".field-error");
+            if (error) {
+              if (!msg) {
+                msg = document.createElement("p");
+                msg.className = "field-error";
+                group.appendChild(msg);
+              }
+              msg.textContent = error.message;
+            } else {
+              msg?.remove();
+            }
+          });
+        };
+
+        // Validates step 1, shows the errors and focuses the first invalid
+        // field. Returns true when the contact details are valid.
+        const checkStep1 = (): boolean => {
+          step1Attempted = true;
+          const errors = validateStep1();
+          showStep1Errors(errors);
+          if (errors.length === 0) return true;
+          const el = document.querySelector<HTMLElement>(
+            STEP1_FOCUS[errors[0].field]
+          );
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          el?.focus({ preventScroll: true });
+          return false;
+        };
+
+        // After the first attempt, errors follow the fields as they change.
+        // Delegated: the phone and country islands hydrate after this runs,
+        // and their hidden inputs dispatch bubbling "change" events.
+        const revalidateStep1 = () => {
+          if (step1Attempted) showStep1Errors(validateStep1());
+        };
+        step1?.addEventListener("input", revalidateStep1);
+        step1?.addEventListener("change", revalidateStep1);
 
         // --- Load PayPal Donate SDK ---
         const loadPayPalSDK = async (): Promise<void> => {
@@ -1138,11 +1150,10 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         // --- Bold payment flow ---
         const payWithBold = async () => {
           // Re-validate contact details; if invalid, send the donor back to fix them.
-          const step1Error = validateStep1();
-          if (step1Error) {
+          if (validateStep1().length > 0) {
             step2?.classList.remove("active");
             step1?.classList.add("active");
-            showToast(step1Error, "error");
+            checkStep1();
             return;
           }
 
@@ -1212,13 +1223,11 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
           };
 
           // Prefill the Bold checkout with the details we already collected.
-          const customerData: Record<string, string> = {
-            fullName: nameInput.value.trim(),
-            email: emailInput.value.trim(),
-          };
-          const phoneValue = (phoneInput.value || "").trim();
-          if (phoneValue) customerData.phone = phoneValue;
-          boldConfig.customerData = JSON.stringify(customerData);
+          boldConfig.customerData = buildCustomerData({
+            name: nameInput.value,
+            email: emailInput.value,
+            phone: phoneInput.value,
+          });
 
           // Bold only accepts a public HTTPS redirect URL. On localhost (http)
           // we omit it — the payment still processes and is confirmed via the
@@ -1275,11 +1284,7 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
 
         // --- Navigation ---
         btnNext?.addEventListener("click", async () => {
-          const error = validateStep1();
-          if (error) {
-            showToast(error, "error");
-            return;
-          }
+          if (!checkStep1()) return;
           step1?.classList.remove("active");
           step2?.classList.add("active");
 

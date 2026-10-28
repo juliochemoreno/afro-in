@@ -4,7 +4,9 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import ImagePlaceholder from "@/components/ImagePlaceholder.astro";
 import TicketCheckoutForm from "@/components/TicketCheckoutForm";
+import "@/styles/checkout-fields.css";
 import { formatPrice } from "@/lib/cart";
+import { countries } from "@/data/countries";
 import type { PublicEvent } from "@/lib/tickets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 
@@ -53,6 +55,11 @@ const T_KEYS = [
   "tix.form.email.ph",
   "tix.form.phone",
   "tix.form.phone.ph",
+  "phone.err",
+  "phone.ph",
+  "phone.dial.label",
+  "phone.dial.search",
+  "phone.dial.empty",
   "tix.form.total",
   "tix.form.pay",
   "tix.form.processing",
@@ -130,6 +137,7 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
             lang={lang as any}
             eventSlug={event.slug}
             eventName={name}
+            countries={countries}
             price={event.price}
             remaining={event.remaining}
             successPath={successPath}

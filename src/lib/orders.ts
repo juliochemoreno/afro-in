@@ -4,6 +4,7 @@
 // hidden or out of stock. The client-sent price is never used.
 
 import { generateOrderId } from "@/lib/bold";
+import { normalizeStoredPhone } from "@/lib/checkoutFields";
 
 export const BOLD_MIN_AMOUNT = 1000; // Bold minimum charge, COP
 const MAX_LINES = 50;
@@ -38,6 +39,8 @@ export interface CheckoutCustomer {
 }
 export interface CheckoutShipping {
   country?: string | null;
+  /** ISO alpha-2 of `country`; only used to validate the address. */
+  countryCode?: string | null;
   department?: string | null;
   city?: string | null;
   address?: string | null;
@@ -99,6 +102,20 @@ export async function createPendingOrder(
   if (!name) throw new CheckoutError("El nombre es obligatorio");
   if (!email || !EMAIL_RE.test(email))
     throw new CheckoutError("Se requiere un email válido");
+  const rawPhone = clean(input.customer?.phone, 40);
+  if (!rawPhone) throw new CheckoutError("El teléfono es obligatorio");
+  const phone = normalizeStoredPhone(rawPhone);
+  if (!phone) throw new CheckoutError("Teléfono inválido");
+
+  const s = input.shipping || {};
+  const countryCode = clean(s.countryCode, 10);
+  if (!clean(s.country, 80)) throw new CheckoutError("El país es obligatorio");
+  if (countryCode !== null && !/^[A-Z]{2}$/.test(countryCode))
+    throw new CheckoutError("País inválido");
+  if (countryCode === "CO" && !clean(s.department, 80))
+    throw new CheckoutError("El departamento es obligatorio");
+  if (!clean(s.city, 80)) throw new CheckoutError("La ciudad es obligatoria");
+  if (!clean(s.address, 300)) throw new CheckoutError("La dirección es obligatoria");
 
   // Resolve every referenced product from D1 by its canonical slug.
   const slugs = Array.from(
@@ -161,7 +178,6 @@ export async function createPendingOrder(
   const currency = "COP";
   const amount = subtotal; // v1: no shipping fee
   const orderId = generateOrderId("order");
-  const s = input.shipping || {};
 
   const orderRes = await db
     .prepare(
@@ -179,7 +195,7 @@ export async function createPendingOrder(
       itemCount,
       name,
       email,
-      clean(input.customer?.phone, 40),
+      phone,
       clean(s.country, 80),
       clean(s.department, 80),
       clean(s.city, 80),
