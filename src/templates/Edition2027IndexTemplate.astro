@@ -127,6 +127,27 @@ const { navLinks, ctaLink } = editionNav(lang);
       </div>
     </section>
 
+    {headliner && (
+      <div class="fz-wrap edition-headliner">
+        <EditionHeadliner
+          artist={headliner.data}
+          appearances={headlinerAppearances}
+          lang={lang}
+          moreHref={getTranslatedPath("/artistas", lang)}
+        />
+      </div>
+    )}
+
+    {stopCards.filter((stop) => stop.tickets).map((stop) => (
+      <div class="fz-wrap edition-tickets">
+        <EditionTickets
+          tickets={stop.tickets!}
+          lang={lang}
+          heading={`${t("edition.ticketsTitle")} · ${stop.name}`}
+        />
+      </div>
+    ))}
+
     <section class="fz-wrap edition-stops-section">
       <div class="fz-frame">
         <div class="fz-frame-inner edition-stops">
@@ -147,26 +168,7 @@ const { navLinks, ctaLink } = editionNav(lang);
 
     <EditionJourney steps={journey} lang={lang} />
 
-    {headliner && (
-      <div class="fz-wrap edition-block">
-        <EditionHeadliner
-          artist={headliner.data}
-          appearances={headlinerAppearances}
-          lang={lang}
-          moreHref={getTranslatedPath("/artistas", lang)}
-        />
-      </div>
-    )}
 
-    {stopCards.filter((stop) => stop.tickets).map((stop) => (
-      <div class="fz-wrap edition-block">
-        <EditionTickets
-          tickets={stop.tickets!}
-          lang={lang}
-          heading={`${t("edition.ticketsTitle")} · ${stop.name}`}
-        />
-      </div>
-    ))}
 
     <section class="fz-wrap edition-block" aria-labelledby="edition-artists">
       <h2 id="edition-artists" class="fz-display edition-h2">{t("edition.artistsTitle")}</h2>
@@ -216,6 +218,14 @@ const { navLinks, ctaLink } = editionNav(lang);
     margin: 0 0 12px;
     font-size: 18px;
     color: var(--fz-cream);
+  }
+
+  .edition-headliner {
+    padding-top: 40px;
+  }
+
+  .edition-tickets {
+    padding-top: 32px;
   }
 
   .edition-stops-section {

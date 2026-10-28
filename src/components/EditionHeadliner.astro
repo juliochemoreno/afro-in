@@ -16,7 +16,7 @@ const { artist, appearances, lang, moreHref } = Astro.props;
 const t = useTranslations(lang);
 ---
 
-<section class="fz-frame fz-headliner" aria-labelledby="fz-headliner-name">
+<section class="fz-frame fz-headliner" aria-labelledby="fz-headliner-name" style="scroll-margin-top: 100px">
   <div class="fz-frame-inner fz-headliner-inner">
     <Image
       src={artist.photo}
