@@ -1,5 +1,6 @@
 ---
 name: "Chichi Banana"
+countryCode: "FR"
 country:
   es: "Francia"
   en: "France"

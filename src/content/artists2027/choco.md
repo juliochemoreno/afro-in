@@ -1,5 +1,6 @@
 ---
 name: "Choco"
+countryCode: "VE"
 country:
   es: "Venezuela"
   en: "Venezuela"

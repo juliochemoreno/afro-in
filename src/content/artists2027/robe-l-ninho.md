@@ -1,5 +1,6 @@
 ---
 name: "Robe L Ninho"
+countryCode: "CU"
 country:
   es: "Cuba"
   en: "Cuba"

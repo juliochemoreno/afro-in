@@ -1,0 +1,218 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import FestivalFont from "@/components/FestivalFont.astro";
+import EditionCountries from "@/components/EditionCountries.astro";
+import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+import { artistAppearances, baseSlug, dayLabel, entryLang, flagEmoji, type Lang } from "@/lib/programacion";
+import { editionNav } from "@/lib/editionNav";
+import "@/styles/festival.css";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = "es" } = Astro.props;
+const t = useTranslations(lang);
+const { navLinks, ctaLink } = editionNav(lang);
+
+const stops = (await getCollection("tour2027"))
+  .filter((entry) => entryLang(entry.filePath!) === lang)
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((entry) => ({ slug: baseSlug(entry.filePath!), name: entry.data.name, days: entry.data.days }));
+
+const artists = (await getCollection("artists2027"))
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((artist) => ({
+    ...artist.data,
+    flag: flagEmoji(artist.data.countryCode),
+    appearances: artistAppearances(artist.id, stops).map((appearance) => {
+      const label = dayLabel(appearance.date, lang);
+      return {
+        ...appearance,
+        when: `${label.weekdayShort} ${label.dayMonth}`,
+        href: `${getTranslatedPath(`/programacion/2027/${appearance.stopSlug}`, lang)}#d-${label.dayNumber}`,
+      };
+    }),
+  }));
+---
+
+<Layout title={t("edition.artistsMetaTitle")} description={t("edition.artistsText")}>
+  <FestivalFont slot="head" />
+  <Header navLinks={navLinks} ctaLink={ctaLink} variant="festival" />
+
+  <main class="fz artists">
+    <section class="fz-wrap artists-hero">
+      <p class="fz-display fz-gold artists-kicker">AFRO IN 2027</p>
+      <h1 class="fz-display artists-title">{t("edition.artistsTitle")}</h1>
+      <p class="fz-muted artists-lead">{t("edition.artistsText")}</p>
+      <EditionCountries artists={artists} lang={lang} />
+    </section>
+
+    <section class="fz-wrap artists-grid" aria-label={t("edition.artistsTitle")}>
+      {artists.map((artist) => (
+        <article class="artist">
+          <Image
+            src={artist.photo}
+            alt={artist.name}
+            widths={[320, 640]}
+            sizes="(max-width: 720px) 100vw, 380px"
+            class="artist-photo"
+          />
+          <div class="artist-body">
+            <h2 class="fz-display artist-name">{artist.name}</h2>
+            <p class="fz-muted artist-country"><span class="fz-flag" aria-hidden="true">{artist.flag}</span> {artist.country[lang]}</p>
+            {artist.appearances.length ? (
+              <ul class="artist-dates">
+                {artist.appearances.map((appearance) => (
+                  <li>
+                    <a href={appearance.href}>
+                      <span class="fz-display fz-gold artist-when">{appearance.when}</span>
+                      <span class="artist-where">
+                        {[appearance.venue, appearance.stopName].filter(Boolean).join(", ")}
+                      </span>
+                      <span class="fz-muted artist-what">{appearance.title}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="artist-tba">{t("edition.dateTba")}</p>
+            )}
+          </div>
+        </article>
+      ))}
+    </section>
+
+    <section class="fz-band">
+      <div class="fz-wrap">
+        <div>
+          <h2 class="fz-display artists-band-title">{t("edition.artistsPastTitle")}</h2>
+          <p class="fz-muted">{t("edition.artistsPastText")}</p>
+        </div>
+        <a class="fz-button" href={getTranslatedPath("/artistas/2026", lang)}>
+          {t("edition.artistsPastLink")}
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <Footer variant="festival" />
+</Layout>
+
+<style>
+  .artists-hero {
+    padding-top: 56px;
+    padding-bottom: 48px;
+  }
+
+  .artists-kicker {
+    margin: 0;
+    font-size: 26px;
+  }
+
+  .artists-title {
+    margin: 4px 0 0;
+    font-size: clamp(56px, 9vw, 128px);
+    line-height: 0.95;
+  }
+
+  .artists-lead {
+    margin: 20px 0 0;
+    font-size: 19px;
+    max-width: 56ch;
+  }
+
+  .artists-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px 28px;
+    padding-bottom: 72px;
+  }
+
+  .artist {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .artist-photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    display: block;
+    outline: 1px solid rgba(242, 193, 78, 0.6);
+    outline-offset: 5px;
+  }
+
+  .artist-name {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1.05;
+  }
+
+  .artist-country {
+    margin: 4px 0 0;
+    font-size: 16px;
+  }
+
+  .artist-dates {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .artist-dates li {
+    border-top: 1px solid rgba(242, 193, 78, 0.3);
+  }
+
+  .fz .artist-dates a {
+    display: grid;
+    gap: 2px;
+    padding: 10px 0;
+    color: var(--fz-cream);
+    text-decoration: none;
+  }
+
+  .fz .artist-dates a:hover .artist-where {
+    text-decoration: underline;
+  }
+
+  .artist-when {
+    font-size: 20px;
+  }
+
+  .artist-what {
+    font-size: 14px;
+  }
+
+  .artist-tba {
+    margin: 14px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid rgba(242, 193, 78, 0.3);
+    color: var(--fz-gold);
+    font-weight: 600;
+  }
+
+  .artists-band-title {
+    font-size: 36px;
+  }
+
+  @media (max-width: 900px) {
+    .artists-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .artists-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

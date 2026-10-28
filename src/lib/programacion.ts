@@ -113,3 +113,30 @@ export function firstAppearance(
   );
   return day ? { date: day.date, venue: day.venue } : undefined;
 }
+
+export interface StopForAppearances {
+  slug: string;
+  name: string;
+  days: {
+    date: string;
+    venue?: string;
+    activities: { title: string; artist?: string | { id: string } }[];
+  }[];
+}
+
+// Every activity of an artist across the edition's stops, in content order.
+export function artistAppearances(artistId: string, stops: StopForAppearances[]) {
+  return stops.flatMap((stop) =>
+    stop.days.flatMap((day) =>
+      day.activities
+        .filter((a) => (typeof a.artist === "string" ? a.artist : a.artist?.id) === artistId)
+        .map((a) => ({ stopSlug: stop.slug, stopName: stop.name, date: day.date, venue: day.venue, title: a.title }))
+    )
+  );
+}
+
+// "CO" → 🇨🇴 (regional indicator symbols), like the site's language picker.
+export function flagEmoji(countryCode: string): string {
+  if (!/^[A-Z]{2}$/.test(countryCode)) throw new Error(`Invalid country code: ${countryCode}`);
+  return String.fromCodePoint(...[...countryCode].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+}

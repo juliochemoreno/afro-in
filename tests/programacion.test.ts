@@ -1,11 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  artistAppearances,
   baseSlug,
   dateRange,
   dayLabel,
   entryLang,
   firstAppearance,
+  flagEmoji,
   formatCop,
   isComingSoon,
   joinList,
@@ -96,4 +98,29 @@ test("first appearance finds the first day referencing the artist", () => {
   assert.deepEqual(firstAppearance("robe", days), { date: "2027-01-16", venue: "Co·KoA" });
   assert.deepEqual(firstAppearance("choco", days), { date: "2027-01-17", venue: "Masaya" });
   assert.equal(firstAppearance("eirini", days), undefined);
+});
+
+test("artist appearances list every activity across stops", () => {
+  const stops = [
+    {
+      slug: "santa-marta",
+      name: "Santa Marta",
+      days: [
+        { date: "2027-01-16", venue: "Co·KoA", activities: [{ title: "Show", artist: { id: "robe" } }] },
+        { date: "2027-01-17", venue: "Masaya", activities: [{ title: "Clases", artist: "robe" }, { title: "Choco", artist: "choco" }] },
+      ],
+    },
+    { slug: "palenque", name: "Palenque", days: [{ date: "2027-01-18", activities: [{ title: "Clases" }] }] },
+  ];
+  assert.deepEqual(artistAppearances("robe", stops), [
+    { stopSlug: "santa-marta", stopName: "Santa Marta", date: "2027-01-16", venue: "Co·KoA", title: "Show" },
+    { stopSlug: "santa-marta", stopName: "Santa Marta", date: "2027-01-17", venue: "Masaya", title: "Clases" },
+  ]);
+  assert.deepEqual(artistAppearances("eirini", stops), []);
+});
+
+test("country codes become flag emoji", () => {
+  assert.equal(flagEmoji("CO"), "🇨🇴");
+  assert.equal(flagEmoji("GB"), "🇬🇧");
+  assert.throws(() => flagEmoji("co"));
 });

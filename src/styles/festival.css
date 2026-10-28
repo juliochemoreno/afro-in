@@ -2,7 +2,7 @@
    Dark like the edition posters; header, footer and brand red stay the site's. */
 
 .fz {
-  --fz-night: #07120d;
+  --fz-night: #161616; /* the footer's black */
   --fz-jungle: #123326;
   --fz-jungle-2: #1a4a35;
   --fz-gold: #f2c14e;
@@ -158,4 +158,84 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
+}
+
+/* Photo hero: an archive photo under a dark wash, text on top. */
+.fz-photo-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.fz-photo-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.fz-photo-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(22, 22, 22, 0.45) 0%, rgba(22, 22, 22, 0.72) 60%, var(--fz-night) 100%);
+}
+
+.fz-photo-hero-content {
+  position: relative;
+}
+
+.fz-photo-hero {
+  min-height: min(78vh, 720px);
+  display: flex;
+  align-items: flex-end;
+}
+
+.fz-photo-hero > .fz-photo-hero-content {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .fz-photo-hero {
+    min-height: 64vh;
+  }
+}
+
+/* Countries strip (international reach). */
+.fz-countries {
+  margin-top: 28px;
+}
+
+.fz-countries-title {
+  margin: 0 0 12px;
+  font-weight: 600;
+  color: var(--fz-gold);
+}
+
+.fz-countries-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fz-countries-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--fz-line);
+  background: rgba(22, 22, 22, 0.55);
+  font-size: 15px;
+}
+
+.fz-flag {
+  font-size: 1.25em;
+  line-height: 1;
 }

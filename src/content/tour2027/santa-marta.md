@@ -5,6 +5,9 @@ endDate: "2027-01-17"
 location: "Santa Marta, Magdalena"
 order: 1
 intro: "Primera parada de AFRO IN 2027: tres días de música, baile y batallas en tres casas aliadas de la ciudad."
+heroImage: "../../assets/img/2014/2014-afroin-img-4.jpg"
+heroPosition: "60% 45%"
+cardImage: "../../assets/img/2017/2017-afroin-img-4.jpg"
 days:
   - date: "2027-01-15"
     venue: "Oh la la! La Puerta"

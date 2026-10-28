@@ -1,5 +1,6 @@
 ---
 name: "Fideles Cadito"
+countryCode: "GB"
 country:
   es: "Reino Unido"
   en: "United Kingdom"

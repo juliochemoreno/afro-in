@@ -77,6 +77,7 @@ const artists2027 = defineCollection({
   schema: ({ image }) =>
     z.object({
       name: z.string(),
+      countryCode: z.string().regex(/^[A-Z]{2}$/),
       country: z.object({ es: z.string(), en: z.string(), fr: z.string() }),
       photo: image(),
       order: z.number(),
@@ -93,6 +94,11 @@ const tour2027 = defineCollection({
       location: z.string(),
       order: z.number(),
       intro: z.string(),
+      heroImage: image(),
+      // CSS object-position keeping the people in frame ("center 30%").
+      heroPosition: z.string().default("center"),
+      cardImage: image(),
+      cardPosition: z.string().default("center"),
       days: z.array(
         z.object({
           date: isoDate,

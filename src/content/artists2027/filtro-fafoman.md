@@ -1,5 +1,6 @@
 ---
 name: "Filtro Fafoman"
+countryCode: "CO"
 country:
   es: "Colombia"
   en: "Colombia"

@@ -5,6 +5,10 @@ endDate: "2027-01-20"
 location: "San Basilio de Palenque, Bolívar"
 order: 2
 intro: "Deuxième étape d'AFRO IN 2027, à San Basilio de Palenque : fête au bord de la rivière, cours de danse pour les enfants et les jeunes de Palenque, et la clôture du festival."
+heroImage: "../../assets/img/afro-in-palenque-1/received_373416019886759.jpeg"
+heroPosition: "center 55%"
+cardImage: "../../assets/img/afro-in-palenque-1/DSC_0434.JPG"
+cardPosition: "78% 40%"
 days:
   - date: "2027-01-17"
     activities:

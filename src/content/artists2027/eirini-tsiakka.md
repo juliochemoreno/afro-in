@@ -1,5 +1,6 @@
 ---
 name: "Eirini Tsiakka"
+countryCode: "CY"
 country:
   es: "Chipre"
   en: "Cyprus"

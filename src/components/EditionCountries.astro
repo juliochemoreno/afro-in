@@ -1,0 +1,29 @@
+---
+// The guest artists' countries with their flags: the festival's international reach.
+import { useTranslations } from "@/i18n/utils";
+import { flagEmoji, type Lang } from "@/lib/programacion";
+
+interface Props {
+  artists: { countryCode: string; country: Record<Lang, string> }[];
+  lang: Lang;
+}
+
+const { artists, lang } = Astro.props;
+const t = useTranslations(lang);
+
+const countries = [...new Map(artists.map((a) => [a.countryCode, a.country[lang]])).entries()];
+---
+
+<div class="fz-countries">
+  <p class="fz-countries-title">
+    {t("edition.countriesTitle").replace("{n}", String(countries.length))}
+  </p>
+  <ul class="fz-countries-list">
+    {countries.map(([code, name]) => (
+      <li>
+        <span class="fz-flag" aria-hidden="true">{flagEmoji(code)}</span>
+        {name}
+      </li>
+    ))}
+  </ul>
+</div>

@@ -374,5 +374,10 @@
   "edition.viewStop": "Voir {name}",
   "edition.timeTba": "Heure à venir",
   "edition.ticketsTitle": "Billets",
-  "edition.ticketsSoon": "Vente en ligne très bientôt sur afroin.org."
+  "edition.ticketsSoon": "Vente en ligne très bientôt sur afroin.org.",
+  "edition.artistsMetaTitle": "Artistes invités · AFRO IN 2027",
+  "edition.artistsPastTitle": "Artistes 2026",
+  "edition.artistsPastText": "La programmation de la tournée de janvier 2026, telle que publiée.",
+  "edition.artistsPastLink": "Voir les artistes 2026",
+  "edition.countriesTitle": "Artistes de {n} pays"
 }

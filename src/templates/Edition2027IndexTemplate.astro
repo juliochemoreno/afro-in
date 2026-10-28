@@ -4,6 +4,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
 import EditionTickets from "@/components/EditionTickets.astro";
+import EditionCountries from "@/components/EditionCountries.astro";
 import { getCollection } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
@@ -13,10 +14,13 @@ import {
   dayLabel,
   entryLang,
   firstAppearance,
+  flagEmoji,
   isComingSoon,
   joinList,
   type Lang,
 } from "@/lib/programacion";
+import heroPhoto from "@/assets/img/2017/2017-afroin-img-7.jpg";
+import { editionNav } from "@/lib/editionNav";
 import "@/styles/festival.css";
 
 interface Props {
@@ -42,6 +46,8 @@ const stopCards = stops.map((stop) => {
     comingSoon: isComingSoon(stop.data.days),
     href: getTranslatedPath(`/programacion/2027/${baseSlug(stop.filePath!)}`, lang),
     tickets: stop.data.tickets,
+    cardImage: stop.data.cardImage,
+    cardPosition: stop.data.cardPosition,
   };
 });
 
@@ -51,37 +57,35 @@ const artistCards = artists.map((artist) => {
   const when = first
     ? [dayLabel(first.date, lang).dayMonth, first.venue].filter(Boolean).join(", ")
     : t("edition.dateTba");
-  return { ...artist.data, meta: `${artist.data.country[lang]} · ${when}` };
+  return { ...artist.data, flag: flagEmoji(artist.data.countryCode), meta: `${artist.data.country[lang]} · ${when}` };
 });
 
-const programNavLinks = [
-  { href: getTranslatedPath("/", lang), label: t("nav.home") },
-  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
-  { href: getTranslatedPath("/programacion", lang), label: t("nav.program") },
-  { href: getTranslatedPath("/programacion/2027/santa-marta", lang), label: "Santa Marta" },
-  { href: getTranslatedPath("/programacion/2027/palenque", lang), label: "Palenque" },
-  { href: getTranslatedPath("/artistas", lang), label: t("nav.artists") },
-  { href: getTranslatedPath("/#contacto", lang), label: t("nav.contact") },
-];
-const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.join") };
+const { navLinks, ctaLink } = editionNav(lang);
 ---
 
 <Layout title={t("edition.pageTitle")} description={t("edition.tagline")}>
   <FestivalFont slot="head" />
-  <Header navLinks={programNavLinks} ctaLink={programCta} />
+  <Header navLinks={navLinks} ctaLink={ctaLink} variant="festival" />
 
   <main class="fz edition">
-    <section class="fz-wrap edition-hero">
-      <p class="fz-muted edition-tagline">{t("edition.tagline")}</p>
-      <h1 class="edition-title">
-        <span class="fz-display edition-title-red">AFRO IN</span>
-        <span class="fz-display fz-gold">2027</span>
-      </h1>
+    <section class="fz-photo-hero edition-hero">
+      <Image src={heroPhoto} alt="" widths={[768, 1296]} sizes="100vw" loading="eager" class="fz-photo-hero-img" />
+      <div class="fz-wrap fz-photo-hero-content">
+        <p class="edition-tagline">{t("edition.tagline")}</p>
+        <h1 class="edition-title">
+          <span class="fz-display edition-title-red">AFRO IN</span>
+          <span class="fz-display fz-gold">2027</span>
+        </h1>
+        <EditionCountries artists={artists.map((a) => a.data)} lang={lang} />
+      </div>
+    </section>
 
-      <div class="fz-frame edition-stops-frame">
+    <section class="fz-wrap edition-stops-section">
+      <div class="fz-frame">
         <div class="fz-frame-inner edition-stops">
           {stopCards.map((stop) => (
             <a class="edition-stop" href={stop.href}>
+              <Image src={stop.cardImage} alt="" widths={[480, 960]} sizes="(max-width: 720px) 100vw, 560px" class="edition-stop-photo" style={`object-position: ${stop.cardPosition}`} />
               <span class="fz-display fz-gold edition-stop-range">{stop.range}</span>
               <span class="fz-display edition-stop-name">{stop.name}</span>
               <span class="fz-muted">{stop.place}</span>
@@ -119,7 +123,7 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
             />
             <div>
               <h3 class="fz-display edition-artist-name">{artist.name}</h3>
-              <p class="fz-muted edition-artist-meta">{artist.meta}</p>
+              <p class="fz-muted edition-artist-meta"><span class="fz-flag" aria-hidden="true">{artist.flag}</span> {artist.meta}</p>
             </div>
           </article>
         ))}
@@ -139,19 +143,33 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
     </section>
   </main>
 
-  <Footer />
+  <Footer variant="festival" />
 </Layout>
 
 <style>
-  .edition-hero {
-    padding-top: 56px;
-    padding-bottom: 56px;
-    background: radial-gradient(120% 70% at 85% 0%, var(--fz-jungle) 0%, transparent 60%);
+  .edition-hero .fz-photo-hero-content {
+    padding-top: 160px;
+    padding-bottom: 48px;
   }
 
   .edition-tagline {
     margin: 0 0 12px;
     font-size: 18px;
+    color: var(--fz-cream);
+  }
+
+  .edition-stops-section {
+    padding-top: 40px;
+    padding-bottom: 56px;
+  }
+
+  .edition-stop-photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    margin-bottom: 12px;
   }
 
   .edition-title {
@@ -167,10 +185,6 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
 
   .edition-title-red {
     color: var(--fz-red);
-  }
-
-  .edition-stops-frame {
-    margin-top: 48px;
   }
 
   .edition-stops {
@@ -269,8 +283,8 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
   }
 
   @media (max-width: 720px) {
-    .edition-hero {
-      padding-top: 32px;
+    .edition-hero .fz-photo-hero-content {
+      padding-top: 96px;
     }
 
     .edition-stops {

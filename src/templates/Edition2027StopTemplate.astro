@@ -7,7 +7,8 @@ import EditionTickets from "@/components/EditionTickets.astro";
 import { getEntries, type CollectionEntry } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
-import { baseSlug, dateRange, dayLabel, isComingSoon, type Lang } from "@/lib/programacion";
+import { baseSlug, dateRange, dayLabel, flagEmoji, isComingSoon, type Lang } from "@/lib/programacion";
+import { editionNav } from "@/lib/editionNav";
 import "@/styles/festival.css";
 
 interface Props {
@@ -42,6 +43,7 @@ const days = data.days.map((day, index) => {
       return {
         ...activity,
         photo: artist?.photo,
+        flag: artist ? flagEmoji(artist.countryCode) : undefined,
         byline: artist && !activity.title.includes(artist.name)
           ? `${artist.name} (${artist.country[lang]})`
           : artist?.country[lang],
@@ -72,30 +74,31 @@ const eventSchema = JSON.stringify({
   organizer: { "@type": "Organization", name: "AFRO IN", url: "https://afroin.org" },
 }).replace(/</g, "\\u003c");
 
-const programNavLinks = [
-  { href: getTranslatedPath("/", lang), label: t("nav.home") },
-  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
-  { href: getTranslatedPath("/programacion", lang), label: t("nav.program") },
-  { href: getTranslatedPath("/programacion/2027/santa-marta", lang), label: "Santa Marta" },
-  { href: getTranslatedPath("/programacion/2027/palenque", lang), label: "Palenque" },
-  { href: getTranslatedPath("/artistas", lang), label: t("nav.artists") },
-  { href: getTranslatedPath("/#contacto", lang), label: t("nav.contact") },
-];
-const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.join") };
+const { navLinks, ctaLink } = editionNav(lang);
 ---
 
 <Layout title={`${data.name} · AFRO IN ${year}`} description={data.intro}>
   <FestivalFont slot="head" />
   <script type="application/ld+json" set:html={eventSchema} />
-  <Header navLinks={programNavLinks} ctaLink={programCta} />
+  <Header navLinks={navLinks} ctaLink={ctaLink} variant="festival" />
 
   <main class="fz stop">
-    <section class="stop-hero">
-      <div class="fz-wrap">
+    <section class="fz-photo-hero stop-hero">
+      <Image
+        src={data.heroImage}
+        alt=""
+        widths={[768, 1440]}
+        sizes="100vw"
+        loading="eager"
+        class="fz-photo-hero-img"
+        style={`object-position: ${data.heroPosition}`}
+      />
+      <div class="fz-wrap fz-photo-hero-content">
+        <div class="stop-hero-text">
         <a class="stop-back" href={getTranslatedPath("/programacion", lang)}>{t("edition.backToEdition")}</a>
         <p class="fz-display fz-gold stop-range">{range}</p>
         <h1 class="fz-display stop-name">{data.name}</h1>
-        <p class="fz-muted stop-intro">{data.intro}</p>
+        <p class="stop-intro">{data.intro}</p>
         {!comingSoon && (
           <nav class="stop-daynav" aria-label={t("edition.days")}>
             {days.map((day) => (
@@ -105,6 +108,7 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
             ))}
           </nav>
         )}
+        </div>
       </div>
     </section>
 
@@ -128,11 +132,8 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
                 <h2 class="fz-display stop-daydate">{day.dayMonth}</h2>
                 {day.venue && (
                   <div class="stop-venue">
-                    {day.venueLogo && (
-                      <Image src={day.venueLogo} alt="" width={112} height={112} class="stop-venue-logo" />
-                    )}
                     <div>
-                      <p class="stop-venue-name">{day.venue}</p>
+                      <p class="fz-display stop-venue-name">{day.venue}</p>
                       {day.venueArea && <p class="fz-muted stop-venue-area">{day.venueArea}</p>}
                     </div>
                   </div>
@@ -160,7 +161,11 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
                     <div>
                       {activity.kind && <p class="stop-kind">{activity.kind}</p>}
                       <h3 class="fz-display stop-title">{activity.title}</h3>
-                      {activity.byline && <p class="fz-muted stop-byline">{activity.byline}</p>}
+                      {activity.byline && (
+                        <p class="fz-muted stop-byline">
+                          <span class="fz-flag" aria-hidden="true">{activity.flag}</span> {activity.byline}
+                        </p>
+                      )}
                       {activity.note && <p class="fz-muted stop-note">{activity.note}</p>}
                       {activity.signupUrl && (
                         <a class="fz-button fz-button-solid stop-signup" href={activity.signupUrl}>
@@ -201,13 +206,13 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
     )}
   </main>
 
-  <Footer />
+  <Footer variant="festival" />
 </Layout>
 
 <style>
-  .stop-hero {
-    background: radial-gradient(110% 90% at 80% 10%, var(--fz-jungle-2) 0%, var(--fz-jungle) 45%, var(--fz-night) 80%);
-    padding: 40px 0 56px;
+  .stop-hero .fz-photo-hero-content {
+    padding-top: 120px;
+    padding-bottom: 48px;
   }
 
   .stop-back {
@@ -221,7 +226,7 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
 
   .stop-name {
     margin: 4px 0 0;
-    font-size: clamp(72px, 12vw, 168px);
+    font-size: clamp(56px, 8vw, 120px);
     line-height: 0.9;
     overflow-wrap: anywhere;
   }
@@ -291,19 +296,11 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
     border-top: 1px solid rgba(242, 193, 78, 0.3);
   }
 
-  .stop-venue-logo {
-    width: 56px;
-    height: 56px;
-    object-fit: contain;
-    background: var(--fz-cream);
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
   .stop-venue-name {
     margin: 0;
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 26px;
+    line-height: 1.1;
+    color: var(--fz-gold);
   }
 
   .stop-venue-area {
@@ -400,8 +397,8 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
   }
 
   @media (max-width: 720px) {
-    .stop-hero {
-      padding-top: 24px;
+    .stop-hero .fz-photo-hero-content {
+      padding-top: 96px;
     }
 
     .stop-day {
