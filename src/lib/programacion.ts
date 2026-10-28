@@ -6,16 +6,20 @@ export type Lang = "es" | "en" | "fr";
 
 const LOCALES: Record<Lang, string> = { es: "es-CO", en: "en-US", fr: "fr-FR" };
 
-// Glob ids of "santa-marta.en.md" end in "en" with or without the dot,
-// same convention as the 2026 [slug].astro pages.
-export function entryLang(id: string): Lang {
-  if (id.endsWith("en")) return "en";
-  if (id.endsWith("fr")) return "fr";
-  return "es";
+// Language and slug come from the entry's file path ("santa-marta.en.md"):
+// glob ids drop the dot ("santa-martaen"), which a slug ending in "en" would fool.
+const FILE_PATTERN = /([^/]+?)(?:\.(en|fr))?\.mdx?$/;
+
+export function entryLang(filePath: string): Lang {
+  const match = FILE_PATTERN.exec(filePath);
+  if (!match) throw new Error(`Unexpected content file: ${filePath}`);
+  return (match[2] as Lang | undefined) ?? "es";
 }
 
-export function baseSlug(id: string): string {
-  return id.replace(/\.?(en|fr)$/, "");
+export function baseSlug(filePath: string): string {
+  const match = FILE_PATTERN.exec(filePath);
+  if (!match) throw new Error(`Unexpected content file: ${filePath}`);
+  return match[1];
 }
 
 export function parseIsoDate(iso: string): Date {
@@ -43,17 +47,38 @@ export function dayLabel(iso: string, lang: Lang) {
   };
 }
 
-export function dateRange(startIso: string, endIso: string, lang: Lang): string {
+function withYearSuffix(text: string, year: number, lang: Lang): string {
+  if (lang === "en") return `${text}, ${year}`;
+  if (lang === "fr") return `${text} ${year}`;
+  return `${text} de ${year}`;
+}
+
+// "15 – 17 de enero" / "January 15 – 17" / "15 – 17 janvier"; withYear adds
+// the year, and a range across years always shows both.
+export function dateRange(
+  startIso: string,
+  endIso: string,
+  lang: Lang,
+  { withYear = false } = {}
+): string {
   const start = parseIsoDate(startIso);
   const end = parseIsoDate(endIso);
-  if (start.getUTCMonth() !== end.getUTCMonth()) {
-    return `${dayLabel(startIso, lang).dayMonth} – ${dayLabel(endIso, lang).dayMonth}`;
+  const startYear = start.getUTCFullYear();
+  const endYear = end.getUTCFullYear();
+  if (startYear !== endYear) {
+    const from = withYearSuffix(dayLabel(startIso, lang).dayMonth, startYear, lang);
+    const to = withYearSuffix(dayLabel(endIso, lang).dayMonth, endYear, lang);
+    return `${from} – ${to}`;
   }
-  const days = `${start.getUTCDate()} – ${end.getUTCDate()}`;
-  const month = format(startIso, lang, { month: "long" });
-  if (lang === "en") return `${month} ${days}`;
-  if (lang === "fr") return `${days} ${month}`;
-  return `${days} de ${month}`;
+  let text: string;
+  if (start.getUTCMonth() !== end.getUTCMonth()) {
+    text = `${dayLabel(startIso, lang).dayMonth} – ${dayLabel(endIso, lang).dayMonth}`;
+  } else {
+    const days = `${start.getUTCDate()} – ${end.getUTCDate()}`;
+    const month = format(startIso, lang, { month: "long" });
+    text = lang === "en" ? `${month} ${days}` : lang === "fr" ? `${days} ${month}` : `${days} de ${month}`;
+  }
+  return withYear ? withYearSuffix(text, startYear, lang) : text;
 }
 
 export function joinList(items: string[], lang: Lang): string {

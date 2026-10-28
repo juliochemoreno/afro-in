@@ -27,7 +27,7 @@ const { lang = "es" } = Astro.props;
 const t = useTranslations(lang);
 
 const stops = (await getCollection("tour2027"))
-  .filter((entry) => entryLang(entry.id) === lang)
+  .filter((entry) => entryLang(entry.filePath!) === lang)
   .sort((a, b) => a.data.order - b.data.order);
 
 const artists = (await getCollection("artists2027")).sort((a, b) => a.data.order - b.data.order);
@@ -40,7 +40,7 @@ const stopCards = stops.map((stop) => {
     range: dateRange(stop.data.startDate, stop.data.endDate, lang),
     place: venues.length ? joinList(venues, lang) : stop.data.location,
     comingSoon: isComingSoon(stop.data.days),
-    href: getTranslatedPath(`/programacion/2027/${baseSlug(stop.id)}`, lang),
+    href: getTranslatedPath(`/programacion/2027/${baseSlug(stop.filePath!)}`, lang),
     tickets: stop.data.tickets,
   };
 });

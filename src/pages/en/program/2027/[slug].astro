@@ -4,9 +4,9 @@ import Edition2027StopTemplate from "@/templates/Edition2027StopTemplate.astro";
 import { baseSlug, entryLang } from "@/lib/programacion";
 
 export async function getStaticPaths() {
-  const allStops = (await getCollection("tour2027")).filter((entry) => entryLang(entry.id) === "en");
+  const allStops = (await getCollection("tour2027")).filter((entry) => entryLang(entry.filePath!) === "en");
   return allStops.map((entry) => ({
-    params: { slug: baseSlug(entry.id) },
+    params: { slug: baseSlug(entry.filePath!) },
     props: { entry, allStops },
   }));
 }

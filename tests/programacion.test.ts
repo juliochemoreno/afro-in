@@ -12,14 +12,16 @@ import {
   parseIsoDate,
 } from "../src/lib/programacion.ts";
 
-test("entry language and slug accept ids with or without the dot", () => {
-  assert.equal(entryLang("santa-marta"), "es");
-  assert.equal(entryLang("santa-marta.en"), "en");
-  assert.equal(entryLang("santa-martaen"), "en");
-  assert.equal(entryLang("palenque.fr"), "fr");
-  assert.equal(baseSlug("santa-marta.en"), "santa-marta");
-  assert.equal(baseSlug("palenquefr"), "palenque");
-  assert.equal(baseSlug("palenque"), "palenque");
+test("entry language and slug come from the file path", () => {
+  assert.equal(entryLang("src/content/tour2027/santa-marta.md"), "es");
+  assert.equal(entryLang("src/content/tour2027/santa-marta.en.md"), "en");
+  assert.equal(entryLang("src/content/tour2027/palenque.fr.mdx"), "fr");
+  assert.equal(baseSlug("src/content/tour2027/santa-marta.en.md"), "santa-marta");
+  assert.equal(baseSlug("src/content/tour2027/palenque.md"), "palenque");
+  // A Spanish slug ending in "en" stays Spanish and whole.
+  assert.equal(entryLang("src/content/tour2027/carmen.md"), "es");
+  assert.equal(baseSlug("src/content/tour2027/carmen.md"), "carmen");
+  assert.throws(() => entryLang("src/content/tour2027/readme.txt"));
 });
 
 test("ISO dates are read as UTC midnight", () => {
@@ -55,6 +57,16 @@ test("date ranges in one month and across months", () => {
   assert.equal(dateRange("2027-01-15", "2027-01-17", "fr"), "15 – 17 janvier");
   assert.equal(dateRange("2027-01-30", "2027-02-02", "es"), "30 de enero – 2 de febrero");
   assert.equal(dateRange("2027-01-30", "2027-02-02", "en"), "January 30 – February 2");
+});
+
+test("date ranges with the year", () => {
+  assert.equal(dateRange("2027-01-15", "2027-01-17", "es", { withYear: true }), "15 – 17 de enero de 2027");
+  assert.equal(dateRange("2027-01-17", "2027-01-20", "en", { withYear: true }), "January 17 – 20, 2027");
+  assert.equal(dateRange("2027-01-15", "2027-01-17", "fr", { withYear: true }), "15 – 17 janvier 2027");
+  assert.equal(
+    dateRange("2027-12-30", "2028-01-02", "es"),
+    "30 de diciembre de 2027 – 2 de enero de 2028"
+  );
 });
 
 test("lists join with the language's conjunction", () => {

@@ -21,7 +21,7 @@ const { data } = entry;
 const t = useTranslations(lang);
 
 const year = data.startDate.slice(0, 4);
-const range = `${dateRange(data.startDate, data.endDate, lang)} ${year}`;
+const range = dateRange(data.startDate, data.endDate, lang, { withYear: true });
 const comingSoon = isComingSoon(data.days);
 
 const artistRefs = data.days.flatMap((day) =>
@@ -54,6 +54,7 @@ const nextStop = allStops
   .filter((stop) => stop.data.order > data.order)
   .sort((a, b) => a.data.order - b.data.order)[0];
 
+// "<" escaped so content can never close the JSON-LD script tag.
 const eventSchema = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "Event",
@@ -69,7 +70,7 @@ const eventSchema = JSON.stringify({
   },
   performer: [...artistsById.values()].map((artist) => ({ "@type": "Person", name: artist.name })),
   organizer: { "@type": "Organization", name: "AFRO IN", url: "https://afroin.org" },
-});
+}).replace(/</g, "\\u003c");
 
 const programNavLinks = [
   { href: getTranslatedPath("/", lang), label: t("nav.home") },
@@ -192,7 +193,7 @@ const programCta = { href: getTranslatedPath("/#unirse", lang), label: t("nav.jo
               {dateRange(nextStop.data.startDate, nextStop.data.endDate, lang)}
             </p>
           </div>
-          <a class="fz-button" href={getTranslatedPath(`/programacion/2027/${baseSlug(nextStop.id)}`, lang)}>
+          <a class="fz-button" href={getTranslatedPath(`/programacion/2027/${baseSlug(nextStop.filePath!)}`, lang)}>
             {t("edition.viewStop").replace("{name}", nextStop.data.name)}
           </a>
         </div>
