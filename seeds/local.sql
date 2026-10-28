@@ -2,6 +2,10 @@
 -- already in the staging R2 bucket (afroin-media-preview), which `astro dev` reads
 -- through the `env.local` remote binding in wrangler.json. Catalog data only.
 --
+-- `--env local` is ONLY for `astro dev` / `--local`. Its D1 database_id is a
+-- placeholder (0000...), so `--remote` or `wrangler deploy --env local` fail
+-- instead of reaching production. Never run them with `--env local`.
+--
 --   npx wrangler d1 execute DB --local --env local --file seeds/local.sql
 
 INSERT OR IGNORE INTO product_images (product_id, r2_key, content_type, alt, position, width, height) VALUES (1, 'products/camiseta-palenque-2020/main.webp', 'image/webp', 'Camiseta Palenque 2020', 0, NULL, NULL);
