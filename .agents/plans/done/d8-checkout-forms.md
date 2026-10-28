@@ -252,17 +252,17 @@ Owns: REQ-CHECKOUT-001, REQ-CHECKOUT-002, REQ-CHECKOUT-003, REQ-CHECKOUT-004
 
 ## Validation Checklist
 
-- [ ] **Level 1 — Lint & Format:** none in this project (no linter). `npm test` for the pure helpers.
-- [ ] **Level 2 — Type Check:** `npm run check` (astro build + tsc + wrangler dry-run)
-- [ ] **Level 2.5 — Code Review:** `code-review` skill on the branch diff (money path: strongest model), then one fresh-context branch review before the PR (orchestrator rule). Save it as an artifact for the report.
-- [ ] **Level 3 — Unit Tests:** `npm test`
-- [ ] **Level 4 — Integration (curl against `astro dev`, not `wrangler dev`, with `.dev.vars` copied):**
+- [x] **Level 1 — Lint & Format:** none in this project (no linter). `npm test` for the pure helpers.
+- [x] **Level 2 — Type Check:** `npm run check` (astro build + tsc + wrangler dry-run)
+- [x] **Level 2.5 — Code Review:** `code-review` skill on the branch diff (money path: strongest model), then one fresh-context branch review before the PR (orchestrator rule). Save it as an artifact for the report.
+- [x] **Level 3 — Unit Tests:** `npm test`
+- [x] **Level 4 — Integration (curl against `astro dev`, not `wrangler dev`, with `.dev.vars` copied):**
   - `POST /api/store/checkout` with a valid cart but: no phone → 400; phone `"+57 123"` → 400; no city → 400; no address → 400; CO without department → 400; `countryCode:"Colombia"` → 400; full valid → 201 with `orderId` `AFROIN-ORD-…`; the D1 row has `customer_phone = "+57 3001234567"`.
   - `POST /api/tickets/checkout` (seeded event slug): no phone → 400; valid → 201 (or `free`).
   - `POST /api/bold-firma`: no phone → 400; valid → 200/201 with `orderId`.
   - `POST /api/donante` without phone → still accepted (unchanged).
   - Price tamper: cart line with `price: 1` → amount still from D1 (rule 1 regression).
-- [ ] **Level 5 — Human Review (Julio, on the branch Preview `https://<branch>.afroin.org`, Bold TEST keys, before merge to `dev`):** desktop and mobile:
+- [x] **Level 5 — Human Review (Julio, on the branch Preview `https://<branch>.afroin.org`, Bold TEST keys, before merge to `dev`):** desktop and mobile. *Done 2026-10-27: Julio checked locally and on the Preview ("todo en orden"); whether both desktop and mobile and a full TEST payment were covered was asked but not confirmed. Agent checked 375 px and desktop locally.*
   - Store: empty Pay shows errors; CO → Magdalena → Santa Marta; non-CO country with states and one without; Bold checkout opens **prefilled** (name, email, phone, address); finish one TEST payment and land on `/pedido`.
   - Tickets: phone required, Bold prefilled.
   - Donation: step-1 inline errors, Bold prefilled; PayPal button renders (no PayPal payment).
@@ -271,13 +271,13 @@ Owns: REQ-CHECKOUT-001, REQ-CHECKOUT-002, REQ-CHECKOUT-003, REQ-CHECKOUT-004
 
 ## Acceptance Criteria
 
-- [ ] Bold opens with name, email, phone (national digits) and dial code prefilled in all three checkouts. The store also sends the billing address (unless Task 0 rules it out).
-- [ ] Pressing Pay/Next with missing data marks every invalid field and focuses the first one. No request is sent.
-- [ ] The store country field is styled like the other inputs on desktop and mobile.
-- [ ] Store: Colombia shows DIVIPOLA departments and their municipalities. Other countries show their states (or text) with city as text.
-- [ ] Phone is required in all three forms. The server rejects missing or invalid phone in store, tickets and `bold-firma`.
-- [ ] `npm run check` and `npm test` pass, and the curl matrix matches.
-- [ ] No change to prices, amounts, the confirm flow or the webhook.
+- [x] Bold opens with name, email, phone (national digits) and dial code prefilled in all three checkouts (prefill visible after choosing "Pago con tarjeta"; Task 0 spike). The store also sends the billing address (unless Task 0 rules it out).
+- [x] Pressing Pay/Next with missing data marks every invalid field and focuses the first one. No request is sent.
+- [x] The store country field is styled like the other inputs on desktop and mobile.
+- [x] Store: Colombia shows DIVIPOLA departments and their municipalities. Other countries show their states (or text) with city as text.
+- [x] Phone is required in all three forms. The server rejects missing or invalid phone in store, tickets and `bold-firma`.
+- [x] `npm run check` and `npm test` pass, and the curl matrix matches.
+- [x] No change to prices, amounts, the confirm flow or the webhook.
 
 ## Confidence Score: 7/10
 
