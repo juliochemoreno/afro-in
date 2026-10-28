@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { ColDef } from "ag-grid-community";
 import AdminGrid from "@/components/admin/AdminGrid";
+import { MIN_ADMIN_PASSWORD_LENGTH } from "@/lib/adminPolicy";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,12 +120,21 @@ export default function AdminsDashboard() {
       setFormError("Ingresa un correo electrónico válido");
       return;
     }
-    if (!editingAdmin && (!formData.password || formData.password.length < 6)) {
-      setFormError("La contraseña debe tener al menos 6 caracteres");
+    if (
+      !editingAdmin &&
+      (!formData.password || formData.password.length < MIN_ADMIN_PASSWORD_LENGTH)
+    ) {
+      setFormError(`La contraseña debe tener al menos ${MIN_ADMIN_PASSWORD_LENGTH} caracteres`);
       return;
     }
-    if (editingAdmin && formData.password && formData.password.length < 6) {
-      setFormError("La nueva contraseña debe tener al menos 6 caracteres");
+    if (
+      editingAdmin &&
+      formData.password &&
+      formData.password.length < MIN_ADMIN_PASSWORD_LENGTH
+    ) {
+      setFormError(
+        `La nueva contraseña debe tener al menos ${MIN_ADMIN_PASSWORD_LENGTH} caracteres`
+      );
       return;
     }
 
@@ -396,7 +406,7 @@ export default function AdminsDashboard() {
                   <Input
                     id="admin-password"
                     type="password"
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={`Mínimo ${MIN_ADMIN_PASSWORD_LENGTH} caracteres`}
                     value={formData.password}
                     onChange={(e) =>
                       setFormData((f) => ({ ...f, password: e.target.value }))

@@ -1,7 +1,14 @@
 # Local secrets for `astro dev` (loaded by the Cloudflare platformProxy).
 # Copy this file to `.dev.vars` and set real values. Do NOT commit `.dev.vars`.
 
-# Credentials for the /admin area (HTTP Basic Auth)
+# Signing key for /admin session cookies. Required: without it (or with fewer
+# than 32 characters) admin login answers 500 and no session is accepted.
+# Generate one with: openssl rand -hex 32
+ADMIN_SESSION_SECRET=""
+
+# Break-glass admin account (superadmin). D1 admins are managed in
+# /admin/administradores once logged in with this account. Login has no rate
+# limit, so use a long random password (openssl rand -base64 24).
 ADMIN_USER="admin"
 ADMIN_PASSWORD="change-me-in-local"
 
