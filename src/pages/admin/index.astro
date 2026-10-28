@@ -1,7 +1,11 @@
 ---
 export const prerender = false;
 import AdminLayout from "@/layouts/AdminLayout.astro";
-import { DollarSign, Clock, Users, Package, ArrowRight } from "lucide-astro";
+import DollarSign from "lucide-astro/DollarSign";
+import Clock from "lucide-astro/Clock";
+import Users from "lucide-astro/Users";
+import Package from "lucide-astro/Package";
+import ArrowRight from "lucide-astro/ArrowRight";
 
 // Access is protected via the session cookie (middleware guards /admin).
 const GOAL = 1_000_000;
