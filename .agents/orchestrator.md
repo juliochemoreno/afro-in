@@ -8,7 +8,7 @@
 |---|---|---|---|
 | afro-in | `/Users/juliochemoreno/Projects/personal/afroin-web/afro-in` | `dev` | PR to `dev` + orchestrator merges with `--no-ff` |
 
-Until D0 revives it, `dev` is stale (Jan 2026, 31 commits behind `main`): do not branch from it.
+`dev` was revived from `main` on 2026-10-27 (f611f19).
 
 ## Work list
 
@@ -25,9 +25,9 @@ Until D0 revives it, `dev` is stale (Jan 2026, 31 commits behind `main`): do not
 ## Release and deploy
 
 - Integration → production: PR `dev` → `main`; Julio approves and merges.
-- Deploys: Cloudflare Workers Builds (Julio's personal AFRO IN account) deploys automatically: `main` → afroin.org. Every other branch → its own Worker Preview (once D0 lands); the `dev` branch's Preview is the dev environment. Merging to `main` IS a production deploy. Never deploy production by hand.
+- Deploys: Cloudflare Workers Builds (Julio's personal AFRO IN account) deploys automatically: `main` → afroin.org. Every other branch → its own Worker Preview at `https://<preview-name>-afro-in.afroinsantamarta.workers.dev` (the name is the branch sanitized for a hostname; Builds and `wrangler preview` print the real URL). Bindings come from `wrangler.json` → `previews` (D1 `afroin-preview`, R2 `afroin-media-preview`); secrets from the Previews Base config, copied only into Previews created AFTER they are set (an existing Preview needs `npx wrangler preview secret put <KEY> --name <preview>`). The `dev` branch's Preview is the dev environment. Manual Preview deploy: `npm run build && npx wrangler preview --name <name>`, with the AFRO IN credentials loaded (`--env-file=<main checkout>/.env` from a worktree; the local wrangler login is HOPLA's account). Merging to `main` IS a production deploy. Never deploy production by hand.
 - Until D0's one-time dashboard switch to Worker Previews, branch preview builds (if enabled) use the PRODUCTION bindings (D1, Bold keys): never test there as if it were a sandbox.
-- Migrations: manual, numbered `migrations/NNNN_*.sql`, no tracking table. Staging D1 shared by all Previews: `wrangler.preview-migrations.jsonc` (pre-approved). Production: Julio's OK, applied BEFORE merging the code that needs it, additive only (the old code keeps running for minutes against the new schema). Record each one in the work list's *Applied in production*.
+- Migrations: manual, numbered `migrations/NNNN_*.sql`, no tracking table. Staging D1 shared by all Previews: `npx wrangler d1 migrations apply PREVIEW_DB --remote --config wrangler.preview-migrations.jsonc` (pre-approved; tracked in its `d1_migrations` table); fake staging-only rows: `seeds/preview.sql` (same config, `d1 execute --file`). NEVER run `d1 migrations apply` without `--config wrangler.preview-migrations.jsonc`: `wrangler.json` points at production, which has no tracking table, so every migration would run there (0004 starts with `DELETE FROM products`). Production: Julio's OK, applied BEFORE merging the code that needs it, additive only (the old code keeps running for minutes against the new schema). Record each one in the work list's *Applied in production*.
 - Checks before a release: list migrations not yet in production; confirm production uses the production Bold keys/webhook and dev the test ones.
 
 ## Approvals
