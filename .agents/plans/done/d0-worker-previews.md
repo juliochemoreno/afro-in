@@ -169,19 +169,21 @@ Confirmed by Julio 2026-10-27 (relayed verbatim by the orchestrator: "Confirmo l
 - Tasks 2, 5, 7, 9 are remote operations on staging resources only (no commit).
 
 ## Validation Checklist
-- [ ] **Level 1 — Lint & Format:** N/A (no linter in the project).
-- [ ] **Level 2 — Type Check / build:** `npm run check`
-- [ ] **Level 2.5 — Code Review:** `code-review` skill on the branch diff (config + seed + docs).
-- [ ] **Level 3 — Unit Tests:** N/A (none exist).
-- [ ] **Level 4 — Integration:** curl matrix against `astro dev` (Task 1) and against the branch Preview + `afroin.org` (Task 9).
-- [ ] **Level 5 — Human Review (Julio, before the orchestrator merges into `dev`):** (a) dashboard switch to Worker Previews done and preview builds enabled — otherwise pushes keep building old-model previews with PRODUCTION bindings; (b) Base secrets loaded (Bold test keys, dev admin) — otherwise dev checkout/admin answer "not configured"; (c) Bold test webhook → `dev` Preview URL `/api/bold-webhook` — otherwise dev payments confirm only via the browser return. Skipping (a) means Preview builds from Builds are not isolated.
+- [-] **Level 1 — Lint & Format:** discarded: the project has no linter.
+- [x] **Level 2 — Type Check / build:** `npm run check`: exit 0 after Task 1 and after Task 3 (dry-run lists the production bindings for `deploy`); the orchestrator re-ran it on merge 3b3cab4.
+- [x] **Level 2.5 — Code Review:** `.agents/code-reviews/d0-worker-previews.md`: 4 kept, all fixed in b71cc22; 1 dropped.
+- [-] **Level 3 — Unit Tests:** discarded: no test framework (tests deferred in the work list).
+- [x] **Level 4 — Integration:** `astro dev` → 200 on `/`, `/en/`, `/tienda`, `/tienda/gorra-negra`, `/api/contador`; Preview vs afroin.org matrix in `.agents/execution-reports/d0-worker-previews.md` (Validation Results).
+- [x] **Level 5a — Human (Julio):** dashboard switch to Worker Previews done 2026-10-27 (Julio's click; *Set up Worker Previews* banner gone, preview command `npx wrangler preview`); preview builds were already enabled.
+- [x] **Level 5b — Human (Julio):** Base secrets loaded 2026-10-27: `wrangler preview base-config secret list` → `ADMIN_PASSWORD`, `ADMIN_USER`, `BOLD_API_KEY`, `BOLD_SECRET_KEY`; production `secret list` unchanged (same 4 names).
+- [-] **Level 5c — Human (Julio):** Bold test webhook → `https://dev-afro-in.afroinsantamarta.workers.dev/api/bold-webhook`: discarded from this plan: it needs the `dev` Preview (created only after the merge) and is Julio's step in the Bold panel; the orchestrator tracks it in `.agents/plans/2026-10-27-work-list.md` (D0).
 
 ## Acceptance Criteria
-- [ ] `wrangler` 4.149.x in `package.json` (4.149.0 in the lockfile); `npm run check` passes; `astro dev` serves `/` and `/tienda`.
-- [ ] `wrangler.json` has `preview_urls: true` and `previews` binding `DB`→`afroin-preview`, `MEDIA`→`afroin-media-preview`; production keys unchanged.
-- [ ] Staging D1 has 0001–0007 + the fake product; staging R2 has the 8 catalog images.
-- [ ] The branch Preview shows `[DEV] Producto de prueba`; `afroin.org` does not; production deployment id unchanged.
-- [ ] Julio has exact dashboard/secret/Bold instructions (PR body).
+- [x] `wrangler` 4.149.x in `package.json` (4.149.0 in the lockfile); `npm run check` passes; `astro dev` serves `/` and `/tienda`: 848a7e4, `npx wrangler --version` → 4.149.0, curl 200.
+- [x] `wrangler.json` has `preview_urls: true` and `previews` binding `DB`→`afroin-preview`, `MEDIA`→`afroin-media-preview`; production keys unchanged: f4ed0ce (diff adds only the two keys).
+- [x] Staging D1 has 0001–0007 + the fake product; staging R2 has the 8 catalog images: `d1 migrations list` → none pending; counts products 9 (8 + id 17 `[DEV]`), donors 0, orders 0; 8 objects in `afroin-media-preview` with the same byte sizes as production.
+- [x] The branch Preview shows `[DEV] Producto de prueba`; `afroin.org` does not; production deployment id unchanged: Preview `/tienda` 1 match (200), afroin.org 0 matches; production deployment `e849149f` before and after; confirmed again by the orchestrator after merge 3b3cab4.
+- [x] Julio has exact dashboard/secret/Bold instructions (PR body): PR #2 body, section "Julio: dashboard and Bold steps".
 
 ## Confidence Score: 7/10
 - **Strengths:** docs read in full; account, resources and URL settings verified; production untouched by design.
