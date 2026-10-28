@@ -4,6 +4,8 @@ import { issueTicketsForOrder, getTicketOrderByBoldId } from "@/lib/tickets";
 
 export const prerender = false;
 
+const TICKET_ORDER_ID_RE = /^AFROIN-TIX-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface ConfirmRequest {
   orderId?: string;
 }
@@ -23,7 +25,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return json({ error: "Invalid JSON body" }, 400);
     }
     const orderId = body?.orderId;
-    if (!orderId || typeof orderId !== "string" || !orderId.startsWith("AFROIN-TIX-")) {
+    if (typeof orderId !== "string" || !TICKET_ORDER_ID_RE.test(orderId)) {
       return json({ error: "valid ticket orderId required" }, 400);
     }
     if (!env.BOLD_API_KEY) {
@@ -31,19 +33,37 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return json({ error: "Provider not configured" }, 500);
     }
 
-    // A Bold outage (fetch throws) must not hide tickets of an order the
-    // webhook already completed: treat it as "no answer yet" and read D1.
-    let result: ConfirmResult;
-    try {
-      result = await confirmBoldOrder(
-        env.DB,
-        env.BOLD_API_KEY,
-        orderId,
-        CONFIRM_TARGETS.ticket
-      );
-    } catch (e) {
-      console.error("ticket confirm: Bold voucher query failed", orderId, e);
-      result = { donorStatus: "pending", providerStatus: "UNREACHABLE", changed: false };
+    // Ask Bold only about orders that exist and are still pending: an unknown
+    // id must not spend the merchant's voucher API quota, and a decided order
+    // (completed by the webhook, free or courtesy) needs no query.
+    const row = await env.DB.prepare(
+      `SELECT status FROM ticket_orders WHERE bold_order_id = ?`
+    )
+      .bind(orderId)
+      .first<{ status: string }>();
+    if (!row) {
+      return json({ status: "pending", providerStatus: null, order: null, event: null, tickets: [] }, 200);
+    }
+
+    let result: ConfirmResult = {
+      donorStatus: row.status as ConfirmResult["donorStatus"],
+      providerStatus: "",
+      changed: false,
+    };
+    if (row.status === "pending") {
+      // A Bold outage (fetch throws) must not fail the receipt: treat it as
+      // "no answer yet"; D1 decides below.
+      try {
+        result = await confirmBoldOrder(
+          env.DB,
+          env.BOLD_API_KEY,
+          orderId,
+          CONFIRM_TARGETS.ticket
+        );
+      } catch (e) {
+        console.error("ticket confirm: Bold voucher query failed", orderId, e);
+        result = { donorStatus: "pending", providerStatus: "UNREACHABLE", changed: false };
+      }
     }
 
     // Issue tickets after confirmation regardless of `changed` or of what the
@@ -60,14 +80,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
       view = await getTicketOrderByBoldId(env.DB, orderId);
     }
 
-    // D1 is the source of truth once an order is completed (by the webhook, or
-    // as a free/courtesy order): a failed or late voucher query must not show a
-    // paid buyer "pending" and hide their tickets.
-    const completed =
-      view.order?.status === "completed" || result.donorStatus === "completed";
+    // D1 is the source of truth: the status shown is the order's status after
+    // this confirmation, so a paid buyer is never shown "pending" when the
+    // webhook already completed the order, and "completed" is never shown
+    // without the tickets that go with it.
+    const status = view.order?.status ?? result.donorStatus;
+    const completed = status === "completed";
     return json(
       {
-        status: completed ? "completed" : result.donorStatus,
+        status,
         providerStatus: result.providerStatus,
         order: view.order
           ? {
@@ -106,6 +127,8 @@ function json(body: unknown, status: number): Response {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
+      // The receipt carries the bearer access token: never cache it.
+      "Cache-Control": "private, no-store",
     },
   });
 }

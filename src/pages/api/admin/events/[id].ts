@@ -59,7 +59,8 @@ export const PATCH: APIRoute = async (ctx) => {
     return json({ error: "JSON inválido" }, 400);
   }
 
-  if (!("visible" in body)) return json({ error: "Nada que actualizar" }, 400);
+  if (!body || typeof body !== "object" || !("visible" in body))
+    return json({ error: "Nada que actualizar" }, 400);
   const res = await db
     .prepare(
       `UPDATE events SET visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
@@ -78,13 +79,18 @@ export const DELETE: APIRoute = async (ctx) => {
   const id = Number(ctx.params.id);
   if (!Number.isFinite(id)) return json({ error: "id inválido" }, 400);
 
-  const sold = (await db
-    .prepare("SELECT COUNT(*) AS n FROM tickets WHERE event_id = ?")
-    .bind(id)
+  // Any ticket order (paid, pending or rejected) keeps the event: orders
+  // reference it, and paid history must not cascade away.
+  const used = (await db
+    .prepare(
+      `SELECT (SELECT COUNT(*) FROM tickets WHERE event_id = ?) +
+              (SELECT COUNT(*) FROM ticket_orders WHERE event_id = ?) AS n`
+    )
+    .bind(id, id)
     .first()) as { n: number } | null;
-  if (Number(sold?.n ?? 0) > 0)
+  if (Number(used?.n ?? 0) > 0)
     return json(
-      { error: "El evento tiene entradas vendidas. Ocúltalo en vez de borrarlo." },
+      { error: "El evento tiene entradas u órdenes. Ocúltalo en vez de borrarlo." },
       409
     );
 
@@ -92,13 +98,22 @@ export const DELETE: APIRoute = async (ctx) => {
     .prepare("SELECT image_r2_key FROM events WHERE id = ?")
     .bind(id)
     .first()) as { image_r2_key: string | null } | null;
-  if (row?.image_r2_key) {
+  if (!row) return json({ error: "No existe" }, 404);
+
+  try {
+    await db.prepare("DELETE FROM events WHERE id = ?").bind(id).run();
+  } catch (e) {
+    console.error("delete event error:", e);
+    return json({ error: "No se pudo borrar el evento" }, 500);
+  }
+
+  // Remove the image only after the row is gone, and only event images.
+  if (row.image_r2_key?.startsWith("events/")) {
     try {
       await env.MEDIA?.delete(row.image_r2_key);
     } catch {
       /* ignore */
     }
   }
-  await db.prepare("DELETE FROM events WHERE id = ?").bind(id).run();
   return json({ ok: true });
 };
