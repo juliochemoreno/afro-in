@@ -53,6 +53,7 @@ export default defineConfig({
     imageService: "compile",
     platformProxy: {
       enabled: true,
+      environment: "local",
     },
   }),
 });
