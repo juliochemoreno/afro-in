@@ -1,0 +1,16 @@
+// Migrations target for the STAGING D1 shared by every Worker Preview.
+// It must point at the same database as `previews.d1_databases` in
+// wrangler.json, never at the production `afroin` database.
+//
+//   npx wrangler d1 migrations apply PREVIEW_DB --remote --config wrangler.preview-migrations.jsonc
+{
+  "account_id": "5d061cd2e8e41dd336d678070802ffaf",
+  "d1_databases": [
+    {
+      "binding": "PREVIEW_DB",
+      "database_name": "afroin-preview",
+      "database_id": "e41ea281-e1e4-49b8-90f3-893fbf9463c1",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
