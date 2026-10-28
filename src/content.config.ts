@@ -81,6 +81,8 @@ const artists2027 = defineCollection({
       country: z.object({ es: z.string(), en: z.string(), fr: z.string() }),
       photo: image(),
       order: z.number(),
+      // The edition's star artist, shown in its own block.
+      featured: z.boolean().default(false),
     }),
 });
 

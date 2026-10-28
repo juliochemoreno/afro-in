@@ -379,5 +379,7 @@
   "edition.artistsPastTitle": "Artistes 2026",
   "edition.artistsPastText": "La programmation de la tournée de janvier 2026, telle que publiée.",
   "edition.artistsPastLink": "Voir les artistes 2026",
-  "edition.countriesTitle": "Artistes de {n} pays"
+  "edition.countriesTitle": "Artistes de {n} pays",
+  "edition.headliner": "Tête d'affiche",
+  "edition.seeAllArtists": "Voir tous les artistes"
 }

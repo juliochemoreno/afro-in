@@ -5,6 +5,7 @@ import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
 import EditionTickets from "@/components/EditionTickets.astro";
 import EditionCountries from "@/components/EditionCountries.astro";
+import EditionHeadliner from "@/components/EditionHeadliner.astro";
 import { getCollection } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
@@ -13,6 +14,7 @@ import {
   dateRange,
   dayLabel,
   entryLang,
+  artistAppearances,
   firstAppearance,
   flagEmoji,
   isComingSoon,
@@ -52,7 +54,22 @@ const stopCards = stops.map((stop) => {
 });
 
 const allDays = stops.flatMap((stop) => stop.data.days);
-const artistCards = artists.map((artist) => {
+const headliner = artists.find((artist) => artist.data.featured);
+const headlinerAppearances = headliner
+  ? artistAppearances(
+      headliner.id,
+      stops.map((stop) => ({ slug: baseSlug(stop.filePath!), name: stop.data.name, days: stop.data.days }))
+    ).map((a) => {
+      const label = dayLabel(a.date, lang);
+      return {
+        when: `${label.weekdayShort} ${label.dayMonth}`,
+        where: [a.venue, a.stopName].filter(Boolean).join(", "),
+        title: a.title,
+        href: `${getTranslatedPath(`/programacion/2027/${a.stopSlug}`, lang)}#d-${label.dayNumber}`,
+      };
+    })
+  : [];
+const artistCards = artists.filter((artist) => !artist.data.featured).map((artist) => {
   const first = firstAppearance(artist.id, allDays);
   const when = first
     ? [dayLabel(first.date, lang).dayMonth, first.venue].filter(Boolean).join(", ")
@@ -97,6 +114,17 @@ const { navLinks, ctaLink } = editionNav(lang);
         </div>
       </div>
     </section>
+
+    {headliner && (
+      <div class="fz-wrap edition-block">
+        <EditionHeadliner
+          artist={headliner.data}
+          appearances={headlinerAppearances}
+          lang={lang}
+          moreHref={getTranslatedPath("/artistas", lang)}
+        />
+      </div>
+    )}
 
     {stopCards.filter((stop) => stop.tickets).map((stop) => (
       <div class="fz-wrap edition-block">

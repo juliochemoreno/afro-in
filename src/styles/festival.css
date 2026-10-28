@@ -239,3 +239,81 @@
   font-size: 1.25em;
   line-height: 1;
 }
+
+/* Headliner (the edition's star artist). */
+.fz-headliner-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+  padding: 32px;
+}
+
+.fz-headliner-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+.fz-headliner-kicker {
+  margin: 0;
+  font-size: 24px;
+  color: var(--fz-red);
+}
+
+.fz-headliner-name {
+  margin: 4px 0 0;
+  font-size: clamp(56px, 8vw, 112px);
+  line-height: 0.95;
+}
+
+.fz-headliner-country {
+  margin: 12px 0 0;
+  font-size: 18px;
+}
+
+.fz-headliner-dates {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+
+.fz-headliner-dates li {
+  border-top: 1px solid var(--fz-line);
+}
+
+.fz .fz-headliner-dates a {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 2px 16px;
+  padding: 12px 0;
+  color: var(--fz-cream);
+  text-decoration: none;
+}
+
+.fz-headliner-dates .fz-display {
+  font-size: 22px;
+  grid-row: span 2;
+}
+
+.fz-headliner-more {
+  margin-top: 24px;
+}
+
+@media (max-width: 720px) {
+  .fz-headliner-inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 16px;
+  }
+
+  .fz .fz-headliner-dates a {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fz-headliner-dates .fz-display {
+    grid-row: auto;
+  }
+}

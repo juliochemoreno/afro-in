@@ -4,6 +4,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
 import EditionCountries from "@/components/EditionCountries.astro";
+import EditionHeadliner from "@/components/EditionHeadliner.astro";
 import { getCollection } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
@@ -34,10 +35,14 @@ const artists = (await getCollection("artists2027"))
       return {
         ...appearance,
         when: `${label.weekdayShort} ${label.dayMonth}`,
+        where: [appearance.venue, appearance.stopName].filter(Boolean).join(", "),
         href: `${getTranslatedPath(`/programacion/2027/${appearance.stopSlug}`, lang)}#d-${label.dayNumber}`,
       };
     }),
   }));
+
+const headliner = artists.find((artist) => artist.featured);
+const others = artists.filter((artist) => !artist.featured);
 ---
 
 <Layout title={t("edition.artistsMetaTitle")} description={t("edition.artistsText")}>
@@ -52,8 +57,14 @@ const artists = (await getCollection("artists2027"))
       <EditionCountries artists={artists} lang={lang} />
     </section>
 
+    {headliner && (
+      <div class="fz-wrap artists-headliner">
+        <EditionHeadliner artist={headliner} appearances={headliner.appearances} lang={lang} />
+      </div>
+    )}
+
     <section class="fz-wrap artists-grid" aria-label={t("edition.artistsTitle")}>
-      {artists.map((artist) => (
+      {others.map((artist) => (
         <article class="artist">
           <Image
             src={artist.photo}
@@ -124,6 +135,10 @@ const artists = (await getCollection("artists2027"))
     margin: 20px 0 0;
     font-size: 19px;
     max-width: 56ch;
+  }
+
+  .artists-headliner {
+    padding-bottom: 56px;
   }
 
   .artists-grid {

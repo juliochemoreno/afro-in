@@ -379,5 +379,7 @@
   "edition.artistsPastTitle": "2026 artists",
   "edition.artistsPastText": "The lineup of the January 2026 tour, as we published it.",
   "edition.artistsPastLink": "See the 2026 artists",
-  "edition.countriesTitle": "Artists from {n} countries"
+  "edition.countriesTitle": "Artists from {n} countries",
+  "edition.headliner": "Headliner",
+  "edition.seeAllArtists": "See all artists"
 }
