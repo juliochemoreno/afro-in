@@ -10,7 +10,7 @@ ADMIN_SESSION_SECRET=""
 # /admin/administradores once logged in with this account. Login has no rate
 # limit, so use a long random password (openssl rand -base64 24).
 ADMIN_USER="admin"
-ADMIN_PASSWORD="change-me-in-local"
+ADMIN_PASSWORD=""
 
 # Bold.co keys: TEST mode keys only (local dev and Worker Previews)
 BOLD_API_KEY=""

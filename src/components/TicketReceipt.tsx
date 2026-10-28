@@ -48,10 +48,16 @@ export default function TicketReceipt({
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    let storedOrderId: string | null = null;
+    try {
+      storedOrderId = sessionStorage.getItem("tix_order_id");
+    } catch {
+      /* storage blocked */
+    }
     const orderId =
       initialOrderId ||
       params.get("bold-order-id") ||
-      sessionStorage.getItem("tix_order_id") ||
+      storedOrderId ||
       params.get("bold_order_id") ||
       params.get("orderId");
 
@@ -75,7 +81,11 @@ export default function TicketReceipt({
         setTickets((data.tickets as TicketView[]) || []);
         if (data.status === "completed") {
           setPhase("success");
-          sessionStorage.removeItem("tix_order_id");
+          try {
+            sessionStorage.removeItem("tix_order_id");
+          } catch {
+            /* storage blocked */
+          }
         } else if (data.status === "rejected") {
           setPhase("failed");
         } else {

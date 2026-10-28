@@ -469,12 +469,19 @@ export default function TicketOrdersDashboard() {
             onClick={() => {
               if (!orders || orders.length === 0) return;
               const headers = ["ID", "Evento", "Comprador", "Email", "Teléfono", "Cantidad", "Total", "Check-in", "Estado", "Fecha"];
+              // Buyer fields come from the public checkout: quote them and
+              // neutralise spreadsheet formulas (=, +, -, @, tab, CR).
+              const cell = (v: string | null | undefined) => {
+                const text = String(v ?? "");
+                const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+                return `"${safe.replace(/"/g, '""')}"`;
+              };
               const rows = orders.map(o => [
                 o.id,
-                `"${o.event_name.replace(/"/g, '""')}"`,
-                `"${o.buyer_name.replace(/"/g, '""')}"`,
-                `"${o.buyer_email.replace(/"/g, '""')}"`,
-                `"${(o.buyer_phone || '').replace(/"/g, '""')}"`,
+                cell(o.event_name),
+                cell(o.buyer_name),
+                cell(o.buyer_email),
+                cell(o.buyer_phone),
                 o.quantity,
                 o.amount,
                 `${o.checked_in_count}/${o.ticket_count || o.quantity}`,

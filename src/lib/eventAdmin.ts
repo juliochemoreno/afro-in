@@ -34,7 +34,12 @@ export function validateEventInput(body: any): string | null {
   if (!slug || !/^[a-z0-9-]+$/.test(slug))
     return "El slug es obligatorio (minúsculas, números y guiones)";
   if (!str(body.name_es, 200)) return "El nombre (ES) es obligatorio";
-  if (!str(body.event_date, 40)) return "La fecha es obligatoria";
+  const date = str(body.event_date, 40);
+  if (!date) return "La fecha es obligatoria";
+  // Colombia wall-clock time; sales close by string comparison (lib/tickets.ts),
+  // which is only exact for this format.
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(date))
+    return "La fecha debe tener el formato AAAA-MM-DDTHH:MM";
   const price = Math.trunc(Number(body.price));
   if (!Number.isFinite(price) || price < 0)
     return "El precio debe ser un número mayor o igual a 0";

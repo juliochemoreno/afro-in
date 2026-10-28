@@ -7,6 +7,10 @@ const { token } = Astro.params;
 const db = (Astro.locals as any).runtime?.env?.DB;
 const view = db && token ? await getTicketOrderByToken(db, token) : null;
 if (!view || !view.order) return Astro.redirect("/en/events", 302);
+// Bearer page (the token is the only credential): never cache it, never leak
+// the URL through the Referer header.
+Astro.response.headers.set("Cache-Control", "private, no-store");
+Astro.response.headers.set("Referrer-Policy", "no-referrer");
 ---
 
 <EntradasTemplate lang="en" tokenOrder={view} permalink={Astro.url.href} />

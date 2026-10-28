@@ -97,7 +97,11 @@ export default function TicketCheckoutForm({
         return;
       }
 
-      sessionStorage.setItem("tix_order_id", data.orderId);
+      try {
+        sessionStorage.setItem("tix_order_id", data.orderId);
+      } catch {
+        /* storage blocked: the receipt still gets the id from Bold's redirect */
+      }
 
       if (!window.BoldCheckout) {
         setError(t["tix.form.err.generic"]);
