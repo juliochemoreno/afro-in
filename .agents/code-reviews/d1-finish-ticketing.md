@@ -1,6 +1,6 @@
 # Code review — D1 finish ticketing
 
-**Plan:** `.agents/plans/d1-finish-ticketing.md` · **Branch:** `claude/d1-ticketing-3fa7a0` → `dev`
+**Plan:** `.agents/plans/done/d1-finish-ticketing.md` · **Branch:** `claude/d1-ticketing-3fa7a0` → `dev`
 **Reviews:** one per phase (separate agent, strongest model, read-only) + one fresh-context review of the whole branch before the PR. Phases 3 (config + pinned scripts) and 4 (staging seed) are small and were covered by the branch review.
 
 ## Phase 1 — admin auth (`993f9f2`)

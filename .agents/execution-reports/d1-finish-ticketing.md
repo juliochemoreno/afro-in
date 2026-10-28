@@ -2,12 +2,12 @@
 
 ## Meta Information
 
-- **Plan:** `.agents/plans/d1-finish-ticketing.md`
+- **Plan:** `.agents/plans/done/d1-finish-ticketing.md`
 - **Branch:** `claude/d1-ticketing-3fa7a0` (from `feature/event-ticketing` 5516faa, `origin/dev` merged in 2eb681a, no rebase)
-- **PR:** to `dev` (URL in the PR list; opened right after this report)
+- **PR:** https://github.com/juliochemoreno/afro-in/pull/4 (head 03c239b). Merged into `dev` as 6ba2d66.
 - **Commits (this session):** 2eb681a (merge `origin/dev`), 8e121bb (plan), 993f9f2 (admin auth), 0ac9214 (ticket money path), 1f858c6 (Preview vars + pinned scripts), 041b553 (staging seed), 458ce20 (branch review fixes), 21dc6ca (code review doc), 10a5721 (store return routing), 4b97f4d (report/plan/review), plus the Level 5 notes commit
 - **Carried commits (code production runs since the 2026-10-06 manual deploy):** 7ac05bd, b073bde, c2d4309, ecc0833, 5516faa
-- **Files added this session:** `migrations/0010_create_admins.sql` (credential-free), `src/lib/adminPolicy.ts`, `.agents/plans/d1-finish-ticketing.md`, `.agents/code-reviews/d1-finish-ticketing.md`, this report
+- **Files added this session:** `migrations/0010_create_admins.sql` (credential-free), `src/lib/adminPolicy.ts`, `.agents/plans/done/d1-finish-ticketing.md`, `.agents/code-reviews/d1-finish-ticketing.md`, this report
 - **Staging (pre-approved):** D1 `afroin-preview` migrated 0008–0010 + `seeds/preview.sql` ticketing rows. Previews base config and Preview `claude-d1-ticketing-3fa7a0`: `ADMIN_SESSION_SECRET` (random, piped, never shown; Julio's OK)
 - **Production:** one read-only schema query with Julio's OK (O4). Nothing written.
 
