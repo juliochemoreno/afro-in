@@ -48,5 +48,26 @@
         "bucket_name": "afroin-media-preview"
       }
     ]
+  },
+  "env": {
+    "local": {
+      "vars": {
+        "PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyB1aVwdMJCEwC5xSaoP31yGgLBoI2sT71U"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "afroin",
+          "database_id": "00000000-0000-0000-0000-000000000000"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "MEDIA",
+          "bucket_name": "afroin-media-preview",
+          "remote": true
+        }
+      ]
+    }
   }
 }
