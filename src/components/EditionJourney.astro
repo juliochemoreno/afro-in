@@ -1,8 +1,8 @@
 ---
-// "The journey": the edition day by day. On wide screens a framed photo stays
-// in place (sticky, pinned on top on phones) and changes as each day scrolls past.
-import { Image } from "astro:assets";
+// "The journey": the edition day by day, with the photo of each day following
+// the scroll (FestivalScrolly).
 import type { ImageMetadata } from "astro";
+import FestivalScrolly from "@/components/FestivalScrolly.astro";
 import { useTranslations } from "@/i18n/utils";
 import type { Lang } from "@/lib/programacion";
 
@@ -23,18 +23,24 @@ interface Props {
 
 const { steps, lang } = Astro.props;
 const t = useTranslations(lang);
+const panels = steps.map((step) => ({
+  photo: step.photo,
+  photoPosition: step.photoPosition,
+  title: `${step.weekdayShort} ${step.dayNumber}`,
+  subtitle: step.city,
+}));
 ---
 
-<section class="fz-wrap fz-journey" aria-labelledby="fz-journey-title" data-journey>
+<section class="fz-wrap fz-journey" aria-labelledby="fz-journey-title">
   <header class="fz-journey-head">
     <h2 id="fz-journey-title" class="fz-display fz-journey-title">{t("edition.journeyTitle")}</h2>
     <p class="fz-muted fz-journey-lead">{t("edition.journeyText")}</p>
   </header>
 
-  <div class="fz-journey-grid">
-    <ol class="fz-journey-steps">
+  <FestivalScrolly panels={panels}>
+    <ol class="fz-journey-list">
       {steps.map((step, index) => (
-        <li class="fz-journey-step" data-step={String(index)}>
+        <li class="fz-scrolly-step" data-step={String(index)}>
           <p class="fz-journey-count">{index + 1} / {steps.length}</p>
           <h3 class="fz-display fz-journey-date">{step.dayMonth}</h3>
           {step.entries.map((entry) => (
@@ -57,56 +63,5 @@ const t = useTranslations(lang);
         </li>
       ))}
     </ol>
-
-    <div class="fz-journey-stage" aria-hidden="true">
-      <div class="fz-frame fz-journey-frame">
-        <div class="fz-journey-photos">
-          {steps.map((step, index) => (
-            <figure class="fz-journey-panel" data-panel={String(index)} data-active={index === 0 ? "" : undefined}>
-              <Image
-                src={step.photo}
-                alt=""
-                widths={[480, 960]}
-                sizes="440px"
-                class="fz-journey-panel-img"
-                style={`object-position: ${step.photoPosition}`}
-              />
-              <figcaption>
-                <span class="fz-display fz-journey-panel-day">{step.weekdayShort} {step.dayNumber}</span>
-                <span class="fz-display fz-gold fz-journey-panel-city">{step.city}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
+  </FestivalScrolly>
 </section>
-
-<script>
-  let observers: IntersectionObserver[] = [];
-
-  function initJourney() {
-    observers.forEach((observer) => observer.disconnect());
-    observers = [];
-    document.querySelectorAll<HTMLElement>("[data-journey]").forEach((root) => {
-      const panels = root.querySelectorAll<HTMLElement>("[data-panel]");
-      const show = (index: string) =>
-        panels.forEach((panel) => panel.toggleAttribute("data-active", panel.dataset.panel === index));
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) show((entry.target as HTMLElement).dataset.step ?? "0");
-          });
-        },
-        // A step is "current" while it crosses a line just below the middle
-        // of the screen (below the pinned photo on phones).
-        { rootMargin: "-55% 0px -40% 0px" }
-      );
-      root.querySelectorAll("[data-step]").forEach((step) => observer.observe(step));
-      observers.push(observer);
-    });
-  }
-
-  document.addEventListener("astro:page-load", initJourney);
-</script>

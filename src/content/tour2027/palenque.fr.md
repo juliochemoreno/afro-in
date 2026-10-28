@@ -11,6 +11,7 @@ cardImage: "../../assets/img/afro-in-palenque-1/DSC_0434.JPG"
 cardPosition: "78% 40%"
 days:
   - date: "2027-01-17"
+    photo: "../../assets/img/afro-in-palenque-1/received_281573592530343.jpeg"
     activities:
       - title: "Fête au bord de la rivière"
         kind: "Fête"

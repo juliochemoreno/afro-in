@@ -4,6 +4,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
 import EditionTickets from "@/components/EditionTickets.astro";
+import FestivalScrolly from "@/components/FestivalScrolly.astro";
 import { getEntries, type CollectionEntry } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
@@ -49,6 +50,17 @@ const days = data.days.map((day, index) => {
           : artist?.country[lang],
       };
     }),
+  };
+});
+
+// Photo following each day: the day's own, else its first artist's, else the stop's.
+const panels = days.map((day) => {
+  const artistPhoto = day.activities.find((activity) => activity.photo)?.photo;
+  return {
+    photo: day.photo ?? artistPhoto ?? data.cardImage,
+    photoPosition: day.photo ? day.photoPosition : "center",
+    title: `${day.weekdayShort} ${day.dayNumber}`,
+    subtitle: day.venue ?? data.name,
   };
 });
 
@@ -119,66 +131,60 @@ const { navLinks, ctaLink } = editionNav(lang);
           <p class="fz-muted">{t("edition.agendaTbaText")}</p>
         </div>
       ) : (
-        days.map((day) => (
-          <section id={day.anchor} class="stop-day">
-            <div class="fz-frame stop-daycard">
-              <div class="fz-frame-inner stop-daycard-inner">
+        <FestivalScrolly panels={panels}>
+          {days.map((day, index) => (
+            <section id={day.anchor} class="fz-scrolly-step stop-day" data-step={String(index)}>
+              <header class="stop-dayhead">
+                <p class="stop-count">{index + 1} / {days.length}</p>
                 <div class="stop-weekday">
-                  <svg width="28" height="26" viewBox="0 0 24 22" aria-hidden="true">
+                  <svg width="24" height="22" viewBox="0 0 24 22" aria-hidden="true">
                     <path d="M12 21s-9-5.6-9-12a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.4-9 12-9 12z" fill={day.heart} />
                   </svg>
                   <span class="fz-display fz-gold">{day.weekdayLong}</span>
                 </div>
                 <h2 class="fz-display stop-daydate">{day.dayMonth}</h2>
                 {day.venue && (
-                  <div class="stop-venue">
-                    <div>
-                      <p class="fz-display stop-venue-name">{day.venue}</p>
-                      {day.venueArea && <p class="fz-muted stop-venue-area">{day.venueArea}</p>}
-                    </div>
+                  <p class="stop-venue">
+                    <span class="fz-display stop-venue-name">{day.venue}</span>
+                    {day.venueArea && <span class="fz-muted stop-venue-area">{day.venueArea}</span>}
+                  </p>
+                )}
+              </header>
+
+              <div class="stop-activities">
+                {day.activities.length === 0 ? (
+                  <div class="stop-tba">
+                    <p class="fz-display stop-tba-title">{t("edition.agendaTba")}</p>
+                    <p class="fz-muted">{t("edition.agendaTbaText")}</p>
                   </div>
+                ) : (
+                  day.activities.map((activity) => (
+                    <article class="stop-activity">
+                      <p class:list={["fz-display", "fz-gold", "stop-time", { "stop-time-tba": !activity.time }]}>
+                        {activity.time ?? t("edition.timeTba")}
+                      </p>
+                      <div>
+                        {activity.kind && <p class="stop-kind">{activity.kind}</p>}
+                        <h3 class="fz-display stop-title">{activity.title}</h3>
+                        {activity.byline && (
+                          <p class="fz-muted stop-byline">
+                            <span class="fz-flag" aria-hidden="true">{activity.flag}</span> {activity.byline}
+                          </p>
+                        )}
+                        {activity.note && <p class="fz-muted stop-note">{activity.note}</p>}
+                        {activity.signupUrl && (
+                          <a class="fz-button fz-button-solid stop-signup" href={activity.signupUrl}>
+                            {t("edition.signup")}
+                          </a>
+                        )}
+                      </div>
+                    </article>
+                  ))
                 )}
               </div>
-            </div>
-
-            <div class="stop-activities">
-              {day.activities.length === 0 ? (
-                <div class="stop-tba">
-                  <p class="fz-display stop-tba-title">{t("edition.agendaTba")}</p>
-                  <p class="fz-muted">{t("edition.agendaTbaText")}</p>
-                </div>
-              ) : (
-                day.activities.map((activity) => (
-                  <article class="stop-activity">
-                    <p class:list={["fz-display", "fz-gold", "stop-time", { "stop-time-tba": !activity.time }]}>
-                      {activity.time ?? t("edition.timeTba")}
-                    </p>
-                    {activity.photo ? (
-                      <Image src={activity.photo} alt="" width={192} height={192} class="stop-photo" />
-                    ) : (
-                      <span class="stop-photo-empty" aria-hidden="true" />
-                    )}
-                    <div>
-                      {activity.kind && <p class="stop-kind">{activity.kind}</p>}
-                      <h3 class="fz-display stop-title">{activity.title}</h3>
-                      {activity.byline && (
-                        <p class="fz-muted stop-byline">
-                          <span class="fz-flag" aria-hidden="true">{activity.flag}</span> {activity.byline}
-                        </p>
-                      )}
-                      {activity.note && <p class="fz-muted stop-note">{activity.note}</p>}
-                      {activity.signupUrl && (
-                        <a class="fz-button fz-button-solid stop-signup" href={activity.signupUrl}>
-                          {t("edition.signup")}
-                        </a>
-                      )}
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
-          </section>
-        ))
+            </section>
+          ))}
+        </FestivalScrolly>
       )}
     </div>
 
@@ -250,61 +256,57 @@ const { navLinks, ctaLink } = editionNav(lang);
   }
 
   .stop-days {
-    padding-top: 24px;
+    padding-top: 8px;
     padding-bottom: 40px;
   }
 
   .stop-day {
-    display: grid;
-    grid-template-columns: 320px minmax(0, 1fr);
-    gap: 48px;
+    justify-content: flex-start;
     padding: 48px 0;
-    border-bottom: 1px solid rgba(242, 193, 78, 0.3);
     scroll-margin-top: 96px;
   }
 
-  .stop-daycard {
-    align-self: start;
-    padding: 6px;
-  }
-
-  .stop-daycard-inner {
-    padding: 24px;
+  .stop-dayhead {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .stop-count {
+    margin: 0;
+    font-weight: 600;
+    color: var(--fz-gold);
   }
 
   .stop-weekday {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     font-size: 22px;
   }
 
   .stop-daydate {
     margin: 0;
-    font-size: 56px;
+    font-size: clamp(44px, 5vw, 64px);
     line-height: 0.95;
   }
 
   .stop-venue {
+    margin: 4px 0 0;
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(242, 193, 78, 0.3);
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
   }
 
   .stop-venue-name {
-    margin: 0;
     font-size: 26px;
     line-height: 1.1;
     color: var(--fz-gold);
   }
 
   .stop-venue-area {
-    margin: 2px 0 0;
     font-size: 15px;
   }
 
@@ -315,10 +317,10 @@ const { navLinks, ctaLink } = editionNav(lang);
 
   .stop-activity {
     display: grid;
-    grid-template-columns: 110px 96px minmax(0, 1fr);
+    grid-template-columns: 110px minmax(0, 1fr);
     gap: 24px;
-    align-items: center;
-    padding: 22px 0;
+    align-items: start;
+    padding: 20px 0;
     border-bottom: 1px solid rgba(244, 234, 213, 0.12);
   }
 
@@ -335,14 +337,6 @@ const { navLinks, ctaLink } = editionNav(lang);
     font-family: var(--font-heading, "Outfit"), sans-serif;
     font-size: 15px;
     font-weight: 600;
-  }
-
-  .stop-photo,
-  .stop-photo-empty {
-    width: 96px;
-    height: 96px;
-    object-fit: cover;
-    display: block;
   }
 
   .stop-kind {
@@ -402,20 +396,14 @@ const { navLinks, ctaLink } = editionNav(lang);
     }
 
     .stop-day {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 20px;
-      padding: 32px 0;
+      padding: 24px 0;
+      /* Below the header and the pinned photo when jumping to a day. */
+      scroll-margin-top: calc(120px + 38vh);
     }
 
     .stop-activity {
       grid-template-columns: 72px minmax(0, 1fr);
       gap: 14px;
-      align-items: start;
-    }
-
-    .stop-photo,
-    .stop-photo-empty {
-      display: none;
     }
 
     .stop-time {

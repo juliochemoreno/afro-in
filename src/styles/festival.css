@@ -318,7 +318,8 @@
   }
 }
 
-/* Journey: steps scroll, the framed photo stays (sticky) and follows them. */
+/* Scrolly: steps scroll, the framed photo stays (sticky) and follows them.
+   Used by the listing journey and the stop agendas. */
 .fz-journey {
   padding-top: 24px;
   padding-bottom: 72px;
@@ -336,20 +337,24 @@
   max-width: 60ch;
 }
 
-.fz-journey-grid {
+.fz-scrolly {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
   gap: 64px;
   margin-top: 24px;
 }
 
-.fz-journey-steps {
+.fz-scrolly-steps {
+  min-width: 0;
+}
+
+.fz-journey-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.fz-journey-step {
+.fz-scrolly-step {
   min-height: 70vh;
   display: flex;
   flex-direction: column;
@@ -398,22 +403,22 @@
   text-underline-offset: 4px;
 }
 
-.fz-journey-stage {
+.fz-scrolly-stage {
   position: relative;
 }
 
-.fz-journey-frame {
+.fz-scrolly-frame {
   position: sticky;
   top: 112px;
 }
 
-.fz-journey-photos {
+.fz-scrolly-photos {
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
 }
 
-.fz-journey-panel {
+.fz-scrolly-panel {
   position: absolute;
   inset: 0;
   margin: 0;
@@ -421,18 +426,18 @@
   transition: opacity 0.45s ease;
 }
 
-.fz-journey-panel[data-active] {
+.fz-scrolly-panel[data-active] {
   opacity: 1;
 }
 
-.fz-journey-panel-img {
+.fz-scrolly-panel-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.fz-journey-panel figcaption {
+.fz-scrolly-panel figcaption {
   position: absolute;
   left: 0;
   right: 0;
@@ -443,17 +448,17 @@
   background: linear-gradient(180deg, transparent 0%, rgba(22, 22, 22, 0.9) 70%);
 }
 
-.fz-journey-panel-day {
+.fz-scrolly-panel-day {
   font-size: 56px;
   line-height: 1;
 }
 
-.fz-journey-panel-city {
+.fz-scrolly-panel-city {
   font-size: 22px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fz-journey-panel {
+  .fz-scrolly-panel {
     transition: none;
   }
 }
@@ -463,13 +468,13 @@
     font-size: 48px;
   }
 
-  .fz-journey-grid {
+  .fz-scrolly {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
   }
 
   /* Phones: the photo stays pinned under the header while the days scroll. */
-  .fz-journey-stage {
+  .fz-scrolly-stage {
     order: -1;
     position: sticky;
     top: 80px;
@@ -478,30 +483,30 @@
     background: var(--fz-night);
   }
 
-  .fz-journey-frame {
+  .fz-scrolly-frame {
     position: static;
     padding: 4px;
   }
 
-  .fz-journey-photos {
+  .fz-scrolly-photos {
     aspect-ratio: 16 / 10;
     max-height: 38vh;
     width: 100%;
   }
 
-  .fz-journey-panel figcaption {
+  .fz-scrolly-panel figcaption {
     padding: 40px 14px 10px;
   }
 
-  .fz-journey-panel-day {
+  .fz-scrolly-panel-day {
     font-size: 34px;
   }
 
-  .fz-journey-panel-city {
+  .fz-scrolly-panel-city {
     font-size: 16px;
   }
 
-  .fz-journey-step {
+  .fz-scrolly-step {
     min-height: 52vh;
     padding: 24px 0;
   }
