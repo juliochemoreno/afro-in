@@ -1,0 +1,7 @@
+---
+// Anton, the display face of the edition pages; same loading pattern as Layout.astro.
+const href = "https://fonts.googleapis.com/css2?family=Anton&display=swap";
+---
+
+<link rel="stylesheet" href={href} media="print" onload="this.media='all'" />
+<noscript><link rel="stylesheet" href={href} /></noscript>

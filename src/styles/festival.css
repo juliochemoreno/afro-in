@@ -1,0 +1,161 @@
+/* "Festival zone" look of the edition programming pages (D9, AFRO IN 2027).
+   Dark like the edition posters; header, footer and brand red stay the site's. */
+
+.fz {
+  --fz-night: #07120d;
+  --fz-jungle: #123326;
+  --fz-jungle-2: #1a4a35;
+  --fz-gold: #f2c14e;
+  --fz-cream: #f4ead5;
+  --fz-muted: #c9bfa8;
+  --fz-heliconia: #e8742a;
+  --fz-teal: #47c1b0;
+  --fz-red: var(--color-primary, #e31c25);
+  --fz-line: rgba(242, 193, 78, 0.45);
+
+  background: var(--fz-night);
+  color: var(--fz-cream);
+  font-family: var(--font-heading, "Outfit"), sans-serif;
+  padding-top: 80px; /* fixed site header */
+}
+
+.fz a {
+  color: var(--fz-gold);
+}
+
+.fz a:hover {
+  color: var(--fz-cream);
+}
+
+.fz a:focus-visible {
+  outline: 2px solid var(--fz-gold);
+  outline-offset: 3px;
+}
+
+.fz-display {
+  font-family: "Anton", var(--font-heading, "Outfit"), sans-serif;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.fz-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+}
+
+.fz-muted {
+  color: var(--fz-muted);
+}
+
+.fz-gold {
+  color: var(--fz-gold);
+}
+
+/* The posters' thin gold double frame. */
+.fz-frame {
+  border: 1px solid var(--fz-gold);
+  padding: 8px;
+}
+
+.fz-frame-inner {
+  border: 1px solid var(--fz-line);
+}
+
+.fz-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1px solid var(--fz-gold);
+  color: var(--fz-gold);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.fz a.fz-button-solid {
+  background: var(--fz-red);
+  border-color: var(--fz-red);
+  color: #fff;
+}
+
+/* Tickets (information only). */
+.fz-tickets {
+  padding: 32px;
+}
+
+.fz-tickets h2 {
+  margin: 0 0 20px;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.fz-tiers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.fz-tiers li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fz-line);
+}
+
+.fz-tier-price {
+  font-size: 40px;
+  line-height: 1.05;
+  color: var(--fz-gold);
+}
+
+.fz-tickets p {
+  margin: 0;
+}
+
+.fz-tickets-foot {
+  margin-top: 24px !important;
+}
+
+.fz-band {
+  border-top: 1px solid rgba(242, 193, 78, 0.35);
+}
+
+.fz-band .fz-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 40px;
+  padding-bottom: 56px;
+}
+
+.fz-band h2,
+.fz-band p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .fz-wrap {
+    padding: 0 16px;
+  }
+
+  .fz-frame {
+    padding: 6px;
+  }
+
+  .fz-tickets {
+    padding: 24px 20px;
+  }
+
+  .fz-tiers {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}

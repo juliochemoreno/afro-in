@@ -1,0 +1,17 @@
+---
+import { getCollection } from "astro:content";
+import Edition2027StopTemplate from "@/templates/Edition2027StopTemplate.astro";
+import { baseSlug, entryLang } from "@/lib/programacion";
+
+export async function getStaticPaths() {
+  const allStops = (await getCollection("tour2027")).filter((entry) => entryLang(entry.id) === "es");
+  return allStops.map((entry) => ({
+    params: { slug: baseSlug(entry.id) },
+    props: { entry, allStops },
+  }));
+}
+
+const { entry, allStops } = Astro.props;
+---
+
+<Edition2027StopTemplate entry={entry} allStops={allStops} lang="es" />
