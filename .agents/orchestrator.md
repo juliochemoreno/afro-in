@@ -8,7 +8,7 @@
 |---|---|---|---|
 | afro-in | `/Users/juliochemoreno/Projects/personal/afroin-web/afro-in` | `dev` | PR to `dev` + orchestrator merges with `--no-ff` |
 
-`dev` was revived from `main` on 2026-10-27 (f611f19).
+`dev` was revived from `main` on 2026-10-27 (73accfb).
 
 ## Work list
 
@@ -48,7 +48,7 @@ No CI: "CI green" is replaced by the worker's validation report plus the orchest
 1. Prices are server-side: store and ticket checkout re-price every line from D1; the client price is never trusted. *Why: a buyer can edit the browser request.*
 2. Every `/api/admin/*` endpoint calls `requireAdmin` itself. *Why: the middleware guards admin pages only, not API routes.*
 3. Bold order ids carry their kind (`AFROIN-` donation, `AFROIN-ORD-`, `AFROIN-TIX-`); the single webhook routes by prefix; confirm targets stay whitelisted in `src/lib/bold.ts`.
-4. Home pages stay static; live data goes in server islands (`server:defer`). *Why: SSR pages on Workers send `astro:assets` to the runtime `/_image` endpoint (no Sharp) and every optimized image 404s (June 2026 regression, 82a0571).*
+4. Home pages stay static; live data goes in server islands (`server:defer`). *Why: SSR pages on Workers send `astro:assets` to the runtime `/_image` endpoint (no Sharp) and every optimized image 404s (June 2026 regression, 429aee7).*
 5. Every public page ships in es/en/fr (`src/i18n/routes.ts`).
 6. Migrations are numbered sequentially and additive-only in production; record each production one in the work list.
 7. The dev environment never receives donors' or buyers' personal data: copy catalog data only (products, taxonomy, events) or seed fake rows.
