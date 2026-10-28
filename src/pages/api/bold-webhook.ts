@@ -4,7 +4,6 @@ import {
   extractOrderId,
   confirmTargetForOrder,
   orderKindFromId,
-  verifyWebhookSignature,
 } from "@/lib/bold";
 import { issueTicketsForOrder } from "@/lib/tickets";
 
@@ -12,26 +11,27 @@ export const prerender = false;
 
 // Bold payment webhook.
 //
-// SECURITY NOTE: We now verify the Bold webhook HMAC signature if the secret key
-// is configured. We also re-query Bold server-side (payment-voucher) for the
-// authoritative status as a defense-in-depth measure. This makes a forged payload
-// harmless: an attacker cannot mark a donation as completed without a real Bold transaction.
+// SECURITY NOTE: we do NOT trust the payload's reported status. The webhook is
+// only a trigger: we re-query Bold server-side (payment-voucher) for the
+// authoritative status. This makes a forged payload harmless: an attacker
+// cannot mark a donation, order or ticket purchase as paid without a real Bold
+// transaction.
+//
+// TODO(bold-webhook-signature): verify `x-bold-signature` (documented at
+// https://www.developers.bold.co/webhook: HMAC-SHA256, hex, over the Base64 of
+// the raw body; key = the secret key in production, the EMPTY string in test
+// mode) and reject (401) invalid ones. Confirm the scheme against a real test
+// webhook first: a wrong key would reject legitimate notifications.
 export const POST: APIRoute = async ({ request, locals }) => {
   const env = locals.runtime.env;
 
   try {
     const raw = await request.text();
-    const signature = request.headers.get("bold-signature");
-
-    if (env.BOLD_SECRET_KEY && signature) {
-      const isValid = await verifyWebhookSignature(raw, signature, env.BOLD_SECRET_KEY);
-      if (!isValid) {
-        console.error("Bold webhook: invalid HMAC signature");
-        return json({ error: "Invalid signature" }, 401);
-      }
-    } else if (env.BOLD_SECRET_KEY && !signature) {
-      console.warn("Bold webhook: missing signature header, proceeding without verification");
-    }
+    // Observability for the TODO above: does Bold send the signature header?
+    console.info(
+      "Bold webhook: x-bold-signature present:",
+      request.headers.has("x-bold-signature")
+    );
 
     const orderId = extractOrderId(raw);
 
@@ -56,13 +56,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
 
     // Ticket orders issue their individual tickets once paid. Idempotent, and
-    // not gated on `changed` (the browser confirm may have flipped the row
-    // first). Failure here must not fail the webhook — Bold would retry and the
-    // idempotent issuance re-runs harmlessly.
-    if (
-      orderKindFromId(orderId) === "ticket" &&
-      result.donorStatus === "completed"
-    ) {
+    // not gated on `changed` or on this voucher answer (the browser confirm may
+    // have completed the row first); it does nothing unless the order is
+    // completed in D1. Failure here must not fail the webhook: the next confirm
+    // or retry re-runs the idempotent issuance.
+    if (orderKindFromId(orderId) === "ticket") {
       try {
         await issueTicketsForOrder(env.DB, orderId);
       } catch (e) {

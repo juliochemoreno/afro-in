@@ -67,6 +67,57 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+// Events store their start as Colombia wall-clock time without a zone
+// (e.g. 2026-01-17T20:00, sometimes with seconds). Colombia is UTC-5 all year
+// (no DST), so "now" in the same format is UTC minus 5 hours, to the second
+// (YYYY-MM-DDTHH:MM:SS) so string comparison is exact for both stored forms.
+// An event is on sale until it starts.
+const BOGOTA_UTC_OFFSET_MS = 5 * 60 * 60 * 1000;
+function nowBogotaWallClock(): string {
+  return new Date(Date.now() - BOGOTA_UTC_OFFSET_MS).toISOString().slice(0, 19);
+}
+
+// One INSERT per ticket, each finding its order by Bold order id so it can run
+// in the same batch that inserts the order. Returns the codes alongside.
+function ticketInserts(
+  db: D1Database,
+  boldOrderId: string,
+  eventId: number,
+  qty: number
+): D1PreparedStatement[] & { codes: string[] } {
+  const stmt = db.prepare(
+    `INSERT INTO tickets (ticket_order_id, event_id, code, status)
+     SELECT id, ?, ?, 'valid' FROM ticket_orders WHERE bold_order_id = ?`
+  );
+  const codes: string[] = [];
+  const inserts: D1PreparedStatement[] = [];
+  for (let i = 0; i < qty; i++) {
+    const code = generateTicketCode();
+    codes.push(code);
+    inserts.push(stmt.bind(eventId, code, boldOrderId));
+  }
+  return Object.assign(inserts, { codes });
+}
+
+async function orderIdByBoldId(db: D1Database, boldOrderId: string): Promise<number> {
+  const row = await db
+    .prepare(`SELECT id FROM ticket_orders WHERE bold_order_id = ?`)
+    .bind(boldOrderId)
+    .first<{ id: number }>();
+  return Number(row?.id);
+}
+
+// Ticket codes are UNIQUE; a collision (32^10 space) aborts the whole batch,
+// so retry once with fresh codes.
+async function withCodeRetry<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (e) {
+    if (!String((e as any)?.message ?? e).includes("UNIQUE")) throw e;
+    return run();
+  }
+}
+
 function toPublic(row: EventRow & { sold?: number }): PublicEvent {
   const sold = Number(row.sold ?? 0);
   const remaining = Math.max(0, row.capacity - sold);
@@ -81,10 +132,10 @@ export async function getVisibleEvents(db: D1Database): Promise<PublicEvent[]> {
        FROM events e
        LEFT JOIN (SELECT event_id, COUNT(*) AS sold FROM tickets GROUP BY event_id) t
          ON t.event_id = e.id
-       WHERE e.visible = 1 AND e.event_date >= ?
+       WHERE e.visible = 1 AND e.event_date > ?
        ORDER BY e.event_date ASC`
     )
-    .bind(nowIso())
+    .bind(nowBogotaWallClock())
     .all<EventRow & { sold: number }>();
   return ((res.results as (EventRow & { sold: number })[]) || []).map(toPublic);
 }
@@ -105,7 +156,7 @@ export async function getEventBySlug(
     .bind(slug)
     .first<(EventRow & { sold: number }) | null>();
   if (!row) return null;
-  if (!row.visible || row.event_date < nowIso()) return null;
+  if (!row.visible || row.event_date <= nowBogotaWallClock()) return null;
   return toPublic(row);
 }
 
@@ -132,7 +183,8 @@ export interface CreatedTicketOrder {
  */
 export async function createPendingTicketOrder(
   db: D1Database,
-  input: TicketCheckoutInput
+  input: TicketCheckoutInput,
+  options: { paymentsEnabled: boolean }
 ): Promise<CreatedTicketOrder> {
   const slug = clean(input.eventSlug, 160);
   if (!slug) throw new CheckoutError("Evento inválido");
@@ -164,7 +216,7 @@ export async function createPendingTicketOrder(
     } | null>();
 
   if (!event) throw new CheckoutError("El evento no existe");
-  if (!event.visible || event.event_date < nowIso())
+  if (!event.visible || event.event_date <= nowBogotaWallClock())
     throw new CheckoutError("El evento no está disponible");
 
   const unit = Math.trunc(Number(event.price));
@@ -184,6 +236,9 @@ export async function createPendingTicketOrder(
     throw new CheckoutError(`Solo quedan ${remaining} entradas`);
 
   const isFree = unit === 0;
+  // Refuse a paid checkout before writing anything when Bold is not configured.
+  if (!isFree && !options.paymentsEnabled)
+    throw new CheckoutError("Payment provider not configured", 500);
   const amount = unit * qty;
   if (!isFree && amount < BOLD_MIN_AMOUNT)
     throw new CheckoutError(`El total mínimo es ${BOLD_MIN_AMOUNT} COP`);
@@ -197,7 +252,7 @@ export async function createPendingTicketOrder(
   const providerStatus = isFree ? "FREE" : null;
   const paidAt = isFree ? nowIso() : null;
 
-  const res = await db
+  const insertOrder = db
     .prepare(
       `INSERT INTO ticket_orders
         (bold_order_id, status, provider, provider_status, currency, amount,
@@ -223,24 +278,19 @@ export async function createPendingTicketOrder(
       accessToken,
       isFree ? 1 : 0,
       paidAt
-    )
-    .run();
-
-  const newOrderId = res.meta.last_row_id as number;
-
-  if (isFree) {
-    const codes: string[] = [];
-    const stmt = db.prepare(
-      `INSERT INTO tickets (ticket_order_id, event_id, code, status) VALUES (?, ?, ?, 'valid')`
     );
-    const inserts = [];
-    for (let i = 0; i < qty; i++) {
-      const code = generateTicketCode();
-      codes.push(code);
-      inserts.push(stmt.bind(newOrderId, event.id, code));
-    }
-    await db.batch(inserts);
+
+  // Free orders are completed at once: the order and its tickets are written in
+  // one batch (a D1 batch is a single transaction), so they exist together or
+  // not at all.
+  if (isFree) {
+    await withCodeRetry(() =>
+      db.batch([insertOrder, ...ticketInserts(db, orderId, event.id, qty)])
+    );
+  } else {
+    await insertOrder.run();
   }
+  const newOrderId = await orderIdByBoldId(db, orderId);
 
   return {
     id: newOrderId,
@@ -312,7 +362,7 @@ export async function createCourtesyTicketOrder(
   const orderId = generateOrderId("ticket");
   const accessToken = crypto.randomUUID();
 
-  const res = await db
+  const insertOrder = db
     .prepare(
       `INSERT INTO ticket_orders
         (bold_order_id, status, provider, provider_status, currency, amount,
@@ -333,22 +383,16 @@ export async function createCourtesyTicketOrder(
       email,
       clean(input.buyer?.phone, 40),
       accessToken
-    )
-    .run();
+    );
 
-  const newOrderId = Number(res.meta.last_row_id);
-
-  const codes: string[] = [];
-  const stmt = db.prepare(
-    `INSERT INTO tickets (ticket_order_id, event_id, code, status) VALUES (?, ?, ?, 'valid')`
-  );
-  const inserts = [];
-  for (let i = 0; i < qty; i++) {
-    const code = generateTicketCode();
-    codes.push(code);
-    inserts.push(stmt.bind(newOrderId, event.id, code));
-  }
-  await db.batch(inserts);
+  // Order + tickets in one batch (single transaction): all or nothing.
+  let codes: string[] = [];
+  await withCodeRetry(() => {
+    const inserts = ticketInserts(db, orderId, event.id, qty);
+    codes = inserts.codes;
+    return db.batch([insertOrder, ...inserts]);
+  });
+  const newOrderId = await orderIdByBoldId(db, orderId);
 
   return {
     id: newOrderId,
@@ -380,10 +424,16 @@ interface TicketOrderRow {
 
 /**
  * Issue tickets for a completed order. Idempotent AND race-safe: the webhook and
- * the browser confirm can call this concurrently. We atomically "claim" the
- * order by flipping tickets_issued 0 -> 1 in a single UPDATE; only the caller
- * whose UPDATE actually changes a row proceeds to insert, so tickets can never
- * be double-issued. Does nothing unless the order is 'completed'.
+ * the browser confirm can call this concurrently. Everything happens in ONE
+ * D1 batch (a single transaction, serialized with other writes):
+ *   1. repair: an order left "claimed" with zero tickets (an older version
+ *      claimed first and inserted later, so a crash in between left it empty)
+ *      is reset to unclaimed;
+ *   2. one INSERT per ticket, guarded by "order completed and unclaimed";
+ *   3. the claim (tickets_issued 0 -> 1).
+ * Either all tickets and the claim are written, or nothing is. A concurrent
+ * caller that runs second finds the order claimed: its inserts and claim
+ * change nothing and it returns the existing codes.
  */
 export async function issueTicketsForOrder(
   db: D1Database,
@@ -398,24 +448,17 @@ export async function issueTicketsForOrder(
 
   if (!order || order.status !== "completed") return { issued: 0, codes: [] };
 
-  // Atomic claim: only one concurrent caller wins the flip from 0 -> 1.
-  const claim = await db
-    .prepare(
-      `UPDATE ticket_orders SET tickets_issued = 1
-       WHERE id = ? AND status = 'completed' AND tickets_issued = 0`
-    )
-    .bind(order.id)
-    .run();
-
-  if (claim.meta.changes === 0) {
-    // Someone else already claimed & issued — return the existing codes.
+  const existingCodes = async () => {
     const existing = await db
       .prepare(`SELECT code FROM tickets WHERE ticket_order_id = ? ORDER BY id`)
       .bind(order.id)
       .all<{ code: string }>();
-    const existingCodes = (existing.results as { code: string }[]) || [];
-    return { issued: 0, codes: existingCodes.map((r) => r.code) };
-  }
+    return ((existing.results as { code: string }[]) || []).map((r) => r.code);
+  };
+
+  // Fast path: already issued.
+  const already = await existingCodes();
+  if (already.length > 0) return { issued: 0, codes: already };
 
   // Oversell log (still issue — the payment was approved).
   const cap = await db
@@ -432,19 +475,41 @@ export async function issueTicketsForOrder(
     );
   }
 
-  const codes: string[] = [];
-  const stmt = db.prepare(
-    `INSERT INTO tickets (ticket_order_id, event_id, code) VALUES (?, ?, ?)`
+  const repair = db
+    .prepare(
+      `UPDATE ticket_orders SET tickets_issued = 0
+       WHERE id = ? AND tickets_issued = 1
+         AND NOT EXISTS (SELECT 1 FROM tickets WHERE ticket_order_id = ?)`
+    )
+    .bind(order.id, order.id);
+  const insert = db.prepare(
+    `INSERT INTO tickets (ticket_order_id, event_id, code)
+     SELECT ?, ?, ? WHERE EXISTS (
+       SELECT 1 FROM ticket_orders
+       WHERE id = ? AND status = 'completed' AND tickets_issued = 0
+     )`
   );
-  const inserts = [];
-  for (let i = 0; i < order.quantity; i++) {
-    const code = generateTicketCode();
-    codes.push(code);
-    inserts.push(stmt.bind(order.id, order.event_id, code));
-  }
-  await db.batch(inserts);
+  const claim = db
+    .prepare(
+      `UPDATE ticket_orders SET tickets_issued = 1
+       WHERE id = ? AND status = 'completed' AND tickets_issued = 0`
+    )
+    .bind(order.id);
 
-  return { issued: codes.length, codes };
+  let codes: string[] = [];
+  const results = await withCodeRetry(() => {
+    codes = Array.from({ length: order.quantity }, generateTicketCode);
+    return db.batch([
+      repair,
+      ...codes.map((code) => insert.bind(order.id, order.event_id, code, order.id)),
+      claim,
+    ]);
+  });
+
+  // The last statement is the claim: it changed a row only if this call's
+  // inserts ran. Codes are read back from D1 either way.
+  const issued = results[results.length - 1].meta.changes > 0 ? codes.length : 0;
+  return { issued, codes: await existingCodes() };
 }
 
 export interface TicketOrderView {
@@ -480,7 +545,11 @@ async function loadTicketOrderView(
   };
 }
 
-/** Full ticket-order view by permanent access token (bearer). */
+/**
+ * Full ticket-order view by permanent access token (bearer). A completed order
+ * without tickets (issuance failed after payment) is repaired here too, since
+ * this page never goes through the confirm endpoint.
+ */
 export async function getTicketOrderByToken(
   db: D1Database,
   token: string
@@ -489,7 +558,12 @@ export async function getTicketOrderByToken(
     .prepare(`SELECT * FROM ticket_orders WHERE access_token = ?`)
     .bind(token)
     .first<TicketOrderRow | null>();
-  return loadTicketOrderView(db, order);
+  const view = await loadTicketOrderView(db, order);
+  if (view.order?.status === "completed" && view.tickets.length === 0) {
+    await issueTicketsForOrder(db, view.order.bold_order_id);
+    return loadTicketOrderView(db, order);
+  }
+  return view;
 }
 
 /** Full ticket-order view by Bold order id (used by the confirm receipt). */

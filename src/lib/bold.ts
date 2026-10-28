@@ -59,43 +59,6 @@ export async function generateIntegritySignature(
 }
 
 /**
- * Verify a Bold webhook signature.
- * Bold webhooks send an HMAC-SHA256 signature in the `bold-signature` header,
- * computed using the secret key over the raw payload body.
- */
-export async function verifyWebhookSignature(
-  rawBody: string,
-  signatureHex: string,
-  secretKey: string
-): Promise<boolean> {
-  try {
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(secretKey),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign", "verify"]
-    );
-    
-    const sigBytes = new Uint8Array(signatureHex.length / 2);
-    for (let i = 0; i < signatureHex.length; i += 2) {
-      sigBytes[i / 2] = parseInt(signatureHex.slice(i, i + 2), 16);
-    }
-
-    return await crypto.subtle.verify(
-      "HMAC",
-      key,
-      sigBytes,
-      encoder.encode(rawBody)
-    );
-  } catch (e) {
-    return false;
-  }
-}
-
-
-/**
  * Map a raw Bold transaction status to our internal donor status.
  * - APPROVED                       -> completed
  * - REJECTED / FAILED / VOIDED     -> rejected
