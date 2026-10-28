@@ -1,0 +1,17 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import EventForm from "@/components/admin/EventForm";
+
+// Access is protected via the session cookie (middleware guards /admin).
+const googleMapsApiKey =
+  (Astro.locals as any).runtime?.env?.PUBLIC_GOOGLE_MAPS_API_KEY ||
+  import.meta.env.PUBLIC_GOOGLE_MAPS_API_KEY ||
+  "";
+---
+
+<AdminLayout title="Nuevo evento | AFRO IN Admin">
+  <main class="h-full overflow-y-auto">
+    <EventForm client:only="react" event={null} googleMapsApiKey={googleMapsApiKey} />
+  </main>
+</AdminLayout>

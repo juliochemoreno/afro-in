@@ -1,0 +1,355 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import ImagePlaceholder from "@/components/ImagePlaceholder.astro";
+import TicketCheckoutForm from "@/components/TicketCheckoutForm";
+import { formatPrice } from "@/lib/cart";
+import type { PublicEvent } from "@/lib/tickets";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+
+interface Props {
+  event: PublicEvent;
+  lang?: string;
+}
+
+const { event, lang = "es" } = Astro.props;
+const t = useTranslations(lang as any);
+
+const localeTag = lang === "en" ? "en-US" : lang === "fr" ? "fr-FR" : "es-CO";
+const fmtDate = new Date(event.event_date).toLocaleDateString(localeTag, {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+const name =
+  (lang === "en" ? event.name_en : lang === "fr" ? event.name_fr : event.name_es) ||
+  event.name_es;
+const description =
+  (lang === "en"
+    ? event.description_en
+    : lang === "fr"
+      ? event.description_fr
+      : event.description_es) || event.description_es || "";
+
+const navLinks = [
+  { href: getTranslatedPath("/", lang), label: t("nav.home") },
+  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
+  { href: getTranslatedPath("/eventos", lang), label: t("nav.events") },
+];
+
+const successPath = getTranslatedPath("/entradas", lang);
+const showRemaining = !event.soldOut && event.remaining <= 20;
+
+const T_KEYS = [
+  "tix.form.quantity",
+  "tix.form.name",
+  "tix.form.name.ph",
+  "tix.form.email",
+  "tix.form.email.ph",
+  "tix.form.phone",
+  "tix.form.phone.ph",
+  "tix.form.total",
+  "tix.form.pay",
+  "tix.form.processing",
+  "tix.form.securenote",
+  "tix.form.err.name",
+  "tix.form.err.email",
+  "tix.form.err.generic",
+  "tix.detail.soldout.title",
+  "tix.detail.soldout.text",
+];
+const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
+---
+
+<Layout title={`${name} | AFRO IN`}>
+  <Header navLinks={navLinks} />
+  <main class="evento-page">
+    <div class="container">
+      <nav class="breadcrumb">
+        <a href={getTranslatedPath("/eventos", lang)}>{t("tix.detail.back")}</a>
+      </nav>
+
+      <div class="evento-grid">
+        <div class="evento-media">
+          <div class="evento-image">
+            {
+              event.image_r2_key ? (
+                <img src={`/media/${event.image_r2_key}`} alt={name} />
+              ) : (
+                <ImagePlaceholder />
+              )
+            }
+          </div>
+          <h1>{name}</h1>
+          <ul class="evento-facts">
+            <li>
+              <span class="fact-label">{t("tix.detail.when")}</span>
+              <span class="fact-value">{fmtDate}</span>
+            </li>
+            {
+              (event.venue || event.city || event.department) && (
+                <li>
+                  <span class="fact-label">{t("tix.detail.where")}</span>
+                  <span class="fact-value">
+                    {[event.venue, event.city, event.department].filter(Boolean).join(" · ")}
+                  </span>
+                </li>
+              )
+            }
+            <li>
+              <span class="fact-label">{t("tix.detail.price")}</span>
+              <span class="fact-value price">
+                {event.price === 0 ? "Entrada Libre" : formatPrice(event.price)}
+              </span>
+            </li>
+            {
+              showRemaining && (
+                <li>
+                  <span class="fact-value remaining">
+                    {t("tix.detail.remaining").replace(
+                      "{n}",
+                      String(event.remaining)
+                    )}
+                  </span>
+                </li>
+              )
+            }
+          </ul>
+          {description && <p class="evento-desc">{description}</p>}
+        </div>
+
+        <aside class="evento-buy">
+          <h2>{event.price === 0 ? "Reservar Entradas" : t("tix.detail.buy")}</h2>
+          <TicketCheckoutForm
+            client:load
+            lang={lang as any}
+            eventSlug={event.slug}
+            eventName={name}
+            price={event.price}
+            remaining={event.remaining}
+            successPath={successPath}
+            t={strings}
+          />
+        </aside>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style is:global>
+  .evento-page {
+    padding: var(--space-xl) 0;
+    padding-top: 120px;
+    min-height: 100vh;
+    background: var(--color-cream);
+  }
+  .evento-page .breadcrumb {
+    margin-bottom: var(--space-lg);
+  }
+  .evento-page .breadcrumb a {
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+  }
+  .evento-page .breadcrumb a:hover {
+    color: var(--color-primary);
+  }
+  .evento-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: var(--space-2xl);
+    align-items: start;
+  }
+  @media (max-width: 880px) {
+    .evento-grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+    }
+  }
+  .evento-image {
+    aspect-ratio: 16 / 10;
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--space-lg);
+  }
+  .evento-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .evento-media h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+  }
+  .evento-facts {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  .evento-facts li {
+    display: flex;
+    flex-direction: column;
+  }
+  .fact-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-light);
+  }
+  .fact-value {
+    color: var(--color-secondary);
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  .fact-value.price {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+  .fact-value.remaining {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-transform: none;
+  }
+  .evento-desc {
+    color: var(--color-text);
+    line-height: 1.7;
+    white-space: pre-line;
+  }
+
+  .evento-buy {
+    background: var(--color-white);
+    border: 1px solid var(--color-cream-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    position: sticky;
+    top: 100px;
+  }
+  .evento-buy h2 {
+    font-family: var(--font-heading);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .tix-form .ck-field {
+    margin-top: var(--space-md);
+    display: flex;
+    flex-direction: column;
+  }
+  .tix-form .ck-field > label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: var(--space-xs);
+    color: var(--color-text);
+  }
+  .tix-form .ck-field input {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-cream-dark);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 1rem;
+    background: var(--color-white);
+    color: var(--color-secondary);
+  }
+  .tix-form .ck-field input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+  }
+  .tix-qty {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
+  .tix-qty label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--color-text);
+  }
+  .tix-stepper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+  .tix-stepper button {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--color-cream-dark);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--color-secondary);
+  }
+  .tix-stepper button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .tix-stepper span {
+    min-width: 2ch;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-secondary);
+  }
+  .tix-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-cream-dark);
+    font-size: 1.1rem;
+    color: var(--color-secondary);
+  }
+  .tix-total strong {
+    font-family: var(--font-heading);
+    color: var(--color-primary);
+    font-size: 1.3rem;
+  }
+  .tix-pay {
+    width: 100%;
+    margin-top: var(--space-md);
+  }
+  .tix-pay:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .tix-secure {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--color-text-light);
+    margin-top: var(--space-sm);
+  }
+  .tix-form .ck-error {
+    margin-top: var(--space-sm);
+    color: var(--color-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .tix-soldout {
+    text-align: center;
+    padding: var(--space-lg) 0;
+  }
+  .tix-soldout-title {
+    font-weight: 700;
+    color: var(--color-secondary);
+    margin-bottom: var(--space-xs);
+  }
+  .tix-soldout p {
+    color: var(--color-text-light);
+  }
+</style>

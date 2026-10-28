@@ -134,20 +134,19 @@ export interface ConfirmResult {
 // vocabulary ('pending' | 'completed' | 'rejected') and the columns
 // status / provider_status / transaction_id / bold_order_id.
 export interface ConfirmTarget {
-  table: "donors" | "orders";
+  table: "donors" | "orders" | "ticket_orders";
   timestampColumn: "completed_at" | "paid_at";
 }
 
-export const CONFIRM_TARGETS: Record<"donation" | "order", ConfirmTarget> = {
+export const CONFIRM_TARGETS: Record<OrderKind, ConfirmTarget> = {
   donation: { table: "donors", timestampColumn: "completed_at" },
   order: { table: "orders", timestampColumn: "paid_at" },
+  ticket: { table: "ticket_orders", timestampColumn: "paid_at" },
 };
 
 /** Pick the confirmation target for an order id by its prefix. */
 export function confirmTargetForOrder(orderId: string): ConfirmTarget {
-  return orderKindFromId(orderId) === "order"
-    ? CONFIRM_TARGETS.order
-    : CONFIRM_TARGETS.donation;
+  return CONFIRM_TARGETS[orderKindFromId(orderId)];
 }
 
 /**

@@ -1,0 +1,28 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import EventForm from "@/components/admin/EventForm";
+
+// Access is protected via the session cookie (middleware guards /admin).
+const { id } = Astro.params;
+const db = (Astro.locals as any).runtime?.env?.DB;
+
+let event: any = null;
+if (db && id) {
+  event = await db
+    .prepare("SELECT * FROM events WHERE id = ?")
+    .bind(Number(id))
+    .first();
+  if (!event) return Astro.redirect("/admin/eventos", 302);
+}
+const googleMapsApiKey =
+  (Astro.locals as any).runtime?.env?.PUBLIC_GOOGLE_MAPS_API_KEY ||
+  import.meta.env.PUBLIC_GOOGLE_MAPS_API_KEY ||
+  "";
+---
+
+<AdminLayout title="Editar evento | AFRO IN Admin">
+  <main class="h-full overflow-y-auto">
+    <EventForm client:only="react" event={event} googleMapsApiKey={googleMapsApiKey} />
+  </main>
+</AdminLayout>
