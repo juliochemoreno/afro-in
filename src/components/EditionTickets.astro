@@ -47,12 +47,17 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
 <script>
   import { bogotaToday, tierStage } from "@/lib/programacion";
 
-  const today = bogotaToday();
-  document.querySelectorAll<HTMLLIElement>("[data-tiers] > li").forEach((item) => {
-    const stage = tierStage(today, item.dataset.from, item.dataset.until);
-    item.dataset.stage = stage;
-    item.querySelector<HTMLElement>(".fz-tier-current")!.hidden = stage !== "current";
-    item.querySelector<HTMLElement>(".fz-tier-done")!.hidden = stage !== "past";
-    item.querySelector<HTMLElement>(".fz-tier-buy")!.hidden = stage !== "current";
-  });
+  // Runs on every page load, including client-side navigations (the layout uses ClientRouter).
+  function showStages() {
+    const today = bogotaToday();
+    document.querySelectorAll<HTMLLIElement>("[data-tiers] > li").forEach((item) => {
+      const stage = tierStage(today, item.dataset.from, item.dataset.until);
+      item.dataset.stage = stage;
+      item.querySelector<HTMLElement>(".fz-tier-current")!.hidden = stage !== "current";
+      item.querySelector<HTMLElement>(".fz-tier-done")!.hidden = stage !== "past";
+      item.querySelector<HTMLElement>(".fz-tier-buy")!.hidden = stage !== "current";
+    });
+  }
+
+  document.addEventListener("astro:page-load", showStages);
 </script>

@@ -112,3 +112,30 @@ Contenido + UI pequeña sobre las páginas D9: nuevas actividades por día/venue
 - Enlaces/slugs de los dos eventos (Preventa y Afro Batalla): pendientes; los botones salen «Muy pronto».
 - Dj Joe/Dj Acid Burrito: ¿ficha nueva en `/artistas` (con foto) o solo texto en la programación? (Por defecto: ficha.)
 - ¿Se editan las fotos con Gemini (prompts en Task 5) antes de publicar, o se usan las originales?
+
+## Scope delivered (closed — D16 frozen)
+
+The item grew from a content update into a redesign of the 2027 pages, driven by Julio's decisions during execution. Everything below is in PR #11; anything new goes to D17/D12.
+
+### Layout rule (all 2027 pages)
+- **One container = the site header's** (`--fz-content-max` 1136px + `--fz-gutter` 32px, 16px on phones): every heading, paragraph and caption lines up with the logo; `--fz-bleed` (via `100cqw`) is the distance to the screen edge for photos that bleed.
+- **Image-led sections edge to edge**: hero, "Dos territorios" (two halves with a 10px gap), next/previous stop card. **Half-screen photos**: journey (bleeds right) and every artist block (bleeds left/right alternating), sticky, with CSS-mask fades on the inner side and top/bottom only. Inside the container: tickets, guest grid, partners, agenda lists.
+- **One vertical rhythm** (`--fz-section-pad` 48px desktop / 32px mobile) and one heading → subtitle → content spacing (8px / 32px). Heights capped (480px–85svh).
+- Text on big photos scales with them (clamp); photos fade with masks, no per-side overlays, one caption scrim.
+
+### Pages
+- **`/programacion` (es/en/fr):** photo hero (full viewport height on desktop) with the festival tagline and the countries strip (flags); intro; Robe L Ninho featured block (sticky photo, dates, tickets); "Dos territorios" (`EditionStops`); journey day by day with sticky photo (venue photos, then the day's artists), day bar and calendar; 9 guest cards in a 3×3 grid (2 columns on small screens, odd last card wide); partners.
+- **Stop pages (Santa Marta, Palenque):** hero, day agenda with sticky journey photo, venues, activities with sign-up buttons, tickets/presale (one config value `SALES`), next/previous stop card edge to edge.
+- **`/artistas`:** hero like the other pages; one block per artist, same as Robe's (alternating sides, shows all their dates); stacking panels on desktop (sticky, next artist slides over the previous), pinned photo with the text sliding over it on phones; reduced motion honoured. The "Artistas 2026" band is gone (`/artistas/2026` still reachable).
+- **Home (`/`, `/en`, `/fr`):** the "AFRO IN Tour 2026" section is replaced, in the home's own style, by the 2027 stops (`Events.astro`): pill "Enero 2027", two cards with badge, number, dates, venues, four highlights and a link to each stop, "Ver programación" and "Comprar preventa" buttons.
+
+### Data and code
+- Afroneto joins the artists (Colombia); activities accept `moreArtists`; the Chichi Banana vs Dj Acid Burrito set and the 19 Jan podcast now count for each artist; `countryCode`/`country` are optional in the schema (no flag when unknown); `activityByline` handles artists without a country.
+- Components: `EditionHeadliner` (star/reverse/center/portrait options), `EditionStops`, `StopLinkCard`, `Flag`, `Pin`, `DayCalendar`, `EditionVenue`, `EditionPartners`, `FestivalScrolly` (journey with sticky photo), `EditionCountries`; `festival.css` holds the shared rules. Tests: 32 (`tests/programacion.test.ts`).
+- No ticketing, checkout or payment code touched.
+
+### Still waiting on Julio (content)
+- DJ Joe Kiz Vibes final photo (the current portrait is provisional).
+- Arroyo party date: 17 or 18 Jan (the content says 17).
+- Time of the Fri 15 Jan event at Oh la la! La Puerta (none in any source); Dj Acid Burrito's time to confirm.
+- The presale / Afro Batalla event links: `SALES.tickets.url` and `SALES.afroBatalla.url` in `src/lib/programacion.ts` (`/eventos/<slug>`); until set, the buttons say "Muy pronto".
