@@ -8,6 +8,7 @@ import { resolveSignup } from "@/lib/activitySignup";
 import Pin from "@/components/Pin.astro";
 import Flag from "@/components/Flag.astro";
 import EditionPartners from "@/components/EditionPartners.astro";
+import EditionStops from "@/components/EditionStops.astro";
 import EditionTickets from "@/components/EditionTickets.astro";
 import EditionCountries from "@/components/EditionCountries.astro";
 import EditionHeadliner from "@/components/EditionHeadliner.astro";
@@ -202,22 +203,7 @@ const { navLinks, ctaLink } = editionNav(lang);
         <h2 id="edition-stops-title" class="fz-display edition-h2">{t("edition.stopsTitle")}</h2>
         <p class="fz-muted edition-lead">{t("edition.stopsText")}</p>
       </header>
-      <div class="edition-stops">
-        {stopCards.map((stop) => (
-          <a class="edition-stop" href={stop.href}>
-            <Image src={stop.cardImage} alt="" widths={[480, 960]} sizes="(max-width: 1023px) 100vw, 50vw" class="edition-stop-photo" style={`object-position: ${stop.cardPosition}`} />
-            <span class="edition-stop-bottom">
-              <span class="edition-stop-range">{stop.range}</span>
-              <span class="edition-stop-title">
-                <span class="fz-display edition-stop-name">{stop.name}</span>
-                <span class="edition-stop-arrow" aria-hidden="true">→</span>
-              </span>
-              <span class="edition-stop-place"><Pin /><span>{stop.place}</span></span>
-            </span>
-            <span class="edition-stop-sr">{stop.comingSoon ? t("edition.comingSoon") : t("edition.viewProgram")}</span>
-          </a>
-        ))}
-      </div>
+      <EditionStops stops={stopCards} lang={lang} />
     </section>
 
     <EditionJourney steps={journey} lang={lang} />
@@ -290,18 +276,6 @@ const { navLinks, ctaLink } = editionNav(lang);
     max-width: 52ch;
   }
 
-  /* Stop card: a wide photo fills it; department and dates on top, name and places at the bottom. */
-  .edition-stop-photo {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
-    mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
-  }
-
   .edition-title {
     margin: 0;
     display: flex;
@@ -315,123 +289,6 @@ const { navLinks, ctaLink } = editionNav(lang);
 
   .edition-title-red {
     color: var(--fz-red);
-  }
-
-  .edition-stops {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  /* Full screen width: two photos side by side with a small gap, faded only at the top and the
-     bottom; the outer screen edges stay sharp. Text scales with the cards. */
-  .edition-stop {
-    position: relative;
-    display: block;
-    height: clamp(480px, 70svh, 85svh);
-    overflow: hidden;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    text-decoration: none;
-  }
-
-  .fz .edition-stop {
-    color: var(--fz-cream);
-  }
-
-  .edition-stop::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(transparent 45%, rgba(14, 10, 8, 0.85));
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
-    mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
-  }
-
-  .edition-stop-bottom {
-    position: absolute;
-    z-index: 2;
-    bottom: 10%;
-    left: var(--fz-bleed);
-    right: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .edition-stop:last-child .edition-stop-bottom {
-    left: clamp(24px, 4vw, 64px);
-    right: clamp(24px, 3vw, 48px);
-  }
-
-  .edition-stop-range {
-    color: #e6b84a;
-    font-weight: 500;
-    font-size: clamp(15px, 1.4vw, 18px);
-  }
-
-  .edition-stop-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-  }
-
-  .edition-stop-name {
-    font-size: clamp(32px, 4vw, 64px);
-    line-height: 1.05;
-    white-space: nowrap;
-    color: #f3e9d2;
-  }
-
-  .edition-stop-place {
-    display: flex;
-    align-items: center;
-    font-size: clamp(14px, 1.25vw, 16px);
-    color: #bfb39c;
-    min-width: 0;
-  }
-
-  .edition-stop-place span {
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .edition-stop-arrow {
-    flex: none;
-    font-size: clamp(22px, 1.9vw, 24px);
-    line-height: 1;
-    color: #e6b84a;
-    transition: transform 0.2s ease;
-  }
-
-  .edition-stop:hover .edition-stop-arrow,
-  .edition-stop:focus-visible .edition-stop-arrow {
-    transform: translateX(4px);
-  }
-
-  .edition-stop:focus-visible {
-    outline: 2px solid #e6b84a;
-    outline-offset: 3px;
-  }
-
-  .edition-stop-sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .edition-stop-arrow {
-      transition: none;
-    }
   }
 
   .edition-h2 {
@@ -544,24 +401,6 @@ const { navLinks, ctaLink } = editionNav(lang);
     .edition-artist:last-child:nth-child(odd) {
       grid-column: 1 / -1;
       aspect-ratio: 16 / 10;
-    }
-  }
-
-  /* Stacked, edge to edge, below 1024px (side by side the halves would be too narrow and tall). */
-  @media (max-width: 1023px) {
-    .edition-stops {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .edition-stop {
-      height: auto;
-      aspect-ratio: 16 / 10;
-    }
-
-    .edition-stop .edition-stop-bottom,
-    .edition-stop:last-child .edition-stop-bottom {
-      left: var(--fz-bleed);
-      right: var(--fz-bleed);
     }
   }
 
