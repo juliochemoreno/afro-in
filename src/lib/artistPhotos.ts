@@ -30,14 +30,14 @@ export interface DaySlide {
   // Venue slides: the name with its place (bottom).
   venue?: { name: string; place: string };
   // Artist slides: the country (top left), the name and the time that day (bottom).
-  artist?: { name: string; countryCode: string; countryName: string; time?: string };
+  artist?: { name: string; countryCode?: string; countryName?: string; time?: string };
 }
 
 interface SlideArtist {
   id: string;
   name: string;
-  countryCode: string;
-  country: Record<string, string>;
+  countryCode?: string;
+  country?: Record<string, string>;
   photo: ImageMetadata;
   photoPosition: string;
   // The artist's time that day, when the agenda gives one.
@@ -65,7 +65,7 @@ export function daySlides(
       photo: artistPhoto(artist.id, artist.photo),
       mobile: artistPhotoMobile(artist.id),
       position: artist.photoPosition,
-      artist: { name: artist.name, countryCode: artist.countryCode, countryName: artist.country[lang], time: artist.time },
+      artist: { name: artist.name, countryCode: artist.countryCode, countryName: artist.country?.[lang], time: artist.time },
     });
   }
   return slides.length

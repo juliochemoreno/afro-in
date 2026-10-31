@@ -163,6 +163,10 @@ test("activity byline names the artist only when the title does not", () => {
   const artist = { name: "Fafoman", countryCode: "CO", country: { es: "Colombia", en: "Colombia", fr: "Colombie" } };
   assert.deepEqual(activityByline("Afro Batalla · Filtro", artist, "es"), { countryCode: "CO", countryName: "Colombia", byline: "Fafoman (Colombia)" });
   assert.deepEqual(activityByline("Fafoman", artist, "fr"), { countryCode: "CO", countryName: "Colombie", byline: "Colombie" });
+  // No country yet: just the name, and nothing to add when the title already has it.
+  const unknown = { name: "Afroneto" };
+  assert.deepEqual(activityByline("Podcast", unknown, "es"), { countryCode: undefined, countryName: undefined, byline: "Afroneto" });
+  assert.equal(activityByline("Afroneto en vivo", unknown, "es").byline, undefined);
   assert.deepEqual(activityByline("Fiesta", undefined, "es"), {});
 });
 

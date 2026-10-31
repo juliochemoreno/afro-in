@@ -77,8 +77,9 @@ const artists2027 = defineCollection({
   schema: ({ image }) =>
     z.object({
       name: z.string(),
-      countryCode: z.string().regex(/^[A-Z]{2}$/),
-      country: z.object({ es: z.string(), en: z.string(), fr: z.string() }),
+      // Optional until the artist's country is confirmed: no flag or country is shown without it.
+      countryCode: z.string().regex(/^[A-Z]{2}$/).optional(),
+      country: z.object({ es: z.string(), en: z.string(), fr: z.string() }).optional(),
       photo: image(),
       // CSS object-position of the 4:5 frames, keeping head and hands in view.
       photoPosition: z.string().default("50% 20%"),
@@ -129,6 +130,8 @@ const tour2027 = defineCollection({
               artist: reference("artists2027").optional(),
               // A second artist sharing the activity (both are listed and get its dates).
               coArtist: reference("artists2027").optional(),
+              // More artists sharing the activity (a third, fourth...).
+              moreArtists: z.array(reference("artists2027")).default([]),
               signupUrl: z.string().url().optional(),
               // Links to the Afro Batalla registration event (see SALES).
               signup: z.enum(["afroBatalla"]).optional(),

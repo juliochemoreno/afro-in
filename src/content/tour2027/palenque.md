@@ -76,7 +76,9 @@ days:
       - time: "4:00 pm"
         title: "Podcast «Afro introspección»"
         kind: "Podcast"
-        note: "Con Robe L Ninho, Afroneto y Fafoman"
+        artist: "robe-l-ninho"
+        coArtist: "fafoman"
+        moreArtists: ["afroneto"]
   - date: "2027-01-20"
     hint: "Mojadera y cierre"
     photo: "../../assets/img/afro-in-palenque-1/28795714_1787905784574717_3533751384268173284_n.jpg"

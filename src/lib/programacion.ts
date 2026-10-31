@@ -155,12 +155,15 @@ function artistIdOf(artist: string | { id: string } | undefined): string | undef
   return typeof artist === "string" ? artist : artist?.id;
 }
 
-// The artists of an activity: its artist and its co-artist, in that order.
+// The artists of an activity: its artist, its co-artist and any more, in that order.
 export function activityArtistIds(activity: {
   artist?: string | { id: string };
   coArtist?: string | { id: string };
+  moreArtists?: (string | { id: string })[];
 }): string[] {
-  return [artistIdOf(activity.artist), artistIdOf(activity.coArtist)].filter((id): id is string => !!id);
+  return [artistIdOf(activity.artist), artistIdOf(activity.coArtist), ...(activity.moreArtists ?? []).map(artistIdOf)].filter(
+    (id): id is string => !!id
+  );
 }
 
 export function isComingSoon(days: { activities: unknown[] }[]): boolean {
@@ -170,7 +173,7 @@ export function isComingSoon(days: { activities: unknown[] }[]): boolean {
 interface DayWithArtists {
   date: string;
   venue?: string;
-  activities: { artist?: string | { id: string }; coArtist?: string | { id: string } }[];
+  activities: { artist?: string | { id: string }; coArtist?: string | { id: string }; moreArtists?: (string | { id: string })[] }[];
 }
 
 // First day (in content order) with an activity by this artist.
@@ -184,17 +187,17 @@ export function firstAppearance(
   return day ? { date: day.date, venue: day.venue } : undefined;
 }
 
-type BylineArtist = { name: string; countryCode: string; country: Record<Lang, string> };
+type BylineArtist = { name: string; countryCode?: string; country?: Record<Lang, string> };
 
 // One byline per artist of an activity (see activityByline), for the agenda rows.
 export function artistLines(
   title: string,
   artists: (BylineArtist | undefined)[],
   lang: Lang
-): { countryCode: string; countryName: string; byline: string }[] {
+): { countryCode?: string; countryName?: string; byline: string }[] {
   return artists.flatMap((artist) => {
     const line = activityByline(title, artist, lang);
-    return line.byline ? [{ countryCode: line.countryCode!, countryName: line.countryName!, byline: line.byline }] : [];
+    return line.byline ? [{ countryCode: line.countryCode, countryName: line.countryName, byline: line.byline }] : [];
   });
 }
 
@@ -204,7 +207,12 @@ export interface StopForAppearances {
   days: {
     date: string;
     venue?: string;
-    activities: { title: string; artist?: string | { id: string }; coArtist?: string | { id: string } }[];
+    activities: {
+      title: string;
+      artist?: string | { id: string };
+      coArtist?: string | { id: string };
+      moreArtists?: (string | { id: string })[];
+    }[];
   }[];
 }
 
@@ -245,14 +253,17 @@ export function journeyDays<Stop extends { order: number; days: Day[] }, Day ext
 // the artist ("Chichi Banana"), else "Name (Country)".
 export function activityByline(
   title: string,
-  artist: { name: string; countryCode: string; country: Record<Lang, string> } | undefined,
+  artist: { name: string; countryCode?: string; country?: Record<Lang, string> } | undefined,
   lang: Lang
 ): { countryCode?: string; countryName?: string; byline?: string } {
   if (!artist) return {};
+  const countryName = artist.country?.[lang];
+  const named = title.includes(artist.name);
   return {
     countryCode: artist.countryCode,
-    countryName: artist.country[lang],
-    byline: title.includes(artist.name) ? artist.country[lang] : `${artist.name} (${artist.country[lang]})`,
+    countryName,
+    // Without a known country the line is just the name (nothing to add when the title has it).
+    byline: countryName ? (named ? countryName : `${artist.name} (${countryName})`) : named ? undefined : artist.name,
   };
 }
 

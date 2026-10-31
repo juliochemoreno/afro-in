@@ -59,6 +59,8 @@ days:
         artist: "robe-l-ninho"
       - title: "Dj Chichi Banana vs Dj Acid Burrito"
         kind: "DJ"
+        artist: "chichi-banana"
+        coArtist: "dj-acid-burrito"
   - date: "2027-01-17"
     hint: "Afro Batalla"
     photo: "../../assets/img/2027/lugares/masaya-fachada.jpg"
