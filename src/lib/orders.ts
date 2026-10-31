@@ -19,9 +19,19 @@ const clean = (s: unknown, max = 200): string | null => {
 
 export class CheckoutError extends Error {
   status: number;
-  constructor(message: string, status = 400) {
+  // Optional stable code (and values) so a client can show its own translation.
+  code?: string;
+  params?: Record<string, number>;
+  constructor(
+    message: string,
+    status = 400,
+    code?: string,
+    params?: Record<string, number>
+  ) {
     super(message);
     this.status = status;
+    this.code = code;
+    this.params = params;
   }
 }
 
