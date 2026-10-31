@@ -7,6 +7,10 @@ import {
   dateRange,
   dayAnchor,
   dayLabel,
+  monthName,
+  activeDayIndex,
+  stopPlace,
+  shortDateList,
   entryLang,
   firstAppearance,
   flagEmoji,
@@ -15,7 +19,9 @@ import {
   joinList,
   journeyDays,
   parseIsoDate,
-  PRESALE,
+  SALES,
+  bogotaToday,
+  tierStage,
 } from "../src/lib/programacion.ts";
 
 test("entry language and slug come from the file path", () => {
@@ -57,21 +63,37 @@ test("day labels per language", () => {
   });
 });
 
+test("month names for the sticky bar", () => {
+  assert.equal(monthName("2027-01-15", "es"), "enero");
+  assert.equal(monthName("2027-01-15", "en"), "January");
+  assert.equal(monthName("2027-01-15", "fr"), "janvier");
+});
+
+test("short date lists for the artist cards", () => {
+  assert.equal(shortDateList(["2027-01-16"], "es"), "16 ene");
+  assert.equal(shortDateList(["2027-01-16", "2027-01-15"], "es"), "15 y 16 ene");
+  assert.equal(shortDateList(["2027-01-15", "2027-01-16", "2027-01-17"], "es"), "15, 16 y 17 ene");
+  assert.equal(shortDateList(["2027-01-15", "2027-01-16"], "en"), "Jan 15 & 16");
+  assert.equal(shortDateList(["2027-01-15", "2027-01-16"], "fr"), "15 et 16 janv");
+  assert.equal(shortDateList(["2027-01-31", "2027-02-01"], "es"), "31 ene y 1 feb");
+});
+
 test("date ranges in one month and across months", () => {
-  assert.equal(dateRange("2027-01-15", "2027-01-17", "es"), "15 – 17 de enero");
-  assert.equal(dateRange("2027-01-15", "2027-01-17", "en"), "January 15 – 17");
-  assert.equal(dateRange("2027-01-15", "2027-01-17", "fr"), "15 – 17 janvier");
-  assert.equal(dateRange("2027-01-30", "2027-02-02", "es"), "30 de enero – 2 de febrero");
+  assert.equal(dateRange("2027-01-15", "2027-01-17", "es"), "15 al 17 de enero");
+  assert.equal(dateRange("2027-01-15", "2027-01-17", "en"), "January 15–17");
+  assert.equal(dateRange("2027-01-15", "2027-01-17", "fr"), "du 15 au 17 janvier");
+  assert.equal(dateRange("2027-01-30", "2027-02-02", "es"), "30 de enero al 2 de febrero");
   assert.equal(dateRange("2027-01-30", "2027-02-02", "en"), "January 30 – February 2");
+  assert.equal(dateRange("2027-01-30", "2027-02-02", "fr"), "du 30 janvier au 2 février");
 });
 
 test("date ranges with the year", () => {
-  assert.equal(dateRange("2027-01-15", "2027-01-17", "es", { withYear: true }), "15 – 17 de enero de 2027");
-  assert.equal(dateRange("2027-01-17", "2027-01-20", "en", { withYear: true }), "January 17 – 20, 2027");
-  assert.equal(dateRange("2027-01-15", "2027-01-17", "fr", { withYear: true }), "15 – 17 janvier 2027");
+  assert.equal(dateRange("2027-01-15", "2027-01-17", "es", { withYear: true }), "15 al 17 de enero de 2027");
+  assert.equal(dateRange("2027-01-17", "2027-01-20", "en", { withYear: true }), "January 17–20, 2027");
+  assert.equal(dateRange("2027-01-15", "2027-01-17", "fr", { withYear: true }), "du 15 au 17 janvier 2027");
   assert.equal(
     dateRange("2027-12-30", "2028-01-02", "es"),
-    "30 de diciembre de 2027 – 2 de enero de 2028"
+    "30 de diciembre de 2027 al 2 de enero de 2028"
   );
 });
 
@@ -139,8 +161,8 @@ test("journey merges stops day by day", () => {
 
 test("activity byline names the artist only when the title does not", () => {
   const artist = { name: "Fafoman", countryCode: "CO", country: { es: "Colombia", en: "Colombia", fr: "Colombie" } };
-  assert.deepEqual(activityByline("Afro Batalla · Filtro", artist, "es"), { flag: "🇨🇴", byline: "Fafoman (Colombia)" });
-  assert.deepEqual(activityByline("Fafoman", artist, "fr"), { flag: "🇨🇴", byline: "Colombie" });
+  assert.deepEqual(activityByline("Afro Batalla · Filtro", artist, "es"), { countryCode: "CO", countryName: "Colombia", byline: "Fafoman (Colombia)" });
+  assert.deepEqual(activityByline("Fafoman", artist, "fr"), { countryCode: "CO", countryName: "Colombie", byline: "Colombie" });
   assert.deepEqual(activityByline("Fiesta", undefined, "es"), {});
 });
 
@@ -149,11 +171,45 @@ test("day anchors use the full date", () => {
   assert.throws(() => dayAnchor("16"));
 });
 
-test("presale config keeps the agreed prices, with every link a site path or empty", () => {
-  assert.equal(PRESALE.presale.price, 45000);
-  assert.equal(PRESALE.presale.capacity, 150);
-  assert.equal(PRESALE.afroBatalla.price, 30000);
-  for (const { url } of [PRESALE.presale, PRESALE.afroBatalla]) {
+test("sales config keeps the Afro Batalla price, with every link a site path or empty", () => {
+  assert.equal(SALES.afroBatalla.price, 30000);
+  for (const { url } of [SALES.tickets, SALES.afroBatalla]) {
     assert.match(url, /^(\/eventos\/[a-z0-9-]+)?$/);
   }
+});
+
+test("price stages follow the date, with open ends and inclusive limits", () => {
+  const stages = [
+    ["2026-11-01", "2026-11-15"],
+    ["2026-11-16", "2026-12-16"],
+    ["2026-12-17", undefined],
+  ] as const;
+  const at = (today: string) => stages.map(([from, until]) => tierStage(today, from, until));
+  assert.deepEqual(at("2026-10-31"), ["upcoming", "upcoming", "upcoming"]);
+  assert.deepEqual(at("2026-11-01"), ["current", "upcoming", "upcoming"]);
+  assert.deepEqual(at("2026-11-15"), ["current", "upcoming", "upcoming"]);
+  assert.deepEqual(at("2026-11-16"), ["past", "current", "upcoming"]);
+  assert.deepEqual(at("2026-12-17"), ["past", "past", "current"]);
+  assert.deepEqual(at("2027-01-20"), ["past", "past", "current"]);
+});
+
+test("Bogotá date does not move with UTC midnight", () => {
+  // 03:00 UTC on Nov 1 is still Oct 31 in Bogotá (UTC-5).
+  assert.equal(bogotaToday(new Date("2026-11-01T03:00:00Z")), "2026-10-31");
+  assert.equal(bogotaToday(new Date("2026-11-01T05:00:00Z")), "2026-11-01");
+});
+
+test("the active day is the topmost one with content still below the sticky bar", () => {
+  const line = 150;
+  assert.equal(activeDayIndex([700, 1300, 1900], line), 0); // the first day on screen
+  assert.equal(activeDayIndex([151, 800, 1400], line), 0); // one pixel of it still shows
+  assert.equal(activeDayIndex([150, 800, 1400], line), 1); // completely above: the next takes over
+  assert.equal(activeDayIndex([-500, 120, 700], line), 2); // day 2 is out of view too
+  assert.equal(activeDayIndex([-900, -300, -10], line), 2); // past the end: the last stays
+  assert.equal(activeDayIndex([], line), 0);
+});
+
+test("stop place: the department when the city is the stop's name, else the whole location", () => {
+  assert.equal(stopPlace("Santa Marta, Magdalena", "Santa Marta"), "Magdalena");
+  assert.equal(stopPlace("San Basilio de Palenque, Bolívar", "Palenque de Benkos"), "San Basilio de Palenque, Bolívar");
 });

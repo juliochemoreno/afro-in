@@ -2,6 +2,7 @@
 // One day's activities (time, kind, title, artist with flag, note, sign-up),
 // or "to be announced" when there are none. Shared by the listing journey
 // and the stop pages.
+import Flag from "@/components/Flag.astro";
 import { useTranslations } from "@/i18n/utils";
 import type { Lang } from "@/lib/programacion";
 
@@ -9,10 +10,11 @@ export interface EditionActivity {
   time?: string;
   kind?: string;
   title: string;
-  flag?: string;
-  byline?: string;
+  // One line per artist: flag, country and "Name (Country)".
+  artistLines?: { countryCode: string; countryName: string; byline: string }[];
   note?: string;
   signupUrl?: string;
+  signupLabel?: string;
 }
 
 interface Props {
@@ -24,6 +26,9 @@ interface Props {
 const { activities, lang, headingLevel = "h4" } = Astro.props;
 const Heading = headingLevel;
 const t = useTranslations(lang);
+// A time column only when some time is known; unknown ones are said once.
+const anyTime = activities.some((activity) => activity.time);
+const missingTime = activities.some((activity) => !activity.time);
 ---
 
 {activities.length === 0 ? (
@@ -32,28 +37,30 @@ const t = useTranslations(lang);
     <p class="fz-muted">{t("edition.agendaTbaText")}</p>
   </div>
 ) : (
-  <div class="fz-activities">
-    {activities.map((activity) => (
-      <article class="fz-activity">
-        <p class:list={["fz-display", "fz-gold", "fz-activity-time", { "fz-activity-time-tba": !activity.time }]}>
-          {activity.time ?? t("edition.timeTba")}
-        </p>
-        <div>
-          {activity.kind && <p class="fz-activity-kind">{activity.kind}</p>}
-          <Heading class="fz-display fz-activity-title">{activity.title}</Heading>
-          {activity.byline && (
-            <p class="fz-muted fz-activity-byline">
-              <span class="fz-flag" aria-hidden="true">{activity.flag}</span> {activity.byline}
-            </p>
-          )}
-          {activity.note && <p class="fz-muted fz-activity-note">{activity.note}</p>}
-          {activity.signupUrl && (
-            <a class="fz-button fz-button-solid fz-activity-signup" href={activity.signupUrl}>
-              {t("edition.signup")}
-            </a>
-          )}
-        </div>
-      </article>
-    ))}
+  <div class="fz-program">
+    {missingTime && <p class="fz-muted fz-program-tbc">{t("edition.timesTbc")}</p>}
+    <ul class="fz-agenda">
+      {activities.map((activity) => (
+        <li class:list={["fz-agenda-item", { "fz-agenda-timed": anyTime }]}>
+          {anyTime && <span class="fz-agenda-time">{activity.time ?? ""}</span>}
+          <div>
+            <Heading class="fz-agenda-title">
+              {activity.title}
+            </Heading>
+            {activity.artistLines?.map((line) => (
+              <p class="fz-muted fz-agenda-byline">
+                <Flag code={line.countryCode} name={line.countryName} />{line.byline}
+              </p>
+            ))}
+            {activity.note && <p class="fz-muted fz-agenda-note">{activity.note}</p>}
+            {activity.signupUrl && (
+              <a class="fz-button fz-button-solid fz-agenda-signup" href={activity.signupUrl}>
+                {activity.signupLabel ?? t("edition.signup")}
+              </a>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
   </div>
 )}

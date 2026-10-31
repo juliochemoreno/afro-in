@@ -2,6 +2,14 @@
    Dark like the edition posters; header, footer and brand red stay the site's. */
 
 .fz {
+  /* Distance from the content column to the screen edge (wide screens), for photos that bleed. */
+  /* Same container as the site header (1200px with 32px sides; 16px on phones, where the header is 8px): text lines up with the logo, photos may bleed beyond it. */
+  --fz-gutter: 32px;
+  --fz-content-max: 1136px; /* the header's nav: 1200px wide with 32px padding */
+  --fz-bleed: calc((100cqw - min(var(--fz-content-max), 100cqw - 2 * var(--fz-gutter))) / 2);
+  --fz-section-pad: 48px;
+  container-type: inline-size;
+  overflow-x: clip;
   --fz-night: #161616; /* the footer's black */
   --fz-jungle: #123326;
   --fz-jungle-2: #1a4a35;
@@ -39,9 +47,9 @@
 }
 
 .fz-wrap {
-  max-width: 1200px;
+  max-width: calc(var(--fz-content-max) + 2 * var(--fz-gutter));
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 var(--fz-gutter);
   box-sizing: border-box;
 }
 
@@ -115,34 +123,45 @@
   color: var(--fz-gold);
 }
 
-.fz-offers {
-  list-style: none;
-  margin: 32px 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+.fz-tiers [hidden] {
+  display: none !important;
 }
 
-.fz-offers li {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  padding-top: 16px;
-  border-top: 1px solid var(--fz-gold);
+.fz-tier-cur {
+  font-size: 0.45em;
+  letter-spacing: 0.06em;
 }
 
-.fz-offer-title {
-  font-size: 26px;
-  line-height: 1.1;
+.fz-tier-flag {
+  align-self: flex-start;
+  padding: 2px 10px;
+  border: 1px solid var(--fz-line);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.fz-offer-cta {
+.fz-tier-current {
+  background: var(--fz-red);
+  border-color: var(--fz-red);
+  color: #fff;
+}
+
+.fz-tiers li[data-stage="past"] > :not(.fz-tier-flag) {
+  opacity: 0.45;
+}
+
+.fz-tiers li[data-stage="current"] {
+  border-top-color: var(--fz-gold);
+}
+
+.fz-tier-buy {
+  align-self: flex-start;
   margin-top: 12px;
 }
 
-.fz-offer-cta-soon {
+.fz-tier-buy-soon {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -174,9 +193,15 @@
   margin: 0;
 }
 
+@media (max-width: 768px) {
+  .fz {
+    --fz-gutter: 16px;
+  }
+}
+
 @media (max-width: 720px) {
-  .fz-wrap {
-    padding: 0 16px;
+  .fz {
+    --fz-section-pad: 32px;
   }
 
   .fz-frame {
@@ -187,8 +212,13 @@
     padding: 24px 20px;
   }
 
-  .fz-tiers,
-  .fz-offers {
+  .fz-tickets h2,
+  .fz-tickets h3 {
+    font-size: 32px;
+    margin-bottom: 16px;
+  }
+
+  .fz-tiers {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
@@ -199,6 +229,9 @@
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  min-height: min(78vh, 720px);
+  display: flex;
+  align-items: flex-end;
 }
 
 .fz-photo-hero-img {
@@ -210,6 +243,7 @@
   z-index: -2;
 }
 
+/* The wash spans the hero's real height (its content can be taller than the minimum). */
 .fz-photo-hero::after {
   content: "";
   position: absolute;
@@ -222,14 +256,15 @@
   position: relative;
 }
 
-.fz-photo-hero {
-  min-height: min(78vh, 720px);
-  display: flex;
-  align-items: flex-end;
-}
-
 .fz-photo-hero > .fz-photo-hero-content {
   width: 100%;
+}
+
+/* Desktop: the hero fills the screen below the site header, so the next block shows only on scroll. */
+@media (min-width: 721px) {
+  .fz-photo-hero {
+    min-height: calc(100svh - 80px);
+  }
 }
 
 @media (max-width: 720px) {
@@ -238,7 +273,7 @@
   }
 }
 
-/* Countries strip (international reach): big flags, names under, gold dots. */
+/* Countries strip (international reach): the heading, then one compact row of small flags with their names. */
 .fz-countries {
   margin-top: 32px;
 }
@@ -255,92 +290,124 @@
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 14px 0;
+  align-items: center;
+  gap: 10px 20px;
 }
 
 .fz-countries-list li {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-width: 76px;
-  padding: 0 14px;
-}
-
-.fz-countries-list li + li {
-  position: relative;
-}
-
-.fz-countries-list li + li::before {
-  content: "";
-  position: absolute;
-  left: -3px;
-  top: 20px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--fz-gold);
-}
-
-.fz-countries-list li:first-child {
-  padding-left: 0;
 }
 
 .fz-countries-flag {
-  font-size: 44px;
+  display: inline-flex;
+  font-size: 20px;
   line-height: 1;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.fz-countries-flag .fz-flagsvg {
+  vertical-align: baseline;
 }
 
 .fz-countries-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
   color: var(--fz-cream);
 }
 
+/* Phones: the earlier look, bigger flags in a 3-column grid with the name under each. */
 @media (max-width: 720px) {
   .fz-countries-list {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px 8px;
+    align-items: start;
   }
 
-  .fz-countries-list li,
-  .fz-countries-list li:first-child {
-    min-width: 0;
-    padding: 0;
-  }
-
-  .fz-countries-list li + li::before {
-    display: none;
+  .fz-countries-list li {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
   }
 
   .fz-countries-flag {
     font-size: 36px;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+  }
+
+  .fz-countries-flag .fz-flagsvg {
+    margin-right: 0;
+  }
+
+  .fz-countries-name {
+    font-size: 14px;
+    font-weight: 600;
   }
 }
 
-.fz-flag {
-  font-size: 1.25em;
-  line-height: 1;
+.fz-pin {
+  display: block;
+  flex: none;
+  width: 0.78em;
+  height: 0.78em;
   margin-right: 6px;
+  color: #e6b84a;
 }
 
-/* Headliner (the edition's star artist). */
+.fz-flagsvg {
+  display: inline-block;
+  width: 1.333em;
+  height: 1em;
+  vertical-align: -0.12em;
+  margin-right: 0.45em;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(244, 234, 213, 0.4);
+}
+
+/* Headliner (the edition's star artist): a tall photo panel left, text right, inside the content
+   column, fading into the page colour (no frame). On phones the photo is a band on top. */
 .fz-headliner-inner {
   display: grid;
-  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 48px;
-  align-items: center;
-  padding: 32px;
+  align-items: stretch;
+}
+
+.fz-headliner-side {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+/* The photo stays in view (below the site header) while the right column scrolls through the
+   dates and the tickets; it lets go where the section ends. */
+.fz-headliner-media {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+  position: sticky;
+  top: 92px;
+  height: clamp(480px, calc(100svh - 92px - 24px), 85svh);
+  overflow: hidden;
+}
+
+/* The photo itself fades out (mask), so its edges melt into the page colour with no frame. */
+.fz-headliner-media picture {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 86%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 86%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+.fz-headliner-media picture {
+  display: block;
+  position: absolute;
+  inset: 0;
 }
 
 .fz-headliner-photo {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: 4 / 5;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -352,7 +419,7 @@
 
 .fz-headliner-name {
   margin: 4px 0 0;
-  font-size: clamp(56px, 8vw, 112px);
+  font-size: clamp(48px, 6vw, 84px);
   line-height: 0.95;
 }
 
@@ -380,29 +447,63 @@
   text-decoration: none;
 }
 
+.fz-headliner-where {
+  display: flex;
+  align-items: baseline;
+}
+
 .fz-headliner-dates .fz-display {
   font-size: 22px;
   grid-row: span 2;
 }
 
-.fz-headliner-more {
-  margin-top: 24px;
+.fz-headliner-extra {
+  border-top: 1px solid var(--fz-line);
+  margin-top: 32px;
 }
 
-.fz-headliner-extra {
-  grid-column: 1 / -1;
-  border-top: 1px solid var(--fz-line);
+/* In the narrower right column the price stages stack. */
+.fz-headliner-extra .fz-tiers {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
 }
 
 .fz-tickets-bare {
   padding: 28px 0 0;
 }
 
-@media (max-width: 720px) {
+/* Below 1024px the photo is a 16:10 band on top, edge to edge, and the text goes under it. */
+@media (max-width: 1023px) {
   .fz-headliner-inner {
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
-    padding: 16px;
+  }
+
+  .fz-headliner-media {
+    position: relative;
+    top: auto;
+    height: auto;
+    min-height: 0;
+    grid-column: 1;
+    grid-row: 1;
+    aspect-ratio: 16 / 10;
+    margin-inline: calc(-1 * var(--fz-bleed));
+  }
+
+  .fz-headliner-media picture {
+    -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0, #000 62%, transparent 100%);
+  }
+
+  .fz-headliner-side {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 720px) {
+  .fz-headliner-extra {
+    margin-top: 24px;
   }
 
   .fz .fz-headliner-dates a {
@@ -417,18 +518,16 @@
 /* Scrolly: steps scroll, the framed photo stays (sticky) and follows them.
    Used by the listing journey and the stop agendas. */
 .fz-journey {
-  padding-top: 24px;
-  padding-bottom: 72px;
 }
 
 .fz-journey-title {
-  margin: 0;
+  margin: 0 0 8px;
   font-size: 64px;
   line-height: 1;
 }
 
 .fz-journey-lead {
-  margin: 8px 0 0;
+  margin: 0 0 32px;
   font-size: 18px;
   max-width: 60ch;
 }
@@ -437,7 +536,6 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
   gap: 64px;
-  margin-top: 24px;
 }
 
 .fz-scrolly-steps {
@@ -455,23 +553,12 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 12px;
   border-top: 1px solid var(--fz-line);
-}
-
-.fz-journey-entry {
-  margin-top: 8px;
+  padding: 40px 0;
 }
 
 .fz-journey-entry + .fz-journey-entry {
-  margin-top: 28px;
-}
-
-.fz-journey-link {
-  display: inline-block;
-  margin-top: 8px;
-  font-weight: 600;
-  text-underline-offset: 4px;
+  margin-top: 32px;
 }
 
 .fz-scrolly-stage {
@@ -487,6 +574,30 @@
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
+}
+
+/* Wide screens: half and half inside the page's content column. The photo is a tall panel
+   that stays in view. */
+@media (min-width: 1024px) {
+  .fz-scrolly {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 48px;
+  }
+
+  .fz-scrolly-frame {
+    top: 92px;
+    height: clamp(480px, calc(100svh - 92px - 24px), 85svh);
+  }
+
+  .fz-scrolly-photos {
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
+  /* Days are as tall as their content, with no empty stretch before the next one. */
+  .fz-scrolly-step {
+    min-height: 0;
+  }
 }
 
 .fz-scrolly-panel {
@@ -508,35 +619,161 @@
   display: block;
 }
 
-.fz-scrolly-panel figcaption {
+.fz-scrolly-slide {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 64px 24px 20px;
+  inset: 0;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+
+.fz-scrolly-slide picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Journey photo, H6 style: the photo fills the box; scrims top and bottom; progress bars,
+   logo or country and counter on top; name and place or time at the bottom. */
+.fz-scrolly-slide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(rgba(14, 10, 8, 0.85), transparent 30%, transparent 55%, rgba(14, 10, 8, 0.92));
+}
+
+.fz-slide-top,
+.fz-slide-bottom {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* The outgoing caption is gone before the incoming one appears, so two names never overlap. */
+.fz-scrolly-slide[data-slide-active] .fz-slide-top,
+.fz-scrolly-slide[data-slide-active] .fz-slide-bottom {
+  opacity: 1;
+  transition: opacity 0.25s ease 0.45s;
+}
+
+.fz-slide-top {
+  top: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(14px, 1.15vw, 18px);
+  color: #d9ccb3;
+}
+
+.fz-slide-id {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.fz-slide-count {
+  color: #e6b84a;
+  font-weight: 500;
+}
+
+.fz-slide-bottom {
+  bottom: 12px;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, transparent 0%, rgba(22, 22, 22, 0.9) 70%);
+  gap: 2px;
 }
 
-.fz-scrolly-panel-day {
-  font-size: 56px;
-  line-height: 1;
+.fz-slide-title {
+  font-size: clamp(26px, 2.6vw, 44px);
+  line-height: 1.05;
+  color: #f3e9d2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.fz-scrolly-panel-city {
-  font-size: 22px;
+.fz-slide-sub {
+  display: flex;
+  align-items: baseline;
+  font-size: clamp(13px, 1.15vw, 18px);
+  color: #bfb39c;
+}
+
+.fz-slide-progress {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+}
+
+.fz-slide-bar {
+  flex: 1;
+  height: 2px;
+  background: rgba(243, 233, 210, 0.3);
+  overflow: hidden;
+}
+
+.fz-slide-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #f3e9d2;
+}
+
+.fz-slide-bar.is-done .fz-slide-bar-fill {
+  width: 100%;
+}
+
+.fz-slide-bar.is-current .fz-slide-bar-fill {
+  animation: fz-bar-fill 4.5s linear forwards;
+}
+
+.fz-scrolly-stage.is-paused .fz-slide-bar.is-current .fz-slide-bar-fill {
+  animation-play-state: paused;
+}
+
+@keyframes fz-bar-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fz-scrolly-panel {
+  .fz-slide-bar.is-current .fz-slide-bar-fill {
+    animation: none;
+    width: 100%;
+  }
+}
+
+.fz-scrolly-slide[data-slide-active] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fz-scrolly-panel,
+  .fz-scrolly-slide,
+  .fz-slide-top,
+  .fz-slide-bottom,
+  .fz-scrolly-slide[data-slide-active] .fz-slide-top,
+  .fz-scrolly-slide[data-slide-active] .fz-slide-bottom {
     transition: none;
   }
 }
 
 @media (max-width: 900px) {
   .fz-journey-title {
-    font-size: 48px;
+    font-size: 40px;
   }
 
   .fz-scrolly {
@@ -556,7 +793,6 @@
 
   .fz-scrolly-frame {
     position: static;
-    padding: 4px;
   }
 
   .fz-scrolly-photos {
@@ -565,119 +801,195 @@
     width: 100%;
   }
 
-  .fz-scrolly-panel figcaption {
-    padding: 40px 14px 10px;
-  }
-
-  .fz-scrolly-panel-day {
-    font-size: 34px;
-  }
-
-  .fz-scrolly-panel-city {
-    font-size: 16px;
-  }
-
   .fz-scrolly-step {
     min-height: 52vh;
     padding: 24px 0;
   }
 }
 
-/* A day: heading, venue line, activities (journey and stop pages). */
-.fz-dayhead {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* Compact day bar: zero-height sticky anchor (no layout shift) scoped to the day. */
+.fz-daybar-anchor {
+  position: sticky;
+  top: var(--fz-daybar-top, 80px);
+  height: 0;
+  z-index: 2;
 }
 
-.fz-day-count {
-  margin: 0;
-  font-weight: 600;
-  color: var(--fz-gold);
-}
-
-.fz-day-weekday {
+.fz-daybar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 22px;
+  padding: 10px 0;
+  background: var(--fz-night);
+  border-bottom: 1px solid rgba(230, 184, 74, 0.45);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
+/* Gold calendar block shared by the sticky day bar and the day links. */
+.fz-cal {
+  flex: none;
+  width: 44px;
+  padding: 4px 0 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #e6b84a;
+  color: #161616;
+}
+
+.fz-cal-wd {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.fz-cal-num {
+  font-size: var(--fz-cal-num, 24px);
+  line-height: 1;
+}
+
+.fz-daybar-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fz-daybar-venue {
+  display: flex;
+  align-items: baseline;
+  font-size: 15px;
+  color: #f3e9d2;
+  min-width: 0;
+}
+
+.fz-daybar-venue span {
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.fz-daybar-place {
+  font-size: 12px;
+  color: var(--fz-muted);
+  line-height: 1.3;
+}
+
+.fz-daybar-count {
+  flex: none;
+  font-size: 12px;
+  color: var(--fz-muted);
+  white-space: nowrap;
+}
+
+.fz-scrolly-step[data-stuck] .fz-daybar {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fz-daybar {
+    transition: none;
+  }
+}
+
+/* A day: counter + date, venue line, compact agenda (journey and stop pages). */
+.fz-dayhead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fz-day-kicker {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+}
+
+/* Subordinate to the section title (64px, 48px on phones): about 57% of it. */
 .fz-day-date {
   margin: 0;
-  font-size: clamp(44px, 5vw, 64px);
-  line-height: 0.95;
+  font-size: 36px;
+  line-height: 1.05;
 }
 
 .fz-venue {
   margin: 12px 0 0;
+  font-size: 24px;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
+  gap: 2px 8px;
 }
 
 .fz-venue-name {
-  font-size: 26px;
+  font-size: 24px;
   line-height: 1.1;
   color: var(--fz-gold);
 }
 
 .fz-venue-area {
+  font-size: 17px;
+}
+
+.fz-program {
+  margin-top: 16px;
+}
+
+.fz-program-tbc {
+  margin: 0 0 8px;
   font-size: 15px;
+  font-weight: 600;
 }
 
-.fz-activities {
-  display: flex;
-  flex-direction: column;
-  margin-top: 8px;
+.fz-agenda {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.fz-activity {
-  display: grid;
-  grid-template-columns: 110px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-  padding: 20px 0;
+.fz-agenda-item {
+  padding: 14px 0;
   border-bottom: 1px solid rgba(244, 234, 213, 0.12);
 }
 
-.fz-activity p,
-.fz-activity h3,
-.fz-activity h4 {
-  margin: 0;
+.fz-agenda-timed {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 16px;
+  align-items: baseline;
 }
 
-.fz-activity-time {
-  font-size: 30px;
-}
-
-.fz-activity-time-tba {
-  font-family: var(--font-heading, "Outfit"), sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.fz-activity-kind {
-  margin-bottom: 4px !important;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--fz-heliconia);
-}
-
-.fz-activity-title {
-  font-size: 34px;
-  font-weight: 400;
-  line-height: 1.05;
-}
-
-.fz-activity-byline,
-.fz-activity-note {
-  margin-top: 6px !important;
+.fz-agenda-time {
+  font-weight: 700;
   font-size: 16px;
+  color: var(--fz-gold);
 }
 
-.fz-activity-signup {
+.fz-agenda-title {
+  margin: 0;
+  font-family: var(--font-body, "Outfit"), sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.fz-agenda-byline,
+.fz-agenda-note {
+  margin: 4px 0 0;
+  font-size: 15px;
+}
+
+.fz-agenda-signup {
   margin-top: 12px;
 }
 
@@ -695,20 +1007,108 @@
 }
 
 @media (max-width: 720px) {
-  .fz-activity {
-    grid-template-columns: 72px minmax(0, 1fr);
-    gap: 14px;
+  .fz-agenda-timed {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px;
   }
 
-  .fz-activity-time {
-    font-size: 22px;
-  }
-
-  .fz-activity-time-tba {
-    font-size: 13px;
-  }
-
-  .fz-activity-title {
+  .fz-day-date {
     font-size: 28px;
+  }
+
+  .fz-venue {
+    font-size: 21px;
+  }
+
+  .fz-venue-name {
+    font-size: 21px;
+  }
+}
+
+/* Wide screens: Robe's photo bleeds to the LEFT screen edge and fades only on the inner side
+   (toward the text) and at the top and bottom. */
+@media (min-width: 1024px) {
+  .fz-headliner-media {
+    margin-left: calc(-1 * var(--fz-bleed));
+  }
+
+  .fz-headliner-media picture {
+    -webkit-mask-image: linear-gradient(to left, transparent 0, #000 18%), linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+    mask-image: linear-gradient(to left, transparent 0, #000 18%), linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  /* Journey photo bleeds to the RIGHT screen edge; fades on the inner (left) side, top and
+     bottom. Captions sit inside the opaque part. */
+  .fz-scrolly-stage {
+    margin-right: calc(-1 * var(--fz-bleed));
+  }
+
+  .fz-scrolly-slide picture,
+  .fz-scrolly-photos .fz-scrolly-slide::before {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18%), linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 18%), linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .fz-scrolly-photos .fz-scrolly-slide::before {
+    background: linear-gradient(rgba(14, 10, 8, 0.55), transparent 28%, transparent 55%, rgba(14, 10, 8, 0.85));
+  }
+
+  .fz-scrolly-photos .fz-slide-progress {
+    top: calc(10% + 6px);
+    left: 16%;
+    right: calc(var(--fz-bleed) + 16px);
+  }
+
+  .fz-scrolly-photos .fz-slide-top,
+  .fz-scrolly-photos .fz-slide-bottom {
+    left: 16%;
+    right: calc(var(--fz-bleed) + 16px);
+  }
+
+  .fz-scrolly-photos .fz-slide-top {
+    top: calc(10% + 22px);
+  }
+
+  .fz-scrolly-photos .fz-slide-bottom {
+    bottom: calc(12% + 4px);
+  }
+}
+
+/* One vertical rhythm for every section of the 2027 pages (desktop and phone): the same padding
+   above and below, so two neighbours are always 2 x --fz-section-pad apart. */
+.edition-intro,
+.edition-headliner,
+.edition-stops-section,
+.fz-journey,
+.edition-block,
+.edition-partners,
+.stop-days,
+.stop-tickets,
+.stop-link-wrap {
+  padding-top: var(--fz-section-pad);
+  padding-bottom: var(--fz-section-pad);
+}
+
+/* Phones and tablets: the same edge-to-edge photos; their captions stay on the container gutter. */
+@media (max-width: 900px) {
+  .fz-scrolly-stage {
+    margin-inline: calc(-1 * var(--fz-bleed));
+  }
+
+  .fz-scrolly-slide picture,
+  .fz-scrolly-slide::before {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+  }
+
+  .fz-slide-progress,
+  .fz-slide-top,
+  .fz-slide-bottom {
+    left: var(--fz-bleed);
+    right: var(--fz-bleed);
   }
 }

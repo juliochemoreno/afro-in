@@ -1,0 +1,13 @@
+---
+// Location pin for venues and places (the only place the icon is used). `heavy` thickens
+// the stroke to match bold display text; plain text gets the regular weight.
+import MapPin from "lucide-astro/MapPin";
+
+interface Props {
+  heavy?: boolean;
+}
+
+const { heavy = false } = Astro.props;
+---
+
+<MapPin class="fz-pin" size="1em" stroke-width={heavy ? 2.6 : 2} aria-hidden="true" />

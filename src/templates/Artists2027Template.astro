@@ -1,5 +1,6 @@
 ---
-import { artistPhoto } from "@/lib/artistPhotos";
+import { artistPhoto, artistPhotoMobile } from "@/lib/artistPhotos";
+import Flag from "@/components/Flag.astro";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
@@ -9,7 +10,7 @@ import EditionHeadliner from "@/components/EditionHeadliner.astro";
 import { getCollection } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
-import { artistAppearances, baseSlug, dayAnchor, dayLabel, entryLang, flagEmoji, type Lang } from "@/lib/programacion";
+import { artistAppearances, baseSlug, dayAnchor, dayLabel, entryLang, type Lang } from "@/lib/programacion";
 import { editionNav } from "@/lib/editionNav";
 import "@/styles/festival.css";
 
@@ -31,7 +32,6 @@ const artists = (await getCollection("artists2027"))
   .map((artist) => ({
     ...artist.data,
     photo: artistPhoto(artist.id, artist.data.photo),
-    flag: flagEmoji(artist.data.countryCode),
     appearances: artistAppearances(artist.id, stops).map((appearance) => {
       const label = dayLabel(appearance.date, lang);
       return {
@@ -62,7 +62,7 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
 
     {headliner && (
       <div class="fz-wrap artists-headliner">
-        <EditionHeadliner artist={headliner} appearances={headliner.appearances} lang={lang} />
+        <EditionHeadliner artist={{ ...headliner, photoMobile: artistPhotoMobile(headliner.id) }} appearances={headliner.appearances} lang={lang} />
       </div>
     )}
 
@@ -79,7 +79,7 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
           />
           <div class="artist-body">
             <h2 class="fz-display artist-name">{artist.name}</h2>
-            <p class="fz-muted artist-country"><span class="fz-flag" aria-hidden="true">{artist.flag}</span> {artist.country[lang]}</p>
+            <p class="fz-muted artist-country"><Flag code={artist.countryCode} name={artist.country[lang]} />{artist.country[lang]}</p>
             {artist.appearances.length ? (
               <ul class="artist-dates">
                 {artist.appearances.map((appearance) => (

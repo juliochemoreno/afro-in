@@ -3,7 +3,11 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
-import { artistPhoto, artistPhotoMobile } from "@/lib/artistPhotos";
+import { artistPhoto, artistPhotoMobile, daySlides } from "@/lib/artistPhotos";
+import { resolveSignup } from "@/lib/activitySignup";
+import Pin from "@/components/Pin.astro";
+import Flag from "@/components/Flag.astro";
+import EditionPartners from "@/components/EditionPartners.astro";
 import EditionTickets from "@/components/EditionTickets.astro";
 import EditionCountries from "@/components/EditionCountries.astro";
 import EditionHeadliner from "@/components/EditionHeadliner.astro";
@@ -16,11 +20,12 @@ import {
   dateRange,
   dayAnchor,
   dayLabel,
+  shortDateList,
   entryLang,
-  activityByline,
+  activityArtistIds,
+  stopPlace,
+  artistLines,
   artistAppearances,
-  firstAppearance,
-  flagEmoji,
   isComingSoon,
   joinList,
   journeyDays,
@@ -44,49 +49,65 @@ const stops = (await getCollection("tour2027"))
 const artists = (await getCollection("artists2027")).sort((a, b) => a.data.order - b.data.order);
 
 const stopCards = stops.map((stop) => {
-  const venues = [...new Set(stop.data.days.map((d) => d.venue).filter((v): v is string => !!v))];
   return {
     id: stop.id,
     name: stop.data.name,
     range: dateRange(stop.data.startDate, stop.data.endDate, lang),
-    place: venues.length ? joinList(venues, lang) : stop.data.location,
+    place: `${stopPlace(stop.data.location, stop.data.name)}, ${t("edition.stopCountry")}`,
     comingSoon: isComingSoon(stop.data.days),
     href: getTranslatedPath(`/programacion/2027/${baseSlug(stop.filePath!)}`, lang),
     tickets: stop.data.tickets,
     cardImage: stop.data.cardImage,
     cardPosition: stop.data.cardPosition,
-    large: stop.data.titleSize === "large",
   };
 });
 
-const allDays = stops.flatMap((stop) => stop.data.days);
 
-const idByPhotoSrc = new Map(artists.map((artist) => [artist.data.photo.src, artist.id]));
 const artistsById = new Map(artists.map((artist) => [artist.id, artist.data]));
 const journey: JourneyStep[] = journeyDays(
   stops.map((stop) => ({ ...stop.data, slug: baseSlug(stop.filePath!) }))
 ).map(({ date, entries }) => {
   const label = dayLabel(date, lang);
   const withPhoto = entries.find((entry) => entry.day.photo);
-  const firstArtist = entries
+  const dayArtists = entries
     .flatMap((entry) => entry.day.activities)
-    .map((activity) => (activity.artist ? artistsById.get(activity.artist.id) : undefined))
-    .find(Boolean);
-  const basePhoto = withPhoto?.day.photo ?? firstArtist?.photo ?? entries[0].stop.cardImage;
-  const portraitId = idByPhotoSrc.get(basePhoto.src);
+    .filter((activity) => !activity.appearanceOnly)
+    .flatMap((activity) =>
+      activityArtistIds(activity).map((id) => ({ id, ...artistsById.get(id)!, time: activity.time }))
+    );
+  // One time per artist for the day: the first one the agenda gives.
+  const timeByArtist = new Map<string, string>();
+  for (const artist of dayArtists) if (artist.time && !timeByArtist.has(artist.id)) timeByArtist.set(artist.id, artist.time);
+  const placeOf = (stop: { name: string; location: string }) =>
+    `${stop.location.split(",")[0].trim()}, ${t("edition.stopCountry")}`;
+  const venueEntry = withPhoto ?? entries[0];
   return {
     ...label,
     city: joinList([...new Set(entries.map((entry) => entry.stop.name))], lang),
-    photo: portraitId ? artistPhoto(portraitId, basePhoto) : basePhoto,
-    photoMobile: portraitId ? artistPhotoMobile(portraitId) : undefined,
-    photoPosition: withPhoto ? withPhoto.day.photoPosition : (firstArtist?.photoPosition ?? "center"),
+    date,
+    barVenue: joinList([...new Set(entries.map((entry) => entry.day.venue ?? entry.stop.name))], lang),
+    barPlace: joinList([...new Set(entries.map((entry) => entry.stop.location.split(",")[0].trim()))], lang),
+    slides: daySlides(
+      withPhoto?.day.photo
+        ? {
+            photos: [withPhoto.day.photo, ...withPhoto.day.morePhotos],
+            position: withPhoto.day.photoPosition,
+            positions: withPhoto.day.photoPositions,
+            name: venueEntry.day.venue ?? venueEntry.stop.name,
+            place: placeOf(venueEntry.stop),
+          }
+        : undefined,
+      dayArtists.map((artist) => ({ ...artist, time: timeByArtist.get(artist.id) })),
+      { photo: entries[0].stop.cardImage, name: entries[0].day.venue ?? entries[0].stop.name, place: placeOf(entries[0].stop) },
+      lang
+    ),
     entries: entries.map(({ stop, day }) => ({
       stopName: stop.name,
       venue: day.venue,
-      href: `${getTranslatedPath(`/programacion/2027/${stop.slug}`, lang)}#${dayAnchor(date)}`,
-      activities: day.activities.map((activity) => ({
+      activities: day.activities.filter((activity) => !activity.appearanceOnly).map((activity) => ({
         ...activity,
-        ...activityByline(activity.title, activity.artist ? artistsById.get(activity.artist.id) : undefined, lang),
+        ...resolveSignup(activity, lang, t),
+        artistLines: artistLines(activity.title, activityArtistIds(activity).map((id) => artistsById.get(id)), lang),
       })),
     })),
   };
@@ -106,12 +127,29 @@ const headlinerAppearances = headliner
       };
     })
   : [];
-const artistCards = artists.filter((artist) => !artist.data.featured).map((artist) => {
-  const first = firstAppearance(artist.id, allDays);
-  const when = first
-    ? [dayLabel(first.date, lang).dayMonth, first.venue].filter(Boolean).join(", ")
-    : t("edition.dateTba");
-  return { ...artist.data, photo: artistPhoto(artist.id, artist.data.photo), flag: flagEmoji(artist.data.countryCode), meta: `${artist.data.country[lang]} · ${when}` };
+// Dates and short venue names of each artist across both stops, from the agenda.
+const whenByArtist = new Map<string, { dates: string[]; venues: string[] }>();
+for (const stop of stops) {
+  for (const day of stop.data.days) {
+    for (const activity of day.activities) {
+      for (const id of activityArtistIds(activity)) {
+        const entry = whenByArtist.get(id) ?? { dates: [], venues: [] };
+        const venue = day.venueShort ?? day.venue ?? stop.data.name;
+        if (!entry.dates.includes(day.date)) entry.dates.push(day.date);
+        if (!entry.venues.includes(venue)) entry.venues.push(venue);
+        whenByArtist.set(id, entry);
+      }
+    }
+  }
+}
+const artistCards = artists.map((artist) => {
+  const when = whenByArtist.get(artist.id);
+  return {
+    ...artist.data,
+    photo: artistPhoto(artist.id, artist.data.photo),
+    dates: when ? shortDateList(when.dates, lang) : undefined,
+    venues: when ? when.venues.join(", ") : undefined,
+  };
 });
 
 const { navLinks, ctaLink } = editionNav(lang);
@@ -142,17 +180,15 @@ const { navLinks, ctaLink } = editionNav(lang);
     {headliner && (
       <div class="fz-wrap edition-headliner">
         <EditionHeadliner
-          artist={{ ...headliner.data, photo: artistPhoto(headliner.id, headliner.data.photo) }}
+          artist={{ ...headliner.data, photo: artistPhoto(headliner.id, headliner.data.photo), photoMobile: artistPhotoMobile(headliner.id) }}
           appearances={headlinerAppearances}
           lang={lang}
-          moreHref={getTranslatedPath("/artistas", lang)}
         >
           {stopCards.filter((stop) => stop.tickets).map((stop) => (
             <EditionTickets
               tickets={stop.tickets!}
               lang={lang}
               heading={`${t("edition.ticketsTitle")} · ${stop.name}`}
-              presale
               bare
             />
           ))}
@@ -161,21 +197,24 @@ const { navLinks, ctaLink } = editionNav(lang);
     )}
 
 
-    <section class="fz-wrap edition-stops-section" aria-labelledby="edition-stops-title">
-      <header class="edition-section-head">
+    <section class="edition-stops-section" aria-labelledby="edition-stops-title">
+      <header class="fz-wrap edition-section-head">
         <h2 id="edition-stops-title" class="fz-display edition-h2">{t("edition.stopsTitle")}</h2>
         <p class="fz-muted edition-lead">{t("edition.stopsText")}</p>
       </header>
       <div class="edition-stops">
         {stopCards.map((stop) => (
           <a class="edition-stop" href={stop.href}>
-            <Image src={stop.cardImage} alt="" widths={[480, 960]} sizes="(max-width: 720px) 100vw, 580px" class="edition-stop-photo" style={`object-position: ${stop.cardPosition}`} />
-            <span class="fz-display fz-gold edition-stop-range">{stop.range}</span>
-            <span class:list={["fz-display", "edition-stop-name", { "edition-stop-name-large": stop.large }]}>{stop.name}</span>
-            <span class="fz-muted">{stop.place}</span>
-            <span class="edition-stop-link">
-              {stop.comingSoon ? t("edition.comingSoon") : t("edition.viewProgram")}
+            <Image src={stop.cardImage} alt="" widths={[480, 960]} sizes="(max-width: 1023px) 100vw, 50vw" class="edition-stop-photo" style={`object-position: ${stop.cardPosition}`} />
+            <span class="edition-stop-bottom">
+              <span class="edition-stop-range">{stop.range}</span>
+              <span class="edition-stop-title">
+                <span class="fz-display edition-stop-name">{stop.name}</span>
+                <span class="edition-stop-arrow" aria-hidden="true">→</span>
+              </span>
+              <span class="edition-stop-place"><Pin /><span>{stop.place}</span></span>
             </span>
+            <span class="edition-stop-sr">{stop.comingSoon ? t("edition.comingSoon") : t("edition.viewProgram")}</span>
           </a>
         ))}
       </div>
@@ -199,26 +238,20 @@ const { navLinks, ctaLink } = editionNav(lang);
               class="edition-artist-photo"
               style={`object-position: ${artist.photoPosition}`}
             />
-            <div>
+            <div class="edition-artist-top">
+              <p class="edition-artist-country"><Flag code={artist.countryCode} name={artist.country[lang]} />{artist.country[lang]}</p>
+              {artist.dates && <p class="edition-artist-dates">{artist.dates}</p>}
+            </div>
+            <div class="edition-artist-bottom">
               <h3 class="fz-display edition-artist-name">{artist.name}</h3>
-              <p class="fz-muted edition-artist-meta"><span class="fz-flag" aria-hidden="true">{artist.flag}</span> {artist.meta}</p>
+              {artist.venues && <p class="edition-artist-venues" title={artist.venues}>{artist.venues}</p>}
             </div>
           </article>
         ))}
       </div>
     </section>
 
-    <section class="fz-band">
-      <div class="fz-wrap">
-        <div>
-          <h2 class="fz-display edition-band-title">{t("edition.pastTitle")}</h2>
-          <p class="fz-muted">{t("edition.pastText")}</p>
-        </div>
-        <a class="fz-button" href={getTranslatedPath("/programacion/2026", lang)}>
-          {t("edition.pastLink")}
-        </a>
-      </div>
-    </section>
+    <EditionPartners lang={lang} />
   </main>
 
   <Footer variant="festival" />
@@ -241,8 +274,6 @@ const { navLinks, ctaLink } = editionNav(lang);
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: 48px;
     align-items: start;
-    padding-top: 72px;
-    padding-bottom: 72px;
   }
 
   .edition-intro-title {
@@ -259,26 +290,16 @@ const { navLinks, ctaLink } = editionNav(lang);
     max-width: 52ch;
   }
 
-  .edition-section-head {
-    margin-bottom: 32px;
-  }
-
-  .edition-headliner {
-    padding-bottom: 24px;
-  }
-
-  .edition-stops-section {
-    padding-top: 40px;
-    padding-bottom: 56px;
-  }
-
+  /* Stop card: a wide photo fills it; department and dates on top, name and places at the bottom. */
   .edition-stop-photo {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 3;
+    height: 100%;
     object-fit: cover;
     display: block;
-    margin-bottom: 12px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
   }
 
   .edition-title {
@@ -289,7 +310,7 @@ const { navLinks, ctaLink } = editionNav(lang);
     align-items: baseline;
     font-weight: 400;
     line-height: 0.9;
-    font-size: clamp(88px, 13vw, 184px);
+    font-size: clamp(72px, 13vw, 184px);
   }
 
   .edition-title-red {
@@ -299,13 +320,19 @@ const { navLinks, ctaLink } = editionNav(lang);
   .edition-stops {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 40px;
+    gap: 10px;
   }
 
+  /* Full screen width: two photos side by side with a small gap, faded only at the top and the
+     bottom; the outer screen edges stay sharp. Text scales with the cards. */
   .edition-stop {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    position: relative;
+    display: block;
+    height: clamp(480px, 70svh, 85svh);
+    overflow: hidden;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
     text-decoration: none;
   }
 
@@ -313,33 +340,98 @@ const { navLinks, ctaLink } = editionNav(lang);
     color: var(--fz-cream);
   }
 
+  .edition-stop::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(transparent 45%, rgba(14, 10, 8, 0.85));
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+  }
+
+  .edition-stop-bottom {
+    position: absolute;
+    z-index: 2;
+    bottom: 10%;
+    left: var(--fz-bleed);
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .edition-stop:last-child .edition-stop-bottom {
+    left: clamp(24px, 4vw, 64px);
+    right: clamp(24px, 3vw, 48px);
+  }
+
   .edition-stop-range {
-    font-size: 26px;
+    color: #e6b84a;
+    font-weight: 500;
+    font-size: clamp(15px, 1.4vw, 18px);
+  }
+
+  .edition-stop-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
   }
 
   .edition-stop-name {
-    font-size: 48px;
+    font-size: clamp(32px, 4vw, 64px);
+    line-height: 1.05;
+    white-space: nowrap;
+    color: #f3e9d2;
+  }
+
+  .edition-stop-place {
+    display: flex;
+    align-items: center;
+    font-size: clamp(14px, 1.25vw, 16px);
+    color: #bfb39c;
+    min-width: 0;
+  }
+
+  .edition-stop-place span {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .edition-stop-arrow {
+    flex: none;
+    font-size: clamp(22px, 1.9vw, 24px);
     line-height: 1;
+    color: #e6b84a;
+    transition: transform 0.2s ease;
   }
 
-  .edition-stop-name-large {
-    font-size: 72px;
+  .edition-stop:hover .edition-stop-arrow,
+  .edition-stop:focus-visible .edition-stop-arrow {
+    transform: translateX(4px);
   }
 
-  .edition-stop-link {
-    margin-top: 8px;
-    font-weight: 600;
-    color: var(--fz-gold);
-    text-decoration: underline;
-    text-underline-offset: 4px;
+  .edition-stop:focus-visible {
+    outline: 2px solid #e6b84a;
+    outline-offset: 3px;
   }
 
-  .fz .edition-stop:hover .edition-stop-link {
-    color: var(--fz-cream);
+  .edition-stop-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
-  .edition-block {
-    padding-bottom: 72px;
+  @media (prefers-reduced-motion: reduce) {
+    .edition-stop-arrow {
+      transition: none;
+    }
   }
 
   .edition-h2 {
@@ -349,46 +441,128 @@ const { navLinks, ctaLink } = editionNav(lang);
   }
 
   .edition-lead {
-    margin: 0 0 36px;
+    margin: 0 0 32px;
     font-size: 18px;
     max-width: 60ch;
   }
 
   .edition-artists {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 28px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
   }
 
+  /* Guest card: the photo fills it; country and dates on top, name and venues at the bottom, over soft scrims. */
   .edition-artist {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: #2a2018;
+  }
+
+  .edition-artist::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(rgba(14, 10, 8, 0.85), transparent 30%, transparent 55%, rgba(14, 10, 8, 0.92));
   }
 
   .edition-artist-photo {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 5;
+    height: 100%;
     object-fit: cover;
     display: block;
-    outline: 1px solid rgba(242, 193, 78, 0.6);
-    outline-offset: 5px;
+  }
+
+  .edition-artist-top,
+  .edition-artist-bottom {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    z-index: 2;
+  }
+
+  .edition-artist-top {
+    top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .edition-artist-top p {
+    margin: 0;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .edition-artist-country {
+    display: flex;
+    align-items: center;
+    color: #d9ccb3;
+    min-width: 0;
+  }
+
+  .edition-artist-dates {
+    color: #e6b84a;
+    font-weight: 500;
+  }
+
+  .edition-artist-bottom {
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
   }
 
   .edition-artist-name {
     margin: 0;
-    font-size: 30px;
+    font-size: 24px;
     line-height: 1.05;
+    color: #f3e9d2;
   }
 
-  .edition-artist-meta {
+  .edition-artist-venues {
     margin: 4px 0 0;
-    font-size: 15px;
+    font-size: 13px;
+    color: #bfb39c;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .edition-band-title {
-    font-size: 36px;
+  /* 8 artists: 4 columns from 1280px, 3 on small laptops, 2 on tablets and phones. */
+  @media (max-width: 1279px) {
+    .edition-artists {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .edition-artists {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+  }
+
+  /* Stacked, edge to edge, below 1024px (side by side the halves would be too narrow and tall). */
+  @media (max-width: 1023px) {
+    .edition-stops {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .edition-stop {
+      height: auto;
+      aspect-ratio: 16 / 10;
+    }
+
+    .edition-stop .edition-stop-bottom,
+    .edition-stop:last-child .edition-stop-bottom {
+      left: var(--fz-bleed);
+      right: var(--fz-bleed);
+    }
   }
 
   @media (max-width: 720px) {
@@ -396,31 +570,14 @@ const { navLinks, ctaLink } = editionNav(lang);
       padding-top: 96px;
     }
 
-    .edition-stops {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .edition-stops {
-      gap: 32px;
-    }
 
     .edition-intro {
       grid-template-columns: minmax(0, 1fr);
       gap: 16px;
-      padding-top: 48px;
-      padding-bottom: 48px;
-    }
-
-    .edition-stop-name {
-      font-size: 40px;
-    }
-
-    .edition-stop-name-large {
-      font-size: 52px;
     }
 
     .edition-h2 {
-      font-size: 48px;
+      font-size: 40px;
     }
 
     .edition-artists {
@@ -429,7 +586,11 @@ const { navLinks, ctaLink } = editionNav(lang);
     }
 
     .edition-artist-name {
-      font-size: 22px;
+      font-size: 19px;
+    }
+
+    .edition-artist-top p {
+      font-size: 12px;
     }
   }
 </style>

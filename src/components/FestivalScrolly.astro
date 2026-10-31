@@ -2,16 +2,25 @@
 // Scroll-driven layout of the edition pages: the steps (default slot) scroll
 // while a framed photo stays in place (sticky; pinned on top on phones) and
 // switches to the step crossing the screen. Each step needs data-step="<index>".
+import Pin from "@/components/Pin.astro";
+import Flag from "@/components/Flag.astro";
 import { getImage } from "astro:assets";
 import type { ImageMetadata } from "astro";
 
-export interface ScrollyPanel {
+export interface ScrollySlide {
   photo: ImageMetadata;
   // Horizontal version for the phone frame (max-width 900px), when it exists.
-  photoMobile?: ImageMetadata;
-  photoPosition: string;
-  title: string;
-  subtitle?: string;
+  mobile?: ImageMetadata;
+  position: string;
+  // Venue slides: name with place (bottom).
+  venue?: { name: string; place: string };
+  // Artist slides: country (top left), name and time that day (bottom).
+  artist?: { name: string; countryCode: string; countryName: string; time?: string };
+}
+
+// The photos of one step: the first shows, the rest crossfade after it (see the script).
+export interface ScrollyPanel {
+  slides: ScrollySlide[];
 }
 
 interface Props {
@@ -21,12 +30,14 @@ interface Props {
 const { panels } = Astro.props;
 
 const images = await Promise.all(
-  panels.map(async (panel) => ({
-    desktop: await getImage({ src: panel.photo, widths: [480, 960], format: "webp" }),
-    mobile: panel.photoMobile
-      ? await getImage({ src: panel.photoMobile, widths: [768, 1440], format: "webp" })
-      : undefined,
-  }))
+  panels.map((panel) =>
+    Promise.all(
+      panel.slides.map(async (slide) => ({
+        desktop: await getImage({ src: slide.photo, widths: [480, 960, 1440], format: "webp" }),
+        mobile: slide.mobile ? await getImage({ src: slide.mobile, widths: [768, 1440], format: "webp" }) : undefined,
+      }))
+    )
+  )
 );
 
 function srcset(image: Awaited<ReturnType<typeof getImage>>) {
@@ -40,31 +51,59 @@ function srcset(image: Awaited<ReturnType<typeof getImage>>) {
   </div>
 
   <div class="fz-scrolly-stage" aria-hidden="true">
-    <div class="fz-frame fz-scrolly-frame">
+    <div class="fz-scrolly-frame">
       <div class="fz-scrolly-photos">
         {panels.map((panel, index) => (
           <figure class="fz-scrolly-panel" data-panel={String(index)} data-active={index === 0 ? "" : undefined}>
-            <picture>
-              {images[index].mobile && (
-                <source media="(max-width: 900px)" srcset={srcset(images[index].mobile!)} sizes="100vw" />
-              )}
-              <img
-                src={images[index].desktop.src}
-                srcset={srcset(images[index].desktop)}
-                sizes="(max-width: 900px) 100vw, 440px"
-                width={images[index].desktop.attributes.width}
-                height={images[index].desktop.attributes.height}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                class="fz-scrolly-panel-img"
-                style={`object-position: ${panel.photoPosition}`}
-              />
-            </picture>
-            <figcaption>
-              <span class="fz-display fz-scrolly-panel-day">{panel.title}</span>
-              {panel.subtitle && <span class="fz-display fz-gold fz-scrolly-panel-city">{panel.subtitle}</span>}
-            </figcaption>
+            {panel.slides.length > 1 && (
+              <div class="fz-slide-progress" data-progress>
+                {panel.slides.map((_, i) => (
+                  <span class="fz-slide-bar"><span class="fz-slide-bar-fill"></span></span>
+                ))}
+              </div>
+            )}
+            {panel.slides.map((slide, slideIndex) => {
+              const image = images[index][slideIndex];
+              const first = slideIndex === 0;
+              // Slides after the first load when their day becomes current (data-* swapped by the script).
+              return (
+                <div class="fz-scrolly-slide" data-slide data-slide-active={first ? "" : undefined}>
+                  <picture>
+                    {image.mobile && (
+                      first
+                        ? <source media="(max-width: 900px)" srcset={srcset(image.mobile)} sizes="100vw" />
+                        : <source media="(max-width: 900px)" data-srcset={srcset(image.mobile)} sizes="100vw" />
+                    )}
+                    <img
+                      {...(first ? { src: image.desktop.src, srcset: srcset(image.desktop), loading: "lazy" } : { "data-src": image.desktop.src, "data-srcset": srcset(image.desktop) })}
+                      sizes="(max-width: 900px) 100vw, 50vw"
+                      width={image.desktop.attributes.width}
+                      height={image.desktop.attributes.height}
+                      alt=""
+                      decoding="async"
+                      class="fz-scrolly-panel-img"
+                      style={`object-position: ${slide.position}`}
+                    />
+                  </picture>
+                  <div class="fz-slide-top">
+                    <span class="fz-slide-id">
+                      {slide.artist && (
+                        <>
+                          <Flag code={slide.artist.countryCode} name={slide.artist.countryName} />{slide.artist.countryName}
+                        </>
+                      )}
+                    </span>
+                    {panel.slides.length > 1 && <span class="fz-slide-count">{slideIndex + 1}/{panel.slides.length}</span>}
+                  </div>
+                  <div class="fz-slide-bottom">
+                    <span class="fz-display fz-slide-title">{slide.venue?.name ?? slide.artist?.name}</span>
+                    {(slide.venue?.place || slide.artist?.time) && (
+                      <span class="fz-slide-sub">{slide.venue && <Pin />}<span>{slide.venue?.place ?? slide.artist?.time}</span></span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </figure>
         ))}
       </div>
@@ -73,31 +112,130 @@ function srcset(image: Awaited<ReturnType<typeof getImage>>) {
 </div>
 
 <script>
-  let observers: IntersectionObserver[] = [];
+  import { activeDayIndex } from "@/lib/programacion";
+
+  const SLIDE_MS = 4500;
+  const SITE_HEADER = 80;
+  const BAR_HEIGHT = 68;
+
+  // Story-style progress: bars before the current slide are full, the current one fills over SLIDE_MS.
+  function paintProgress(panel: HTMLElement) {
+    const bars = panel.querySelectorAll<HTMLElement>("[data-progress] .fz-slide-bar");
+    const slides = [...panel.querySelectorAll<HTMLElement>("[data-slide]")];
+    const current = slides.findIndex((slide) => slide.hasAttribute("data-slide-active"));
+    bars.forEach((bar, i) => {
+      bar.classList.toggle("is-done", i < current);
+      bar.classList.remove("is-current");
+      if (i === current) {
+        // Restart the fill animation.
+        void bar.offsetWidth;
+        bar.classList.add("is-current");
+      }
+    });
+  }
+  let timers: number[] = [];
+  let cleanups: (() => void)[] = [];
 
   function disconnectScrolly() {
-    observers.forEach((observer) => observer.disconnect());
-    observers = [];
+    cleanups.forEach((cleanup) => cleanup());
+    cleanups = [];
+    timers.forEach((timer) => window.clearInterval(timer));
+    timers = [];
+  }
+
+  // The extra photos of a day load only once its panel is current.
+  function loadSlides(panel: HTMLElement | undefined) {
+    panel?.querySelectorAll<HTMLSourceElement>("source[data-srcset]").forEach((source) => {
+      source.srcset = source.dataset.srcset ?? "";
+      source.removeAttribute("data-srcset");
+    });
+    panel?.querySelectorAll<HTMLImageElement>("img[data-src]").forEach((img) => {
+      img.srcset = img.dataset.srcset ?? "";
+      img.src = img.dataset.src ?? "";
+      img.removeAttribute("data-src");
+    });
   }
 
   function initScrolly() {
     disconnectScrolly();
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     document.querySelectorAll<HTMLElement>("[data-scrolly]").forEach((root) => {
       const panels = root.querySelectorAll<HTMLElement>("[data-panel]");
-      const show = (index: string) =>
-        panels.forEach((panel) => panel.toggleAttribute("data-active", panel.dataset.panel === index));
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) show((entry.target as HTMLElement).dataset.step ?? "0");
-          });
-        },
-        // A step is "current" while it crosses a line just below the middle
-        // of the screen (below the pinned photo on phones).
-        { rootMargin: "-55% 0px -40% 0px" }
+      let lastChange = Date.now();
+      const show = (index: string) => {
+        panels.forEach((panel) => {
+          const wasActive = panel.hasAttribute("data-active");
+          panel.toggleAttribute("data-active", panel.dataset.panel === index);
+          // A day that becomes current restarts from its first photo.
+          if (!wasActive && panel.dataset.panel === index) {
+            panel.querySelectorAll<HTMLElement>("[data-slide]").forEach((slide, i) => slide.toggleAttribute("data-slide-active", i === 0));
+            lastChange = Date.now();
+            paintProgress(panel);
+          }
+        });
+        if (!reduceMotion.matches) loadSlides(root.querySelector<HTMLElement>("[data-panel][data-active]") ?? undefined);
+      };
+      // One source of truth for the current day: the photo and the sticky bar both follow the
+      // topmost day with content below the site header and the bar (and, on phones, the pinned photo).
+      const stage = root.querySelector<HTMLElement>(".fz-scrolly-stage");
+      let barTop = -1;
+      const sync = () => {
+        const phone = window.matchMedia("(max-width: 900px)").matches;
+        const top = SITE_HEADER + (phone && stage ? Math.round(stage.getBoundingClientRect().height) : 0);
+        if (top !== barTop) {
+          barTop = top;
+          document.documentElement.style.setProperty("--fz-daybar-top", `${top}px`);
+        }
+        const steps = [...root.querySelectorAll<HTMLElement>("[data-step]")];
+        const barHeight = root.querySelector<HTMLElement>(".fz-daybar")?.offsetHeight || BAR_HEIGHT;
+        const active = activeDayIndex(steps.map((step) => step.getBoundingClientRect().bottom), top + barHeight);
+        show(String(active));
+        steps.forEach((step, i) => {
+          const head = step.querySelector<HTMLElement>(".fz-dayhead");
+          step.toggleAttribute("data-stuck", i === active && !!head && head.getBoundingClientRect().bottom < top);
+        });
+      };
+      window.addEventListener("scroll", sync, { passive: true });
+      window.addEventListener("resize", sync);
+      const sizes = new ResizeObserver(sync);
+      if (stage) sizes.observe(stage);
+      cleanups.push(() => {
+        window.removeEventListener("scroll", sync);
+        window.removeEventListener("resize", sync);
+        sizes.disconnect();
+      });
+      sync();
+
+      const first = root.querySelector<HTMLElement>("[data-panel][data-active]");
+      if (first) paintProgress(first);
+      // Several photos in a day: crossfade them, paused on hover or reduced motion.
+      if (reduceMotion.matches) return;
+      let hovering = false;
+      stage?.addEventListener("mouseenter", () => {
+        hovering = true;
+        stage.classList.add("is-paused");
+      });
+      stage?.addEventListener("mouseleave", () => {
+        hovering = false;
+        lastChange = Date.now();
+        stage.classList.remove("is-paused");
+        const active = root.querySelector<HTMLElement>("[data-panel][data-active]");
+        if (active) paintProgress(active);
+      });
+
+      loadSlides(root.querySelector<HTMLElement>("[data-panel][data-active]") ?? undefined);
+      timers.push(
+        window.setInterval(() => {
+          if (hovering || document.hidden || Date.now() - lastChange < SLIDE_MS) return;
+          const slides = [...(root.querySelectorAll<HTMLElement>("[data-panel][data-active] [data-slide]") ?? [])];
+          if (slides.length < 2) return;
+          const current = slides.findIndex((slide) => slide.hasAttribute("data-slide-active"));
+          slides[current]?.removeAttribute("data-slide-active");
+          slides[(current + 1) % slides.length].setAttribute("data-slide-active", "");
+          lastChange = Date.now();
+          paintProgress(root.querySelector<HTMLElement>("[data-panel][data-active]")!);
+        }, 500)
       );
-      root.querySelectorAll("[data-step]").forEach((step) => observer.observe(step));
-      observers.push(observer);
     });
   }
 

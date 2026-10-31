@@ -1,25 +1,44 @@
 ---
-// Heading of one day: "2 / 3", heart + weekday, big date.
+// Heading of one day: a small gold counter ("1/6"), then the big date with the weekday.
+// It also renders the day's compact bar ("1/6 · Vie 15 ene · Sede"), which sticks under
+// the site menu while the day is on screen and its big header has scrolled away.
+import Pin from "@/components/Pin.astro";
+import DayCalendar from "@/components/DayCalendar.astro";
+import { useTranslations } from "@/i18n/utils";
+import { dayLabel, monthName, type Lang } from "@/lib/programacion";
+
 interface Props {
   index: number;
   total: number;
   weekdayLong: string;
   dayMonth: string;
+  // For the compact bar: the day (ISO), the venue (or stop) and the city.
+  date: string;
+  venue: string;
+  place: string;
+  lang: Lang;
   headingLevel?: "h2" | "h3";
 }
 
-const { index, total, weekdayLong, dayMonth, headingLevel = "h3" } = Astro.props;
+const { index, total, weekdayLong, dayMonth, date: iso, venue, place, lang, headingLevel = "h3" } = Astro.props;
+const t = useTranslations(lang);
+const label = dayLabel(iso, lang);
 const Heading = headingLevel;
-const heart = index % 2 === 0 ? "var(--fz-red)" : "var(--fz-teal)";
+const heading = lang === "en" ? `${weekdayLong}, ${dayMonth}` : `${weekdayLong} ${dayMonth}`;
 ---
 
-<header class="fz-dayhead">
-  <p class="fz-day-count">{index + 1} / {total}</p>
-  <div class="fz-day-weekday">
-    <svg width="24" height="22" viewBox="0 0 24 22" aria-hidden="true">
-      <path d="M12 21s-9-5.6-9-12a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.4-9 12-9 12z" fill={heart}></path>
-    </svg>
-    <span class="fz-display fz-gold">{weekdayLong}</span>
+<div class="fz-daybar-anchor" aria-hidden="true">
+  <div class="fz-daybar">
+    <DayCalendar weekday={label.weekdayShort} number={label.dayNumber} />
+    <span class="fz-daybar-text">
+      <span class="fz-daybar-venue"><Pin heavy /><span>{venue}</span></span>
+      <span class="fz-daybar-place">{place} · {monthName(iso, lang)}</span>
+    </span>
+    <span class="fz-daybar-count">{t("edition.dayOf").replace("{n}", String(index + 1)).replace("{total}", String(total))}</span>
   </div>
-  <Heading class="fz-display fz-day-date">{dayMonth}</Heading>
+</div>
+<header class="fz-dayhead">
+  <p class="fz-display fz-gold fz-day-kicker">{t("edition.dayOf").replace("{n}", String(index + 1)).replace("{total}", String(total))}</p>
+  <Heading class="fz-display fz-day-date">{heading}</Heading>
 </header>
+

@@ -1,0 +1,14 @@
+---
+// A gold calendar block: weekday abbreviation over the day number (sticky day bar, day links).
+interface Props {
+  weekday: string;
+  number: string;
+}
+
+const { weekday, number } = Astro.props;
+---
+
+<span class="fz-cal">
+  <span class="fz-cal-wd">{weekday}</span>
+  <span class="fz-display fz-cal-num">{number}</span>
+</span>

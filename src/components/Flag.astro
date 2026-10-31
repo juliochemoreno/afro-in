@@ -1,0 +1,29 @@
+---
+// A country's flag as an inline SVG (4:3, about 1em high, thin light border so white
+// flags read on the dark pages), labelled with the country name; the name itself
+// when the code has no flag.
+import { FLAGS } from "@/lib/flags";
+
+interface Props {
+  code: string;
+  name: string;
+}
+
+const { code, name } = Astro.props;
+const flag = FLAGS[code];
+---
+
+{
+  flag ? (
+    <svg
+      class="fz-flagsvg"
+      viewBox={flag.viewBox}
+      preserveAspectRatio="xMidYMid slice"
+      role="img"
+      aria-label={name}
+      set:html={flag.svg}
+    />
+  ) : (
+    <span class="fz-flagtext">{name}</span>
+  )
+}

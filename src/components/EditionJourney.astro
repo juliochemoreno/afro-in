@@ -2,7 +2,8 @@
 // "The journey": the edition day by day, with the photo of each day following
 // the scroll (FestivalScrolly).
 import type { ImageMetadata } from "astro";
-import FestivalScrolly from "@/components/FestivalScrolly.astro";
+import FestivalScrolly, { type ScrollySlide } from "@/components/FestivalScrolly.astro";
+import EditionVenue from "@/components/EditionVenue.astro";
 import EditionDayHead from "@/components/EditionDayHead.astro";
 import EditionActivities, { type EditionActivity } from "@/components/EditionActivities.astro";
 import { useTranslations } from "@/i18n/utils";
@@ -14,10 +15,12 @@ export interface JourneyStep {
   dayNumber: string;
   dayMonth: string;
   city: string;
-  photo: ImageMetadata;
-  photoMobile?: ImageMetadata;
-  photoPosition: string;
-  entries: { stopName: string; venue?: string; href: string; activities: EditionActivity[] }[];
+  slides: ScrollySlide[];
+  // Day (ISO), venue and city for the compact day bar.
+  date: string;
+  barVenue: string;
+  barPlace: string;
+  entries: { stopName: string; venue?: string; activities: EditionActivity[] }[];
 }
 
 interface Props {
@@ -27,13 +30,7 @@ interface Props {
 
 const { steps, lang } = Astro.props;
 const t = useTranslations(lang);
-const panels = steps.map((step) => ({
-  photo: step.photo,
-  photoMobile: step.photoMobile,
-  photoPosition: step.photoPosition,
-  title: `${step.weekdayShort} ${step.dayNumber}`,
-  subtitle: step.city,
-}));
+const panels = steps.map((step) => ({ slides: step.slides }));
 ---
 
 <section class="fz-wrap fz-journey" aria-labelledby="fz-journey-title">
@@ -46,17 +43,11 @@ const panels = steps.map((step) => ({
     <ol class="fz-journey-list">
       {steps.map((step, index) => (
         <li class="fz-scrolly-step fz-journey-day" data-step={String(index)}>
-          <EditionDayHead index={index} total={steps.length} weekdayLong={step.weekdayLong} dayMonth={step.dayMonth} />
+          <EditionDayHead index={index} total={steps.length} weekdayLong={step.weekdayLong} dayMonth={step.dayMonth} date={step.date} venue={step.barVenue} place={step.barPlace} lang={lang} />
           {step.entries.map((entry) => (
             <div class="fz-journey-entry">
-              <p class="fz-venue">
-                <span class="fz-display fz-venue-name">{entry.venue ?? entry.stopName}</span>
-                {entry.venue && <span class="fz-muted fz-venue-area">{entry.stopName}</span>}
-              </p>
+              <EditionVenue name={entry.venue ?? entry.stopName} area={entry.venue ? entry.stopName : undefined} />
               <EditionActivities activities={entry.activities} lang={lang} />
-              <a class="fz-journey-link" href={entry.href}>
-                {t("edition.journeyDayLink").replace("{name}", entry.stopName)}
-              </a>
             </div>
           ))}
         </li>
