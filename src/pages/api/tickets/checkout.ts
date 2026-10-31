@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { generateIntegritySignature } from "@/lib/bold";
 import { CheckoutError } from "@/lib/orders";
-import { createPendingTicketOrder } from "@/lib/tickets";
+import { PriceChangedError, createPendingTicketOrder } from "@/lib/tickets";
 
 export const prerender = false;
 
@@ -33,6 +33,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     try {
       order = await createPendingTicketOrder(env.DB, body as any, { paymentsEnabled });
     } catch (e) {
+      // The stage moved on since the buyer loaded the page: tell the form the
+      // new price so the buyer accepts it before paying.
+      if (e instanceof PriceChangedError) {
+        return json(
+          { error: e.message, code: "price_changed", unitPrice: e.unitPrice },
+          e.status
+        );
+      }
       if (e instanceof CheckoutError) {
         if (e.status >= 500) console.error("ticket checkout:", e.message);
         return json({ error: e.message }, e.status);

@@ -6,6 +6,16 @@
 import { generateOrderId } from "@/lib/bold";
 import { BOLD_MIN_AMOUNT, CheckoutError } from "@/lib/orders";
 import { normalizeStoredPhone } from "@/lib/checkoutFields";
+import {
+  HOLD_MINUTES,
+  bogotaToday,
+  nowBogotaWallClock,
+  resolveSale,
+  stageStatuses,
+  type Sale,
+  type StageView,
+  type StageWithSales,
+} from "@/lib/ticketStages";
 
 const MAX_QTY = 10;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -58,10 +68,29 @@ export interface EventRow {
   visible: number;
 }
 
+export interface StageWithRevenue extends StageWithSales {
+  revenue: number; // COP paid in completed orders of this stage
+}
+
 export interface PublicEvent extends EventRow {
   sold: number;
+  held: number;
   remaining: number;
   soldOut: boolean;
+  // Price stages in date order (empty for a single-price event) and what can be
+  // bought today. With stages, `price` is the current (or next) stage's price
+  // and `remaining` also respects the stage quota.
+  stages: StageView<StageWithRevenue>[];
+  sale: Sale | null;
+}
+
+/** Thrown when the price the buyer saw is no longer the price to charge. */
+export class PriceChangedError extends CheckoutError {
+  unitPrice: number;
+  constructor(unitPrice: number) {
+    super("El precio cambió. Revisa el nuevo total y vuelve a intentarlo.", 409);
+    this.unitPrice = unitPrice;
+  }
 }
 
 function nowIso(): string {
@@ -69,13 +98,79 @@ function nowIso(): string {
 }
 
 // Events store their start as Colombia wall-clock time without a zone
-// (e.g. 2026-01-17T20:00, sometimes with seconds). Colombia is UTC-5 all year
-// (no DST), so "now" in the same format is UTC minus 5 hours, to the second
-// (YYYY-MM-DDTHH:MM:SS) so string comparison is exact for both stored forms.
-// An event is on sale until it starts.
-const BOGOTA_UTC_OFFSET_MS = 5 * 60 * 60 * 1000;
-function nowBogotaWallClock(): string {
-  return new Date(Date.now() - BOGOTA_UTC_OFFSET_MS).toISOString().slice(0, 19);
+// (e.g. 2026-01-17T20:00, sometimes with seconds); nowBogotaWallClock() gives
+// "now" in the same format, to the second, so string comparison is exact for
+// both stored forms. An event is on sale until it starts.
+
+// A pending order holds its tickets for HOLD_MINUTES so concurrent buyers do
+// not oversell a small quota. created_at is UTC 'YYYY-MM-DD HH:MM:SS', the
+// format datetime('now') returns, so the comparison is a plain string one.
+const HOLD_SINCE = `datetime('now', '-${HOLD_MINUTES} minutes')`;
+const HELD_FOR_EVENT = `(SELECT COALESCE(SUM(quantity), 0) FROM ticket_orders
+   WHERE event_id = e.id AND status = 'pending' AND created_at > ${HOLD_SINCE})`;
+
+/**
+ * Price stages of the given events with their issued (`sold`), held and paid
+ * (`revenue`) counts, in one query. Map keyed by event id.
+ */
+export async function loadStagesWithSales(
+  db: D1Database,
+  eventIds: number[]
+): Promise<Map<number, StageWithRevenue[]>> {
+  const map = new Map<number, StageWithRevenue[]>();
+  if (eventIds.length === 0) return map;
+  // D1 caps bound parameters at 100; past that, read all stages and filter.
+  const filtered = eventIds.length <= 90;
+  const where = filtered
+    ? `WHERE s.event_id IN (${eventIds.map(() => "?").join(", ")})`
+    : "";
+  const res = await db
+    .prepare(
+      `SELECT s.*,
+              (SELECT COUNT(*) FROM tickets t
+                 JOIN ticket_orders o ON o.id = t.ticket_order_id
+                WHERE o.stage_id = s.id) AS sold,
+              (SELECT COALESCE(SUM(o.quantity), 0) FROM ticket_orders o
+                WHERE o.stage_id = s.id AND o.status = 'pending'
+                  AND o.created_at > ${HOLD_SINCE}) AS held,
+              (SELECT COALESCE(SUM(o.amount), 0) FROM ticket_orders o
+                WHERE o.stage_id = s.id AND o.status = 'completed') AS revenue
+       FROM event_price_stages s
+       ${where}
+       ORDER BY s.event_id, s.starts_on, s.id`
+    )
+    .bind(...(filtered ? eventIds : []))
+    .all<StageWithRevenue>();
+  const wanted = new Set(eventIds);
+  for (const row of (res.results as StageWithRevenue[]) || []) {
+    if (!wanted.has(row.event_id)) continue;
+    const stage = {
+      ...row,
+      sold: Number(row.sold ?? 0),
+      held: Number(row.held ?? 0),
+      revenue: Number(row.revenue ?? 0),
+    };
+    const list = map.get(row.event_id);
+    if (list) list.push(stage);
+    else map.set(row.event_id, [stage]);
+  }
+  return map;
+}
+
+/** Issued tickets and tickets held by recent pending orders, for one event. */
+async function eventUsage(
+  db: D1Database,
+  eventId: number
+): Promise<{ sold: number; held: number }> {
+  const row = await db
+    .prepare(
+      `SELECT (SELECT COUNT(*) FROM tickets WHERE event_id = e.id) AS sold,
+              ${HELD_FOR_EVENT} AS held
+       FROM events e WHERE e.id = ?`
+    )
+    .bind(eventId)
+    .first<{ sold: number; held: number }>();
+  return { sold: Number(row?.sold ?? 0), held: Number(row?.held ?? 0) };
 }
 
 // One INSERT per ticket, each finding its order by Bold order id so it can run
@@ -119,17 +214,40 @@ async function withCodeRetry<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
-function toPublic(row: EventRow & { sold?: number }): PublicEvent {
+function toPublic(
+  row: EventRow & { sold?: number; held?: number },
+  stages: StageWithRevenue[] = [],
+  today: string = bogotaToday()
+): PublicEvent {
   const sold = Number(row.sold ?? 0);
-  const remaining = Math.max(0, row.capacity - sold);
-  return { ...row, sold, remaining, soldOut: remaining <= 0 };
+  const held = Number(row.held ?? 0);
+  const eventRemaining = Math.max(0, row.capacity - sold - held);
+  if (stages.length === 0) {
+    return {
+      ...row,
+      sold,
+      held,
+      remaining: eventRemaining,
+      soldOut: eventRemaining <= 0,
+      stages: [],
+      sale: null,
+    };
+  }
+  const views = stageStatuses(stages, today);
+  const sale = resolveSale(stages, today);
+  const price = sale.state === "ended" ? row.price : sale.stage.price;
+  const remaining =
+    sale.state === "current" ? Math.min(sale.remaining, eventRemaining) : 0;
+  const soldOut =
+    sale.state === "ended" || (sale.state === "current" && remaining <= 0);
+  return { ...row, price, sold, held, remaining, soldOut, stages: views, sale };
 }
 
 /** Visible, not-yet-past events with their sold counts, soonest first. */
 export async function getVisibleEvents(db: D1Database): Promise<PublicEvent[]> {
   const res = await db
     .prepare(
-      `SELECT e.*, COALESCE(t.sold, 0) AS sold
+      `SELECT e.*, COALESCE(t.sold, 0) AS sold, ${HELD_FOR_EVENT} AS held
        FROM events e
        LEFT JOIN (SELECT event_id, COUNT(*) AS sold FROM tickets GROUP BY event_id) t
          ON t.event_id = e.id
@@ -137,8 +255,11 @@ export async function getVisibleEvents(db: D1Database): Promise<PublicEvent[]> {
        ORDER BY e.event_date ASC`
     )
     .bind(nowBogotaWallClock())
-    .all<EventRow & { sold: number }>();
-  return ((res.results as (EventRow & { sold: number })[]) || []).map(toPublic);
+    .all<EventRow & { sold: number; held: number }>();
+  const rows = (res.results as (EventRow & { sold: number; held: number })[]) || [];
+  const stages = await loadStagesWithSales(db, rows.map((r) => r.id));
+  const today = bogotaToday();
+  return rows.map((r) => toPublic(r, stages.get(r.id), today));
 }
 
 /** A single public event by slug. Returns null when missing, hidden or past. */
@@ -148,22 +269,26 @@ export async function getEventBySlug(
 ): Promise<PublicEvent | null> {
   const row = await db
     .prepare(
-      `SELECT e.*, COALESCE(t.sold, 0) AS sold
+      `SELECT e.*, COALESCE(t.sold, 0) AS sold, ${HELD_FOR_EVENT} AS held
        FROM events e
        LEFT JOIN (SELECT event_id, COUNT(*) AS sold FROM tickets GROUP BY event_id) t
          ON t.event_id = e.id
        WHERE e.slug = ?`
     )
     .bind(slug)
-    .first<(EventRow & { sold: number }) | null>();
+    .first<(EventRow & { sold: number; held: number }) | null>();
   if (!row) return null;
   if (!row.visible || row.event_date <= nowBogotaWallClock()) return null;
-  return toPublic(row);
+  const stages = await loadStagesWithSales(db, [row.id]);
+  return toPublic(row, stages.get(row.id));
 }
 
 export interface TicketCheckoutInput {
   eventSlug?: string;
   quantity?: number | string;
+  // The unit price the buyer was shown. Only used to refuse with
+  // PriceChangedError when it differs; the charge is always computed here.
+  expectedUnitPrice?: number | string | null;
   buyer?: { name?: string; email?: string; phone?: string | null };
 }
 
@@ -224,21 +349,42 @@ export async function createPendingTicketOrder(
   if (!event.visible || event.event_date <= nowBogotaWallClock())
     throw new CheckoutError("El evento no está disponible");
 
-  const unit = Math.trunc(Number(event.price));
+  // With price stages, the price and quota come from the stage on sale today
+  // (Bogotá date + stage sales); otherwise from the event.
+  const stages = (await loadStagesWithSales(db, [event.id])).get(event.id) ?? [];
+  let stageId: number | null = null;
+  let stageRemaining = Infinity;
+  let price = Number(event.price);
+  if (stages.length > 0) {
+    const sale = resolveSale(stages, bogotaToday());
+    if (sale.state === "upcoming")
+      throw new CheckoutError("La venta aún no está abierta");
+    if (sale.state === "ended") throw new CheckoutError("Entradas agotadas");
+    stageId = sale.stage.id;
+    stageRemaining = sale.remaining;
+    price = Number(sale.stage.price);
+  }
+
+  const unit = Math.trunc(price);
   if (!Number.isFinite(unit) || unit < 0)
     throw new CheckoutError("Precio del evento inválido");
 
-  // Capacity check. Note: a pending payment does NOT reserve seats, so a small
-  // oversell window exists under concurrent purchases (accepted for v1).
-  const soldRow = await db
-    .prepare(`SELECT COUNT(*) AS sold FROM tickets WHERE event_id = ?`)
-    .bind(event.id)
-    .first<{ sold: number }>();
-  const sold = Number(soldRow?.sold ?? 0);
-  const remaining = event.capacity - sold;
+  const expected = input.expectedUnitPrice;
+  if (expected != null && expected !== "") {
+    const shown = Math.trunc(Number(expected));
+    if (Number.isFinite(shown) && shown !== unit) throw new PriceChangedError(unit);
+  }
+
+  // Capacity check: issued tickets + tickets held by recent pending orders,
+  // against the event capacity and the stage quota. The INSERT below repeats
+  // the check atomically, so concurrent buyers cannot both take the last seats.
+  const usage = await eventUsage(db, event.id);
+  const remaining = Math.min(event.capacity - usage.sold - usage.held, stageRemaining);
   if (remaining <= 0) throw new CheckoutError("Entradas agotadas");
-  if (qty > remaining)
-    throw new CheckoutError(`Solo quedan ${remaining} entradas`);
+  if (qty > remaining) {
+    const left = remaining === 1 ? "Solo queda 1 entrada" : `Solo quedan ${remaining} entradas`;
+    throw new CheckoutError(stageId != null ? `${left} a este precio` : left);
+  }
 
   const isFree = unit === 0;
   // Refuse a paid checkout before writing anything when Bold is not configured.
@@ -257,14 +403,33 @@ export async function createPendingTicketOrder(
   const providerStatus = isFree ? "FREE" : null;
   const paidAt = isFree ? nowIso() : null;
 
+  // Inserted only if the seats still fit: D1 runs each statement atomically
+  // and serializes writes, so the capacity re-check and the insert cannot be
+  // interleaved with another checkout.
+  const stageGuard =
+    stageId != null
+      ? `AND (SELECT COUNT(*) FROM tickets t
+                JOIN ticket_orders o ON o.id = t.ticket_order_id
+               WHERE o.stage_id = ?17)
+          + (SELECT COALESCE(SUM(quantity), 0) FROM ticket_orders
+              WHERE stage_id = ?17 AND status = 'pending'
+                AND created_at > ${HOLD_SINCE})
+          + ?10 <= (SELECT capacity FROM event_price_stages WHERE id = ?17)`
+      : "";
   const insertOrder = db
     .prepare(
       `INSERT INTO ticket_orders
         (bold_order_id, status, provider, provider_status, currency, amount,
          event_id, event_name, unit_price, quantity,
          buyer_name, buyer_email, buyer_phone, access_token,
-         tickets_issued, paid_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         tickets_issued, paid_at, stage_id)
+       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17
+       FROM events e
+       WHERE e.id = ?7
+         AND (SELECT COUNT(*) FROM tickets WHERE event_id = e.id)
+           + ${HELD_FOR_EVENT}
+           + ?10 <= e.capacity
+         ${stageGuard}`
     )
     .bind(
       orderId,
@@ -282,19 +447,28 @@ export async function createPendingTicketOrder(
       phone,
       accessToken,
       isFree ? 1 : 0,
-      paidAt
+      paidAt,
+      stageId
     );
 
   // Free orders are completed at once: the order and its tickets are written in
   // one batch (a D1 batch is a single transaction), so they exist together or
-  // not at all.
+  // not at all. The ticket inserts find the order by its Bold id, so they add
+  // nothing when the guarded order insert was refused.
+  let inserted: number;
   if (isFree) {
-    await withCodeRetry(() =>
+    const results = await withCodeRetry(() =>
       db.batch([insertOrder, ...ticketInserts(db, orderId, event.id, qty)])
     );
+    inserted = results[0].meta.changes;
   } else {
-    await insertOrder.run();
+    inserted = (await insertOrder.run()).meta.changes;
   }
+  if (!inserted)
+    throw new CheckoutError(
+      "Las entradas se acaban de agotar o quedan menos de las que pediste. Recarga la página e inténtalo de nuevo.",
+      409
+    );
   const newOrderId = await orderIdByBoldId(db, orderId);
 
   return {
@@ -354,12 +528,10 @@ export async function createCourtesyTicketOrder(
 
   if (!event) throw new CheckoutError("El evento no existe");
 
-  const soldRow = await db
-    .prepare(`SELECT COUNT(*) AS sold FROM tickets WHERE event_id = ?`)
-    .bind(event.id)
-    .first<{ sold: number }>();
-  const sold = Number(soldRow?.sold ?? 0);
-  const remaining = event.capacity - sold;
+  // Courtesies count against the event capacity only (never a stage quota),
+  // including the tickets held by recent pending orders.
+  const usage = await eventUsage(db, event.id);
+  const remaining = event.capacity - usage.sold - usage.held;
   if (remaining < qty) {
     throw new CheckoutError(`Solo quedan ${Math.max(0, remaining)} cupos disponibles`);
   }
@@ -657,7 +829,8 @@ export async function getEventsForAdmin(db: D1Database): Promise<any[]> {
     .prepare(
       `SELECT e.*,
               COALESCE(t.sold, 0) AS sold,
-              COALESCE(t.checked_in, 0) AS checked_in
+              COALESCE(t.checked_in, 0) AS checked_in,
+              ${HELD_FOR_EVENT} AS held
        FROM events e
        LEFT JOIN (
          SELECT event_id,
@@ -668,17 +841,32 @@ export async function getEventsForAdmin(db: D1Database): Promise<any[]> {
        ORDER BY e.event_date DESC`
     )
     .all();
-  return (res.results as any[]) || [];
+  const rows = (res.results as any[]) || [];
+  const stages = await loadStagesWithSales(db, rows.map((r) => Number(r.id)));
+  const today = bogotaToday();
+  return rows.map((r) => {
+    const list = stages.get(Number(r.id)) ?? [];
+    if (list.length === 0) return { ...r, stages: [] };
+    const sale = resolveSale(list, today);
+    return {
+      ...r,
+      stages: stageStatuses(list, today),
+      current_stage_name: sale.state === "ended" ? null : sale.stage.name_es,
+      current_price: sale.state === "ended" ? null : sale.stage.price,
+      sale_state: sale.state,
+    };
+  });
 }
 
 export async function getTicketOrdersForAdmin(
   db: D1Database,
   eventId?: number
 ): Promise<any[]> {
-  const base = `SELECT o.*,
+  const base = `SELECT o.*, s.name_es AS stage_name,
        (SELECT COUNT(*) FROM tickets WHERE ticket_order_id = o.id) AS ticket_count,
        (SELECT COUNT(*) FROM tickets WHERE ticket_order_id = o.id AND status = 'checked_in') AS checked_in_count
-     FROM ticket_orders o`;
+     FROM ticket_orders o
+     LEFT JOIN event_price_stages s ON s.id = o.stage_id`;
   const stmt = eventId
     ? db.prepare(`${base} WHERE o.event_id = ? ORDER BY o.created_at DESC`).bind(eventId)
     : db.prepare(`${base} ORDER BY o.created_at DESC`);

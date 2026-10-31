@@ -2,6 +2,7 @@
 // Mirrors the shape of lib/productAdmin.ts but for the events table.
 
 import { BOLD_MIN_AMOUNT } from "@/lib/orders";
+import { validateStages, type CleanStage } from "@/lib/ticketStages";
 
 export const EVENT_COLUMNS = [
   "slug",
@@ -49,6 +50,86 @@ export function validateEventInput(body: any): string | null {
   if (!Number.isFinite(capacity) || capacity < 1)
     return "El cupo debe ser al menos 1";
   return null;
+}
+
+/**
+ * The price stages in an admin request. `stages: null` means the request does
+ * not touch them (no `stages` key); an empty list removes them all. With
+ * stages, the event's own price becomes the first stage's price so readers
+ * that do not know stages still see a sensible number.
+ */
+export function parseStages(
+  body: any
+): { stages: CleanStage[] | null } | { error: string } {
+  if (!body || typeof body !== "object" || body.stages == null) return { stages: null };
+  const res = validateStages(body.stages, {
+    eventDate: String(body.event_date ?? ""),
+    minAmount: BOLD_MIN_AMOUNT,
+  });
+  if ("error" in res) return res;
+  if (res.stages.length > 0) body.price = res.stages[0].price;
+  return res;
+}
+
+const STAGE_VALUES = (s: CleanStage) => [
+  s.name_es,
+  s.name_en,
+  s.name_fr,
+  s.price,
+  s.capacity,
+  s.starts_on,
+  s.ends_on,
+];
+
+/** INSERTs for new stages of the event whose slug is given (same batch as the event). */
+export function stageInsertsBySlug(
+  db: D1Database,
+  slug: string,
+  stages: CleanStage[]
+): D1PreparedStatement[] {
+  const stmt = db.prepare(
+    `INSERT INTO event_price_stages
+       (event_id, name_es, name_en, name_fr, price, capacity, starts_on, ends_on, updated_at)
+     SELECT id, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP FROM events WHERE slug = ?`
+  );
+  return stages.map((s) => stmt.bind(...STAGE_VALUES(s), slug));
+}
+
+/**
+ * Statements that make the event's stages match `stages`: update the ones
+ * with an id, insert the new ones, delete the missing ones. Deletes skip
+ * stages that have orders (the caller refuses those first with a message).
+ */
+export function stageSyncStatements(
+  db: D1Database,
+  eventId: number,
+  stages: CleanStage[],
+  removedIds: number[]
+): D1PreparedStatement[] {
+  const del = db.prepare(
+    `DELETE FROM event_price_stages
+     WHERE id = ? AND event_id = ?
+       AND NOT EXISTS (SELECT 1 FROM ticket_orders WHERE stage_id = ?)`
+  );
+  const upd = db.prepare(
+    `UPDATE event_price_stages
+     SET name_es = ?, name_en = ?, name_fr = ?, price = ?, capacity = ?,
+         starts_on = ?, ends_on = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ? AND event_id = ?`
+  );
+  const ins = db.prepare(
+    `INSERT INTO event_price_stages
+       (event_id, name_es, name_en, name_fr, price, capacity, starts_on, ends_on, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+  );
+  return [
+    ...removedIds.map((id) => del.bind(id, eventId, id)),
+    ...stages.map((s) =>
+      s.id != null
+        ? upd.bind(...STAGE_VALUES(s), s.id, eventId)
+        : ins.bind(eventId, ...STAGE_VALUES(s))
+    ),
+  ];
 }
 
 /** Ordered values matching EVENT_COLUMNS for binding into a prepared statement. */

@@ -1,7 +1,13 @@
 import type { APIRoute } from "astro";
 import { requireAdmin, adminUnauthorized } from "@/lib/adminAuth";
 import { getEventsForAdmin } from "@/lib/tickets";
-import { EVENT_COLUMNS, eventValues, validateEventInput } from "@/lib/eventAdmin";
+import {
+  EVENT_COLUMNS,
+  eventValues,
+  parseStages,
+  stageInsertsBySlug,
+  validateEventInput,
+} from "@/lib/eventAdmin";
 
 export const prerender = false;
 
@@ -31,19 +37,26 @@ export const POST: APIRoute = async (ctx) => {
     return json({ error: "JSON inválido" }, 400);
   }
 
+  // Stages first: with stages the event price becomes the first stage's price.
+  const parsed = parseStages(body);
+  if ("error" in parsed) return json({ error: parsed.error }, 400);
   const err = validateEventInput(body);
   if (err) return json({ error: err }, 400);
 
   const placeholders = EVENT_COLUMNS.map(() => "?").join(", ");
   try {
-    const res = await db
+    // Event and its stages in one batch (a single transaction).
+    const insertEvent = db
       .prepare(
         `INSERT INTO events (${EVENT_COLUMNS.join(", ")}, updated_at)
          VALUES (${placeholders}, CURRENT_TIMESTAMP)`
       )
-      .bind(...eventValues(body))
-      .run();
-    return json({ id: Number(res.meta.last_row_id) }, 201);
+      .bind(...eventValues(body));
+    const results = await db.batch([
+      insertEvent,
+      ...stageInsertsBySlug(db, String(body.slug).trim(), parsed.stages ?? []),
+    ]);
+    return json({ id: Number(results[0].meta.last_row_id) }, 201);
   } catch (e: any) {
     if (String(e?.message || e).includes("UNIQUE"))
       return json({ error: "El slug ya existe" }, 409);

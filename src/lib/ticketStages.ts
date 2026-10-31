@@ -33,10 +33,10 @@ export interface StageWithSales extends StageRow {
 
 export type StageStatus = "past" | "soldout" | "current" | "upcoming";
 
-export interface StageView extends StageWithSales {
+export type StageView<T extends StageWithSales = StageWithSales> = T & {
   status: StageStatus;
   remaining: number;
-}
+};
 
 export type Sale =
   | { state: "current"; stage: StageView; remaining: number }
@@ -63,10 +63,13 @@ function byStart<T extends { starts_on: string; id?: number }>(a: T, b: T): numb
 }
 
 /** Every stage with its status on `today` and its remaining tickets, in date order. */
-export function stageStatuses(stages: StageWithSales[], today: string): StageView[] {
+export function stageStatuses<T extends StageWithSales>(
+  stages: T[],
+  today: string
+): StageView<T>[] {
   let opened = false; // a stage before was sold out: the next one opens early
   let foundCurrent = false;
-  return [...stages].sort(byStart).map((s) => {
+  return [...stages].sort(byStart).map((s): StageView<T> => {
     const remaining = Math.max(0, s.capacity - s.sold - s.held);
     const ended = s.ends_on != null && s.ends_on < today;
     let status: StageStatus;
