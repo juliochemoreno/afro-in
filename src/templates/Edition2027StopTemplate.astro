@@ -3,6 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
+import { artistPhoto, artistPhotoMobile } from "@/lib/artistPhotos";
 import EditionTickets from "@/components/EditionTickets.astro";
 import FestivalScrolly from "@/components/FestivalScrolly.astro";
 import EditionDayHead from "@/components/EditionDayHead.astro";
@@ -33,6 +34,7 @@ const artistRefs = data.days.flatMap((day) =>
 );
 const artistEntries = await getEntries(artistRefs);
 const artistsById = new Map(artistEntries.map((artist) => [artist.id, artist.data]));
+const idByPhotoSrc = new Map(artistEntries.map((artist) => [artist.data.photo.src, artist.id]));
 
 const days = data.days.map((day) => {
   const label = dayLabel(day.date, lang);
@@ -42,17 +44,20 @@ const days = data.days.map((day) => {
     anchor: dayAnchor(day.date),
     activities: day.activities.map((activity) => {
       const artist = activity.artist ? artistsById.get(activity.artist.id) : undefined;
-      return { ...activity, photo: artist?.photo, ...activityByline(activity.title, artist, lang) };
+      return { ...activity, photo: artist?.photo, photoPosition: artist?.photoPosition, ...activityByline(activity.title, artist, lang) };
     }),
   };
 });
 
 // Photo following each day: the day's own, else its first artist's, else the stop's.
 const panels = days.map((day) => {
-  const artistPhoto = day.activities.find((activity) => activity.photo)?.photo;
+  const firstArtistPhoto = day.activities.find((activity) => activity.photo);
+  const basePhoto = day.photo ?? firstArtistPhoto?.photo ?? data.cardImage;
+  const portraitId = idByPhotoSrc.get(basePhoto.src);
   return {
-    photo: day.photo ?? artistPhoto ?? data.cardImage,
-    photoPosition: day.photo ? day.photoPosition : "center",
+    photo: portraitId ? artistPhoto(portraitId, basePhoto) : basePhoto,
+    photoMobile: portraitId ? artistPhotoMobile(portraitId) : undefined,
+    photoPosition: day.photo ? day.photoPosition : (firstArtistPhoto?.photoPosition ?? "center"),
     title: `${day.weekdayShort} ${day.dayNumber}`,
     subtitle: day.venue ?? data.name,
   };

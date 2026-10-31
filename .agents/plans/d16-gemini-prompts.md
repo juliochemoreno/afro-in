@@ -1,43 +1,48 @@
-# D16 — Gemini prompts for the 2027 artist portraits
+# D16 — Gemini master prompt for the 2027 artist portraits
 
-Where the portraits appear (all **4:5** frames, `object-fit: cover`, no portrait is a hero): artist card on `/programacion` and `/artistas` (≈380 px wide, 2x = 760 px), the featured Robe L Ninho block (≈460 px, 2x = 920 px) and the scrolling journey photo (≈560 px, 2x ≈ 1120 px). Target for every output: **4:5, 1600 × 2000 px, JPG**.
+> **Status:** the master prompt text is pending Julio's confirmation (the orchestrator sends it); paste it in the "Master prompt" section below. The frame specs, file names and swap-in rules here are final.
 
-Per-artist focal points are already in code (`photoPosition` in `src/content/artists2027/*.md`), so nothing is cut at the sides. What code cannot fix: a head that touches the top edge of the original, low resolution, and a landscape photo.
+## Two files per artist
 
-## Review of today's render (4:5 crop, desktop and mobile identical)
-
-| Artist (file in `che/Retratos/`) | Original | Problem | Needs Gemini |
+| File | Aspect | Size | Used in |
 |---|---|---|---|
-| Robe L Ninho `robe-l-ninho-retrato.jpg` | 800×1200 | Hair touches the top edge; low resolution for the 920 px featured block | Yes |
-| Fafoman `Fafoman-retrato.heic` | 1230×2228 | Cap touches the top edge; ~883 px wide after export | Yes |
-| Chichi Banana `chichi-banana-retrato.JPG` | 900×1350 | Curls touch the top edge; low resolution | Yes |
-| DJ Acid Burrito `Dj-acid-burrito-retrato.JPG` | 1600×1068 (landscape) | 4:5 cuts about half the width, hands and equipment lost | Yes |
-| Choco `choco-retrato.JPG` | 1728×3072 | Hands slightly cut at the bottom; good resolution | Optional |
-| Fideles Cadito, Eirini Tsiakka, DJ Joe Kiz Vibes | 3024×4032 | Nothing cut, high resolution (subject is small in the frame) | No |
+| `<artist-id>-web-v.jpg` | 4:5 (vertical) | **1600 × 2000** | Every 4:5 frame, on desktop **and** phone: artist cards, the featured Robe L Ninho block, and the journey photo on desktop |
+| `<artist-id>-web-h.jpg` | 16:10 (horizontal) | **1600 × 1000** | The journey photo on phones/tablets (viewport ≤ 900 px) |
 
-## Save outputs
+`<artist-id>` is the file name of the artist's card: `robe-l-ninho`, `choco`, `chichi-banana`, `fafoman`, `fideles-cadito`, `eirini-tsiakka`, `dj-joe-kiz-vibes`, `dj-acid-burrito`.
 
-Save each result next to its original, in `~/Pictures/Afro In/2027/che/Retratos/`, with the suffix `-web` (e.g. `robe-l-ninho-retrato-web.jpg`). Tell Claude and it will convert, copy into `src/assets/img/2027/artistas/` and swap them in.
+Save each result in `~/Pictures/Afro In/2027/che/Retratos/` next to the original, as `<artist-id>-web-v.jpg` / `<artist-id>-web-h.jpg`. Claude then copies them to `src/assets/img/2027/artistas/` with the same names; the site picks them up by name and keeps the current photo for any artist whose files do not exist yet. Nothing is swapped until they are there.
 
-**Check before using each one:** open the original and the `-web` file side by side and compare face, features, skin tone, hair, body, clothes and expression. If anything changed, discard it and re-run; do not use it.
+## Where each frame renders (measured in the dev server)
 
-## Common rules (already in every prompt)
+| Place | ≤ 560 px (375 px phone) | 768 px | 1280 px | Aspect |
+|---|---|---|---|---|
+| Artist card, `/programacion` | 164 × 204 (2 columns) | 206 × 257 | 355 × 443 | 4:5 |
+| Artist card, `/artistas` | 343 × 429 (1 column) | 2 columns | 355 × 443 | 4:5 |
+| Featured Robe block (both pages) | 295 × 369 | 460 × 575 | 460 × 575 | 4:5 |
+| Journey photo (sticky frame, `/programacion` and each stop page) | **333 × 208** | **663 × 389** | 422 × 528 | **16:10 up to 900 px**, then 4:5 |
 
-Extend the background (outpaint) to fit the frame instead of cropping; upscale and sharpen; do not alter the person's face, features, skin tone, hair, body, clothes or expression; no added text or logos; keep the original lighting.
+So only the journey photo turns horizontal on phones (an earlier note said "identical on desktop and mobile": that was wrong for this frame); the cards and the Robe block stay 4:5 on every width. The 1600 × 1000 `-h` file covers the largest horizontal frame (≈ 840 px wide at 2x); the 1600 × 2000 `-v` file covers the largest 4:5 frame (460 px at 2x = 920 px) with margin.
 
-## Prompts (attach the input file, then paste)
+## Which photos need regenerating
 
-### 1. Robe L Ninho — input `che/Retratos/robe-l-ninho-retrato.jpg`
-> Take this portrait and produce a 4:5 image at 1600×2000 px. Extend the background (outpaint) above and around the person so the top of the hair has comfortable headroom, instead of cropping. Upscale and sharpen to the final size. Do not alter the person's face, features, skin tone, hair, body, clothes, jewelry or expression. No added text or logos. Keep the original lighting and the dark green-grey background style.
+| Artist (original in `che/Retratos/`) | Original | Problem today |
+|---|---|---|
+| Robe L Ninho `robe-l-ninho-retrato.jpg` | 800×1200 | Hair touches the top edge; low resolution for the 460 px block |
+| Fafoman `Fafoman-retrato.heic` | 1230×2228 | Cap touches the top edge |
+| Chichi Banana `chichi-banana-retrato.JPG` | 900×1350 | Curls touch the top edge; low resolution |
+| DJ Acid Burrito `Dj-acid-burrito-retrato.JPG` | 1600×1068 (landscape) | A 4:5 crop loses about half the width, hands and equipment |
+| Choco `choco-retrato.JPG` | 1728×3072 | Hands slightly cut at the bottom (minor) |
+| Fideles Cadito, Eirini Tsiakka, DJ Joe Kiz Vibes | 3024×4032 | Nothing cut; subject is small in the frame (optional, only for a shared style) |
 
-### 2. Fafoman — input `che/Retratos/Fafoman-retrato.heic`
-> Take this portrait and produce a 4:5 image at 1600×2000 px. Extend the sky and background (outpaint) above the person so the top of the cap and the leopard-print scarf are fully inside the frame with headroom, instead of cropping. Upscale and sharpen. Do not alter the person's face, features, skin tone, beard, glasses, nose ring, cap, scarf, body, clothes or expression. No added text or logos. Keep the original lighting.
+The `-h` version needs an outpainted wide frame with the person kept inside the centre third, because the phone frame is cropped by `object-fit: cover` with a per-artist focal point (`photoPosition` in `src/content/artists2027/*.md`).
 
-### 3. Chichi Banana — input `che/Retratos/chichi-banana-retrato.JPG`
-> Take this portrait and produce a 4:5 image at 1600×2000 px. Extend the plain grey studio background (outpaint) above and to the sides so the curls and headphones have headroom, instead of cropping. Upscale and sharpen. Do not alter the person's face, features, skin tone, hair, headphones, body, clothes or expression. No added text or logos. Keep the original lighting.
+## Master prompt
 
-### 4. DJ Acid Burrito — input `che/Retratos/Dj-acid-burrito-retrato.JPG`
-> Take this landscape photo and produce a vertical 4:5 image at 1600×2000 px. Extend the dark background and the neon light trails (outpaint) above and below to fit the portrait frame, instead of cropping the person; keep the DJ with the colorful headscarf, headphones and hands on the mixer fully in frame. Upscale and sharpen. Do not alter the person's face, features, skin tone, hair, headscarf, body, clothes or expression. No added text or logos. Keep the original lighting and the colored light effects.
+*(pending — paste the confirmed text here)*
 
-### 5. Choco (optional) — input `che/Retratos/choco-retrato.JPG`
-> Take this portrait and produce a 4:5 image at 1600×2000 px. Extend the background (outpaint) at the bottom so both hands are fully visible, instead of cropping. Upscale and sharpen. Do not alter the person's face, features, skin tone, hair, sunglasses, body, red shirt or expression. No added text or logos. Keep the original lighting and the dark teal background.
+Rules the final text must keep: extend the background (outpaint) to fit the frame instead of cropping; upscale and sharpen; do not alter the person's face, features, skin tone, hair, body, clothes or expression; no added text or logos; keep the original lighting; one shared style for all portraits.
+
+## Check before using each result
+
+Open the original and the generated file side by side and compare face, features, skin tone, hair, body, clothes and expression. If anything changed, discard it and run it again.
