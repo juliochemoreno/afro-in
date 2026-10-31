@@ -1,0 +1,18 @@
+---
+// Venue line of a day: the name, then the area, on one line. (The venue's logo
+// goes on the journey photo, see FestivalScrolly.)
+import Pin from "@/components/Pin.astro";
+
+interface Props {
+  name: string;
+  area?: string;
+}
+
+const { name, area } = Astro.props;
+---
+
+<p class="fz-venue">
+  <Pin heavy />
+  <span class="fz-display fz-venue-name">{name}</span>
+  {area && <span class="fz-muted fz-venue-area">· {area}</span>}
+</p>

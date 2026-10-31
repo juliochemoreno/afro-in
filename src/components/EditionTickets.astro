@@ -1,11 +1,12 @@
 ---
-// Ticket tiers of an edition stop, as information only (no sale here).
-import { useTranslations } from "@/i18n/utils";
-import { formatCop, type Lang } from "@/lib/programacion";
+// Price stages of an edition stop. The stage in force is marked in the browser
+// (see the script below), so a prerendered page never shows a stale one.
+import { useTranslations, getTranslatedPath } from "@/i18n/utils";
+import { SALES, formatCop, type Lang } from "@/lib/programacion";
 
 interface Props {
   tickets: {
-    tiers: { period: string; price: number; note?: string }[];
+    tiers: { period: string; from?: string; until?: string; price: number; note?: string }[];
     includes?: string;
   };
   lang: Lang;
@@ -17,21 +18,46 @@ interface Props {
 const { tickets, lang, heading, bare = false } = Astro.props;
 const t = useTranslations(lang);
 const Heading = bare ? "h3" : "h2";
+const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : "";
 ---
 
 <section class:list={[{ "fz-frame": !bare }]} aria-label={heading ?? t("edition.ticketsTitle")}>
   <div class:list={["fz-tickets", { "fz-frame-inner": !bare, "fz-tickets-bare": bare }]}>
     <Heading class="fz-display">{heading ?? t("edition.ticketsTitle")}</Heading>
-    <ul class="fz-tiers">
+    <ul class="fz-tiers" data-tiers>
       {tickets.tiers.map((tier) => (
-        <li>
+        <li data-from={tier.from} data-until={tier.until}>
+          <span class="fz-tier-flag fz-tier-current" hidden>{t("edition.stageCurrent")}</span>
+          <span class="fz-tier-flag fz-tier-done" hidden>{t("edition.stageDone")}</span>
           <span>{tier.period}</span>
-          <span class="fz-display fz-tier-price">{formatCop(tier.price, lang)}</span>
+          <span class="fz-display fz-tier-price">{formatCop(tier.price, lang)} <span class="fz-tier-cur">COP</span></span>
           {tier.note && <span class="fz-muted">{tier.note}</span>}
+          {buyUrl ? (
+            <a class="fz-button fz-button-solid fz-tier-buy" href={buyUrl} hidden>{t("edition.presaleCta")}</a>
+          ) : (
+            <span class="fz-button fz-tier-buy fz-tier-buy-soon" aria-disabled="true" hidden>{t("edition.offerSoon")}</span>
+          )}
         </li>
       ))}
     </ul>
     {tickets.includes && <p class="fz-tickets-foot">{tickets.includes}</p>}
-    <p class="fz-muted">{t("edition.ticketsSoon")}</p>
   </div>
 </section>
+
+<script>
+  import { bogotaToday, tierStage } from "@/lib/programacion";
+
+  // Runs on every page load, including client-side navigations (the layout uses ClientRouter).
+  function showStages() {
+    const today = bogotaToday();
+    document.querySelectorAll<HTMLLIElement>("[data-tiers] > li").forEach((item) => {
+      const stage = tierStage(today, item.dataset.from, item.dataset.until);
+      item.dataset.stage = stage;
+      item.querySelector<HTMLElement>(".fz-tier-current")!.hidden = stage !== "current";
+      item.querySelector<HTMLElement>(".fz-tier-done")!.hidden = stage !== "past";
+      item.querySelector<HTMLElement>(".fz-tier-buy")!.hidden = stage !== "current";
+    });
+  }
+
+  document.addEventListener("astro:page-load", showStages);
+</script>

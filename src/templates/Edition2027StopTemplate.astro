@@ -3,6 +3,11 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
+import { daySlides } from "@/lib/artistPhotos";
+import { resolveSignup } from "@/lib/activitySignup";
+import StopLinkCard from "@/components/StopLinkCard.astro";
+import DayCalendar from "@/components/DayCalendar.astro";
+import EditionVenue from "@/components/EditionVenue.astro";
 import EditionTickets from "@/components/EditionTickets.astro";
 import FestivalScrolly from "@/components/FestivalScrolly.astro";
 import EditionDayHead from "@/components/EditionDayHead.astro";
@@ -10,7 +15,7 @@ import EditionActivities from "@/components/EditionActivities.astro";
 import { getEntries, type CollectionEntry } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
-import { activityByline, baseSlug, dateRange, dayAnchor, dayLabel, isComingSoon, type Lang } from "@/lib/programacion";
+import { activityArtistIds, artistLines, baseSlug, dateRange, dayAnchor, dayLabel, isComingSoon, stopPlace, type Lang } from "@/lib/programacion";
 import { editionNav } from "@/lib/editionNav";
 import "@/styles/festival.css";
 
@@ -29,7 +34,7 @@ const range = dateRange(data.startDate, data.endDate, lang, { withYear: true });
 const comingSoon = isComingSoon(data.days);
 
 const artistRefs = data.days.flatMap((day) =>
-  day.activities.flatMap((activity) => (activity.artist ? [activity.artist] : []))
+  day.activities.flatMap((activity) => [activity.artist, activity.coArtist, ...activity.moreArtists].filter((ref) => !!ref))
 );
 const artistEntries = await getEntries(artistRefs);
 const artistsById = new Map(artistEntries.map((artist) => [artist.id, artist.data]));
@@ -40,27 +45,52 @@ const days = data.days.map((day) => {
     ...day,
     ...label,
     anchor: dayAnchor(day.date),
-    activities: day.activities.map((activity) => {
-      const artist = activity.artist ? artistsById.get(activity.artist.id) : undefined;
-      return { ...activity, photo: artist?.photo, ...activityByline(activity.title, artist, lang) };
-    }),
+    activities: day.activities.filter((activity) => !activity.appearanceOnly).map((activity) => ({
+      ...activity,
+      ...resolveSignup(activity, lang, t),
+      artistLines: artistLines(activity.title, activityArtistIds(activity).map((id) => artistsById.get(id)), lang),
+    })),
   };
 });
 
-// Photo following each day: the day's own, else its first artist's, else the stop's.
+// Photos following each day: the venue's, then the artists of its agenda.
+// The day links name the venue only when the days differ in it (Palenque is one place all along).
+const distinctVenues = new Set(days.map((day) => day.venue ?? data.name)).size > 1;
+const place = `${data.location.split(",")[0].trim()}, ${t("edition.stopCountry")}`;
 const panels = days.map((day) => {
-  const artistPhoto = day.activities.find((activity) => activity.photo)?.photo;
+  const name = day.venue ?? data.name;
   return {
-    photo: day.photo ?? artistPhoto ?? data.cardImage,
-    photoPosition: day.photo ? day.photoPosition : "center",
-    title: `${day.weekdayShort} ${day.dayNumber}`,
-    subtitle: day.venue ?? data.name,
+    slides: daySlides(
+      day.photo
+        ? { photos: [day.photo, ...day.morePhotos], position: day.photoPosition, positions: day.photoPositions, name, place }
+        : undefined,
+      day.activities.flatMap((activity) =>
+        activityArtistIds(activity).map((id) => ({ id, ...artistsById.get(id)!, time: activity.time }))
+      ),
+      { photo: data.cardImage, name, place },
+      lang
+    ),
   };
 });
 
 const nextStop = allStops
   .filter((stop) => stop.data.order > data.order)
   .sort((a, b) => a.data.order - b.data.order)[0];
+const prevStop = allStops
+  .filter((stop) => stop.data.order < data.order)
+  .sort((a, b) => b.data.order - a.data.order)[0];
+// The neighbouring stop shown as a wide card: the next one, else the previous one.
+const linkedStop = nextStop ?? prevStop;
+const linkedStopCard = linkedStop && {
+  href: getTranslatedPath(`/programacion/2027/${baseSlug(linkedStop.filePath!)}`, lang),
+  image: linkedStop.data.cardImage,
+  position: linkedStop.data.cardPosition,
+  kicker: t(nextStop ? "edition.nextStop" : "edition.prevStop"),
+  range: dateRange(linkedStop.data.startDate, linkedStop.data.endDate, lang),
+  name: linkedStop.data.name,
+  place: `${stopPlace(linkedStop.data.location, linkedStop.data.name)}, ${t("edition.stopCountry")}`,
+  linkText: t("edition.viewStop").replace("{name}", linkedStop.data.name),
+};
 
 // "<" escaped so content can never close the JSON-LD script tag.
 const eventSchema = JSON.stringify({
@@ -108,8 +138,12 @@ const { navLinks, ctaLink } = editionNav(lang);
         {!comingSoon && (
           <nav class="stop-daynav" aria-label={t("edition.days")}>
             {days.map((day) => (
-              <a class="fz-button stop-daylink" href={`#${day.anchor}`}>
-                {day.weekdayShort} {day.dayNumber}
+              <a class="stop-daylink" href={`#${day.anchor}`}>
+                <DayCalendar weekday={day.weekdayShort} number={day.dayNumber} />
+                <span class="stop-daylink-text">
+                  {distinctVenues && <span class="stop-daylink-venue">{day.venue ?? data.name}</span>}
+                  {day.hint && <span class="stop-daylink-hint">{day.hint}</span>}
+                </span>
               </a>
             ))}
           </nav>
@@ -133,14 +167,13 @@ const { navLinks, ctaLink } = editionNav(lang);
                 total={days.length}
                 weekdayLong={day.weekdayLong}
                 dayMonth={day.dayMonth}
+                date={day.date}
+                venue={day.venue ?? data.name}
+                place={data.location.split(",")[0].trim()}
+                lang={lang}
                 headingLevel="h2"
               />
-              {day.venue && (
-                <p class="fz-venue">
-                  <span class="fz-display fz-venue-name">{day.venue}</span>
-                  {day.venueArea && <span class="fz-muted fz-venue-area">{day.venueArea}</span>}
-                </p>
-              )}
+              {day.venue && <EditionVenue name={day.venue} area={day.venueArea} />}
               <EditionActivities activities={day.activities} lang={lang} headingLevel="h3" />
             </section>
           ))}
@@ -154,21 +187,10 @@ const { navLinks, ctaLink } = editionNav(lang);
       </div>
     )}
 
-    {nextStop && (
-      <section class="fz-band">
-        <div class="fz-wrap">
-          <div>
-            <p class="fz-muted">{t("edition.nextStop")}</p>
-            <p class="fz-display stop-next-name">{nextStop.data.name}</p>
-            <p class="fz-display fz-gold stop-next-range">
-              {dateRange(nextStop.data.startDate, nextStop.data.endDate, lang)}
-            </p>
-          </div>
-          <a class="fz-button" href={getTranslatedPath(`/programacion/2027/${baseSlug(nextStop.filePath!)}`, lang)}>
-            {t("edition.viewStop").replace("{name}", nextStop.data.name)}
-          </a>
-        </div>
-      </section>
+    {linkedStopCard && (
+      <div class="stop-link-wrap">
+        <StopLinkCard {...linkedStopCard} />
+      </div>
     )}
   </main>
 
@@ -182,42 +204,67 @@ const { navLinks, ctaLink } = editionNav(lang);
   }
 
   .stop-back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     font-size: 15px;
   }
 
+  /* One fluid scale for both stop pages: small on phones, up to 96px / 32px / 18px on desktop. */
   .stop-range {
-    margin: 28px 0 0;
-    font-size: 30px;
+    margin: 12px 0 0;
+    font-size: clamp(20px, 5.4vw, 32px);
   }
 
   .stop-name {
     margin: 4px 0 0;
-    font-size: clamp(56px, 8vw, 120px);
-    line-height: 0.9;
-    overflow-wrap: anywhere;
+    font-size: clamp(40px, 11vw, 96px);
+    line-height: 0.95;
   }
 
   .stop-intro {
     margin: 20px 0 0;
-    font-size: 19px;
-    max-width: 56ch;
+    font-size: clamp(16px, 1.4vw + 5px, 18px);
+    line-height: 1.5;
+    max-width: 60ch;
   }
 
   .stop-daynav {
     margin-top: 32px;
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 16px 32px;
   }
 
   .fz .stop-daylink {
+    --fz-cal-num: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     color: var(--fz-cream);
-    padding: 0 20px;
+    text-decoration: none;
   }
 
-  .stop-days {
-    padding-top: 8px;
-    padding-bottom: 40px;
+  .stop-daylink-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .stop-daylink-venue {
+    font-size: 15px;
+  }
+
+  .stop-daylink-hint {
+    font-size: 13px;
+    color: var(--fz-muted);
+  }
+
+  .fz .stop-daylink:hover .stop-daylink-venue,
+  .fz .stop-daylink:focus-visible .stop-daylink-venue {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .stop-day {
@@ -226,23 +273,39 @@ const { navLinks, ctaLink } = editionNav(lang);
     scroll-margin-top: 96px;
   }
 
-  .stop-tickets {
-    padding-top: 32px;
-    padding-bottom: 56px;
-  }
-
-  .stop-next-name {
-    margin-top: 4px !important;
-    font-size: 44px;
-    line-height: 1;
-  }
-
-  .stop-next-range {
-    margin-top: 6px !important;
-    font-size: 22px;
-  }
-
   @media (max-width: 720px) {
+    /* Two columns, small type: the hint may take two lines but is never cut. */
+    .stop-daynav {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .stop-intro {
+      margin-top: 16px;
+    }
+
+    .fz .stop-daylink {
+      --fz-cal-num: 22px;
+      gap: 10px;
+      min-height: 44px;
+      align-items: center;
+    }
+
+    .stop-daylink .fz-cal {
+      width: 40px;
+    }
+
+    .stop-daylink-venue {
+      font-size: 13px;
+    }
+
+    .stop-daylink-hint {
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
     .stop-hero .fz-photo-hero-content {
       padding-top: 96px;
     }

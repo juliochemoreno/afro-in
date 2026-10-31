@@ -1,0 +1,111 @@
+---
+// "Nos acompañan": the partners' logos on the page background, one visual height each.
+// Only logos that read on dark (transparent) are listed; the rest of the site's allies
+// (src/components/Allies.astro) have opaque, light backgrounds.
+import { Image } from "astro:assets";
+import laPuerta from "@/assets/img/aliados/la-puerta-dark.png";
+import cokoa from "@/assets/img/aliados/cokoa-dark.png";
+import masaya from "@/assets/img/aliados/masaya.webp";
+import caribeam from "@/assets/img/aliados/caribeam-team-dark.png";
+import kombilesaMi from "@/assets/img/aliados/kombilesa-mi.webp";
+import tayrosoft from "@/assets/img/tayrosoft-logo-white.svg";
+import { useTranslations } from "@/i18n/utils";
+import type { Lang } from "@/lib/programacion";
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+// `height` evens out the visual size: wordmarks are wide, badges round, and some files carry padding.
+const partners = [
+  { name: "Oh la la! La Puerta", logo: laPuerta, height: 72 },
+  { name: "Co·KoA", logo: cokoa, height: 44 },
+  { name: "Masaya", logo: masaya, height: 52 },
+  { name: "Caribeam Team", logo: caribeam, height: 76 },
+  { name: "Kombilesa Mi", logo: kombilesaMi, height: 88 },
+  { name: "Tayrosoft", logo: tayrosoft, height: 28, href: "https://tayrosoft.com" },
+];
+---
+
+<section class="fz-wrap edition-partners" aria-labelledby="edition-partners">
+  <h2 id="edition-partners" class="fz-display edition-partners-title">{t("edition.partnersTitle")}</h2>
+  <p class="fz-muted edition-partners-lead">{t("edition.partnersText")}</p>
+  <ul class="edition-partners-list">
+    {partners.map((partner) => (
+      <li>
+        {partner.href ? (
+          <a href={partner.href} target="_blank" rel="noopener noreferrer" class="edition-partner-link">
+            <Image src={partner.logo} alt={partner.name} height={partner.height * 2} style={`height: ${partner.height}px`} class="edition-partner-logo" loading="lazy" />
+          </a>
+        ) : (
+          <Image src={partner.logo} alt={partner.name} height={partner.height * 2} style={`height: ${partner.height}px`} class="edition-partner-logo" loading="lazy" />
+        )}
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+  /* Same title and subtitle as the other sections of the page. */
+  .edition-partners-title {
+    margin: 0 0 8px;
+    font-size: 64px;
+    line-height: 1;
+  }
+
+  .edition-partners-lead {
+    margin: 0 0 32px;
+    font-size: 18px;
+    max-width: 60ch;
+  }
+
+  .edition-partners-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 32px 56px;
+  }
+
+  .edition-partner-logo {
+    display: block;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .edition-partner-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    transition: opacity 0.2s ease;
+  }
+
+  .edition-partner-link:hover,
+  .edition-partner-link:focus-visible {
+    opacity: 0.8;
+  }
+
+  @media (max-width: 720px) {
+    .edition-partners-title {
+      font-size: 40px;
+    }
+
+    .edition-partners-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px 16px;
+      justify-items: center;
+    }
+
+    .edition-partner-logo {
+      transform-origin: center;
+      max-height: 64px;
+      width: auto;
+    }
+  }
+</style>
