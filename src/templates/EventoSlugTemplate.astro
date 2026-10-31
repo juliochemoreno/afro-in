@@ -8,6 +8,7 @@ import "@/styles/checkout-fields.css";
 import { formatPrice } from "@/lib/cart";
 import { countries } from "@/data/countries";
 import type { PublicEvent } from "@/lib/tickets";
+import { stageName, type StageStatus } from "@/lib/ticketStages";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 
 interface Props {
@@ -45,7 +46,41 @@ const navLinks = [
 ];
 
 const successPath = getTranslatedPath("/entradas", lang);
-const showRemaining = !event.soldOut && event.remaining <= 20;
+const sale = event.sale;
+const staged = event.stages.length > 0;
+const notOpenYet = sale?.state === "upcoming";
+const showRemaining = !event.soldOut && !notOpenYet && event.remaining <= 20;
+
+// Stage dates are whole Bogotá days; noon UTC keeps the day in any zone.
+const fmtDay = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString(localeTag, {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+const fmtDayLong = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString(localeTag, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+const stageDates = (s: { starts_on: string; ends_on: string | null }) =>
+  s.ends_on
+    ? `${fmtDay(s.starts_on)} – ${fmtDay(s.ends_on)}`
+    : t("tix.stages.from").replace("{date}", fmtDay(s.starts_on));
+const STAGE_LABEL: Record<StageStatus, string> = {
+  current: t("tix.stages.now"),
+  soldout: t("tix.stages.soldout"),
+  past: t("tix.stages.ended"),
+  upcoming: t("tix.stages.upcoming"),
+};
+const priceLabel =
+  event.price === 0 ? "Entrada Libre" : formatPrice(event.price);
+const priceFact =
+  staged && sale && sale.state !== "ended"
+    ? `${stageName(sale.stage, lang)} · ${priceLabel}`
+    : priceLabel;
 
 const T_KEYS = [
   "tix.form.quantity",
@@ -67,6 +102,7 @@ const T_KEYS = [
   "tix.form.err.name",
   "tix.form.err.email",
   "tix.form.err.generic",
+  "tix.form.err.pricechanged",
   "tix.detail.soldout.title",
   "tix.detail.soldout.text",
 ];
@@ -110,15 +146,13 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
             }
             <li>
               <span class="fact-label">{t("tix.detail.price")}</span>
-              <span class="fact-value price">
-                {event.price === 0 ? "Entrada Libre" : formatPrice(event.price)}
-              </span>
+              <span class="fact-value price">{priceFact}</span>
             </li>
             {
               showRemaining && (
                 <li>
                   <span class="fact-value remaining">
-                    {t("tix.detail.remaining").replace(
+                    {t(staged ? "tix.detail.remaining.stage" : "tix.detail.remaining").replace(
                       "{n}",
                       String(event.remaining)
                     )}
@@ -127,11 +161,36 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
               )
             }
           </ul>
+          {
+            staged && (
+              <section class="evento-stages">
+                <h2>{t("tix.stages.title")}</h2>
+                <ul>
+                  {event.stages.map((s) => (
+                    <li class={`stage stage-${s.status}`}>
+                      <span class="stage-name">{stageName(s, lang)}</span>
+                      <span class="stage-price">
+                        {s.price === 0 ? "Entrada Libre" : formatPrice(s.price)}
+                      </span>
+                      <span class="stage-dates">{stageDates(s)}</span>
+                      <span class="stage-status">{STAGE_LABEL[s.status]}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )
+          }
           {description && <p class="evento-desc">{description}</p>}
         </div>
 
         <aside class="evento-buy">
           <h2>{event.price === 0 ? "Reservar Entradas" : t("tix.detail.buy")}</h2>
+          {notOpenYet && sale?.state === "upcoming" ? (
+            <div class="tix-soldout">
+              <p class="tix-soldout-title">{t("tix.stages.opens.title")}</p>
+              <p>{t("tix.stages.opens.text").replace("{date}", fmtDayLong(sale.opensOn))}</p>
+            </div>
+          ) : (
           <TicketCheckoutForm
             client:load
             lang={lang as any}
@@ -143,6 +202,7 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
             successPath={successPath}
             t={strings}
           />
+          )}
         </aside>
       </div>
     </div>
@@ -224,6 +284,61 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
     font-size: 1.3rem;
     font-weight: 700;
     color: var(--color-primary);
+  }
+  .evento-stages {
+    margin: 0 0 var(--space-lg, 1.5rem);
+  }
+  .evento-stages h2 {
+    font-size: 1.1rem;
+    color: var(--color-secondary);
+    margin: 0 0 0.5rem;
+  }
+  .evento-stages ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+  }
+  .evento-stages .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.1rem 0.75rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--color-cream-dark);
+    border-radius: 8px;
+    background: var(--color-white);
+  }
+  .evento-stages .stage-name {
+    font-weight: 700;
+    color: var(--color-secondary);
+  }
+  .evento-stages .stage-price {
+    font-weight: 700;
+    color: var(--color-secondary);
+    text-align: right;
+  }
+  .evento-stages .stage-dates,
+  .evento-stages .stage-status {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+  }
+  .evento-stages .stage-status {
+    text-align: right;
+  }
+  .evento-stages .stage-current {
+    border-color: var(--color-primary);
+    box-shadow: inset 4px 0 0 var(--color-primary);
+  }
+  .evento-stages .stage-current .stage-status,
+  .evento-stages .stage-current .stage-price {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+  .evento-stages .stage-past .stage-price,
+  .evento-stages .stage-soldout .stage-price {
+    text-decoration: line-through;
+    color: var(--color-text-light);
   }
   .fact-value.remaining {
     color: var(--color-primary);

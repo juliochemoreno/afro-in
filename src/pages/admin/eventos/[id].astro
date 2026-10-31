@@ -2,6 +2,8 @@
 export const prerender = false;
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import EventForm from "@/components/admin/EventForm";
+import { loadStagesWithSales } from "@/lib/tickets";
+import { bogotaToday, stageStatuses } from "@/lib/ticketStages";
 
 // Access is protected via the session cookie (middleware guards /admin).
 const { id } = Astro.params;
@@ -15,6 +17,25 @@ if (db && id) {
     .first();
   if (!event) return Astro.redirect("/admin/eventos", 302);
 }
+
+// Price stages with their sales; a stage with any order cannot be deleted.
+let stages: any[] = [];
+if (event) {
+  const list = (await loadStagesWithSales(db, [event.id])).get(event.id) ?? [];
+  const ordered = await db
+    .prepare(
+      "SELECT DISTINCT stage_id FROM ticket_orders WHERE event_id = ? AND stage_id IS NOT NULL"
+    )
+    .bind(event.id)
+    .all();
+  const withOrders = new Set(
+    ((ordered.results || []) as { stage_id: number }[]).map((r) => Number(r.stage_id))
+  );
+  stages = stageStatuses(list, bogotaToday()).map((s) => ({
+    ...s,
+    has_orders: withOrders.has(s.id),
+  }));
+}
 const googleMapsApiKey =
   (Astro.locals as any).runtime?.env?.PUBLIC_GOOGLE_MAPS_API_KEY ||
   import.meta.env.PUBLIC_GOOGLE_MAPS_API_KEY ||
@@ -23,6 +44,6 @@ const googleMapsApiKey =
 
 <AdminLayout title="Editar evento | AFRO IN Admin">
   <main class="h-full overflow-y-auto">
-    <EventForm client:only="react" event={event} googleMapsApiKey={googleMapsApiKey} />
+    <EventForm client:only="react" event={event} stages={stages} googleMapsApiKey={googleMapsApiKey} />
   </main>
 </AdminLayout>
