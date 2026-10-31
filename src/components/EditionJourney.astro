@@ -15,6 +15,7 @@ export interface JourneyStep {
   dayMonth: string;
   city: string;
   photo: ImageMetadata;
+  photoMobile?: ImageMetadata;
   photoPosition: string;
   entries: { stopName: string; venue?: string; href: string; activities: EditionActivity[] }[];
 }
@@ -28,6 +29,7 @@ const { steps, lang } = Astro.props;
 const t = useTranslations(lang);
 const panels = steps.map((step) => ({
   photo: step.photo,
+  photoMobile: step.photoMobile,
   photoPosition: step.photoPosition,
   title: `${step.weekdayShort} ${step.dayNumber}`,
   subtitle: step.city,

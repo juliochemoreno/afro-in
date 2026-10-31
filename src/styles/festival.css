@@ -115,6 +115,38 @@
   color: var(--fz-gold);
 }
 
+.fz-offers {
+  list-style: none;
+  margin: 32px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.fz-offers li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fz-gold);
+}
+
+.fz-offer-title {
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.fz-offer-cta {
+  margin-top: 12px;
+}
+
+.fz-offer-cta-soon {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .fz-tickets p {
   margin: 0;
 }
@@ -155,7 +187,8 @@
     padding: 24px 20px;
   }
 
-  .fz-tiers {
+  .fz-tiers,
+  .fz-offers {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }

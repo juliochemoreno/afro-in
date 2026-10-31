@@ -85,6 +85,14 @@ export function joinList(items: string[], lang: Lang): string {
   return new Intl.ListFormat(LOCALES[lang], { type: "conjunction" }).format(items);
 }
 
+// Buy pages of the presale and the Afro Batalla registration, both events of
+// the ticketing system. Fill in the `url` (an afroin.org path such as
+// "/eventos/<slug>") to turn the "soon" button into a link.
+export const PRESALE = {
+  presale: { price: 45000, capacity: 150, url: "" },
+  afroBatalla: { price: 30000, url: "" },
+};
+
 export function formatCop(amount: number, lang: Lang): string {
   return new Intl.NumberFormat(LOCALES[lang], {
     style: "currency",

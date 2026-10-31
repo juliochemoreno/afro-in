@@ -1,4 +1,5 @@
 ---
+import { artistPhoto } from "@/lib/artistPhotos";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
@@ -29,6 +30,7 @@ const artists = (await getCollection("artists2027"))
   .sort((a, b) => a.data.order - b.data.order)
   .map((artist) => ({
     ...artist.data,
+    photo: artistPhoto(artist.id, artist.data.photo),
     flag: flagEmoji(artist.data.countryCode),
     appearances: artistAppearances(artist.id, stops).map((appearance) => {
       const label = dayLabel(appearance.date, lang);
@@ -73,6 +75,7 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
             widths={[320, 640]}
             sizes="(max-width: 720px) 100vw, 380px"
             class="artist-photo"
+            style={`object-position: ${artist.photoPosition}`}
           />
           <div class="artist-body">
             <h2 class="fz-display artist-name">{artist.name}</h2>

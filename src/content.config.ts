@@ -80,6 +80,8 @@ const artists2027 = defineCollection({
       countryCode: z.string().regex(/^[A-Z]{2}$/),
       country: z.object({ es: z.string(), en: z.string(), fr: z.string() }),
       photo: image(),
+      // CSS object-position of the 4:5 frames, keeping head and hands in view.
+      photoPosition: z.string().default("50% 20%"),
       order: z.number(),
       // The edition's star artist, shown in its own block.
       featured: z.boolean().default(false),
@@ -101,6 +103,8 @@ const tour2027 = defineCollection({
       heroPosition: z.string().default("center"),
       cardImage: image(),
       cardPosition: z.string().default("center"),
+      // "large" gives the stop name a bigger title (hero and listing card).
+      titleSize: z.enum(["normal", "large"]).default("normal"),
       days: z.array(
         z.object({
           date: isoDate,

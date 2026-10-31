@@ -3,6 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
+import { artistPhoto, artistPhotoMobile } from "@/lib/artistPhotos";
 import EditionTickets from "@/components/EditionTickets.astro";
 import EditionCountries from "@/components/EditionCountries.astro";
 import EditionHeadliner from "@/components/EditionHeadliner.astro";
@@ -54,11 +55,13 @@ const stopCards = stops.map((stop) => {
     tickets: stop.data.tickets,
     cardImage: stop.data.cardImage,
     cardPosition: stop.data.cardPosition,
+    large: stop.data.titleSize === "large",
   };
 });
 
 const allDays = stops.flatMap((stop) => stop.data.days);
 
+const idByPhotoSrc = new Map(artists.map((artist) => [artist.data.photo.src, artist.id]));
 const artistsById = new Map(artists.map((artist) => [artist.id, artist.data]));
 const journey: JourneyStep[] = journeyDays(
   stops.map((stop) => ({ ...stop.data, slug: baseSlug(stop.filePath!) }))
@@ -69,11 +72,14 @@ const journey: JourneyStep[] = journeyDays(
     .flatMap((entry) => entry.day.activities)
     .map((activity) => (activity.artist ? artistsById.get(activity.artist.id) : undefined))
     .find(Boolean);
+  const basePhoto = withPhoto?.day.photo ?? firstArtist?.photo ?? entries[0].stop.cardImage;
+  const portraitId = idByPhotoSrc.get(basePhoto.src);
   return {
     ...label,
     city: joinList([...new Set(entries.map((entry) => entry.stop.name))], lang),
-    photo: withPhoto?.day.photo ?? firstArtist?.photo ?? entries[0].stop.cardImage,
-    photoPosition: withPhoto?.day.photoPosition ?? "center",
+    photo: portraitId ? artistPhoto(portraitId, basePhoto) : basePhoto,
+    photoMobile: portraitId ? artistPhotoMobile(portraitId) : undefined,
+    photoPosition: withPhoto ? withPhoto.day.photoPosition : (firstArtist?.photoPosition ?? "center"),
     entries: entries.map(({ stop, day }) => ({
       stopName: stop.name,
       venue: day.venue,
@@ -105,7 +111,7 @@ const artistCards = artists.filter((artist) => !artist.data.featured).map((artis
   const when = first
     ? [dayLabel(first.date, lang).dayMonth, first.venue].filter(Boolean).join(", ")
     : t("edition.dateTba");
-  return { ...artist.data, flag: flagEmoji(artist.data.countryCode), meta: `${artist.data.country[lang]} · ${when}` };
+  return { ...artist.data, photo: artistPhoto(artist.id, artist.data.photo), flag: flagEmoji(artist.data.countryCode), meta: `${artist.data.country[lang]} · ${when}` };
 });
 
 const { navLinks, ctaLink } = editionNav(lang);
@@ -136,7 +142,7 @@ const { navLinks, ctaLink } = editionNav(lang);
     {headliner && (
       <div class="fz-wrap edition-headliner">
         <EditionHeadliner
-          artist={headliner.data}
+          artist={{ ...headliner.data, photo: artistPhoto(headliner.id, headliner.data.photo) }}
           appearances={headlinerAppearances}
           lang={lang}
           moreHref={getTranslatedPath("/artistas", lang)}
@@ -146,6 +152,7 @@ const { navLinks, ctaLink } = editionNav(lang);
               tickets={stop.tickets!}
               lang={lang}
               heading={`${t("edition.ticketsTitle")} · ${stop.name}`}
+              presale
               bare
             />
           ))}
@@ -164,7 +171,7 @@ const { navLinks, ctaLink } = editionNav(lang);
           <a class="edition-stop" href={stop.href}>
             <Image src={stop.cardImage} alt="" widths={[480, 960]} sizes="(max-width: 720px) 100vw, 580px" class="edition-stop-photo" style={`object-position: ${stop.cardPosition}`} />
             <span class="fz-display fz-gold edition-stop-range">{stop.range}</span>
-            <span class="fz-display edition-stop-name">{stop.name}</span>
+            <span class:list={["fz-display", "edition-stop-name", { "edition-stop-name-large": stop.large }]}>{stop.name}</span>
             <span class="fz-muted">{stop.place}</span>
             <span class="edition-stop-link">
               {stop.comingSoon ? t("edition.comingSoon") : t("edition.viewProgram")}
@@ -190,6 +197,7 @@ const { navLinks, ctaLink } = editionNav(lang);
               widths={[320, 640]}
               sizes="(max-width: 720px) 50vw, 380px"
               class="edition-artist-photo"
+              style={`object-position: ${artist.photoPosition}`}
             />
             <div>
               <h3 class="fz-display edition-artist-name">{artist.name}</h3>
@@ -314,6 +322,10 @@ const { navLinks, ctaLink } = editionNav(lang);
     line-height: 1;
   }
 
+  .edition-stop-name-large {
+    font-size: 72px;
+  }
+
   .edition-stop-link {
     margin-top: 8px;
     font-weight: 600;
@@ -401,6 +413,10 @@ const { navLinks, ctaLink } = editionNav(lang);
 
     .edition-stop-name {
       font-size: 40px;
+    }
+
+    .edition-stop-name-large {
+      font-size: 52px;
     }
 
     .edition-h2 {
