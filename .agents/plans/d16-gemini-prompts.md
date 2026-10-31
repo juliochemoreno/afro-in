@@ -1,17 +1,19 @@
 # D16 — Gemini master prompt for the 2027 artist portraits
 
-> **Status:** the master prompt text is pending Julio's confirmation (the orchestrator sends it); paste it in the "Master prompt" section below. The frame specs, file names and swap-in rules here are final.
+> **Status:** master prompt confirmed by Julio (one common background for every portrait). Gemini's image mode has no 4:5 and no pixel size, so Gemini makes **3:4** (vertical) and **16:9** (horizontal) and Claude crops and resizes to the site's frames.
 
 ## Two files per artist
 
-| File | Aspect | Size | Used in |
-|---|---|---|---|
-| `<artist-id>-web-v.jpg` | 4:5 (vertical) | **1600 × 2000** | Every 4:5 frame, on desktop **and** phone: artist cards, the featured Robe L Ninho block, and the journey photo on desktop |
-| `<artist-id>-web-h.jpg` | 16:10 (horizontal) | **1600 × 1000** | The journey photo on phones/tablets (viewport ≤ 900 px) |
+| File | Aspect | Size | Gemini selector | Used in |
+|---|---|---|---|---|
+| `<artist-id>-web-v.jpg` | 4:5 (vertical) | **1600 × 2000** | **3:4** (Claude crops the sides to 4:5) | Every 4:5 frame, on desktop **and** phone: artist cards, the featured Robe block, and the journey photo on desktop |
+| `<artist-id>-web-h.jpg` | 16:10 (horizontal) | **1600 × 1000** | **16:9** (Claude crops top and bottom to 16:10) | The journey photo on phones/tablets (viewport ≤ 900 px) |
 
-`<artist-id>` is the file name of the artist's card: `robe-l-ninho`, `choco`, `chichi-banana`, `fafoman`, `fideles-cadito`, `eirini-tsiakka`, `dj-joe-kiz-vibes`, `dj-acid-burrito`.
+The `-h` file is only needed for artists whose photo appears in the journey: today **Robe L Ninho** (Jan 16) and **Fideles Cadito** (Jan 17, first artist of the day). Every other artist needs only `-v`.
 
-Save each result in `~/Pictures/Afro In/2027/che/Retratos/` next to the original, as `<artist-id>-web-v.jpg` / `<artist-id>-web-h.jpg`. Claude then copies them to `src/assets/img/2027/artistas/` with the same names; the site picks them up by name and keeps the current photo for any artist whose files do not exist yet. Nothing is swapped until they are there.
+`<artist-id>`: `robe-l-ninho`, `choco`, `chichi-banana`, `fafoman`, `fideles-cadito`, `eirini-tsiakka`, `dj-joe-kiz-vibes`, `dj-acid-burrito`.
+
+Julio saves each Gemini result in `~/Pictures/Afro In/2027/che/Retratos/` as `<artist-id>-web-v.jpg` (the 3:4 image) and `<artist-id>-web-h.jpg` (the 16:9 image), at whatever size Gemini gives. When Julio says so, Claude crops and resizes with `sips` (face stays centered), copies them to `src/assets/img/2027/artistas/` with the same names, checks desktop and 375 px, and commits. The site picks the files up by name and keeps the current photo for any artist without files. Nothing is swapped until then.
 
 ## Where each frame renders (measured in the dev server)
 
@@ -35,13 +37,55 @@ So only the journey photo turns horizontal on phones (an earlier note said "iden
 | Choco `choco-retrato.JPG` | 1728×3072 | Hands slightly cut at the bottom (minor) |
 | Fideles Cadito, Eirini Tsiakka, DJ Joe Kiz Vibes | 3024×4032 | Nothing cut; subject is small in the frame (optional, only for a shared style) |
 
-The `-h` version needs an outpainted wide frame with the person kept inside the centre third, because the phone frame is cropped by `object-fit: cover` with a per-artist focal point (`photoPosition` in `src/content/artists2027/*.md`).
+The horizontal image is cropped by `object-fit: cover` with a per-artist focal point (`photoPosition` in `src/content/artists2027/*.md`), so the person must stay near the centre.
 
 ## Master prompt
 
-*(pending — paste the confirmed text here)*
+One request = one image. Attach the artist's original photo, choose **3:4** in Gemini's image mode, paste this, and save the result as `<artist-id>-web-v.jpg`.
 
-Rules the final text must keep: extend the background (outpaint) to fit the frame instead of cropping; upscale and sharpen; do not alter the person's face, features, skin tone, hair, body, clothes or expression; no added text or logos; keep the original lighting; one shared style for all portraits.
+```
+ROLE: Professional portrait retoucher preparing artist photos for a music and dance festival website. The attached photo is the ONLY source of truth for the person.
+
+IDENTITY — ABSOLUTE RULES:
+- Keep the person 100% identical to the original: face shape, eyes, nose, lips, teeth, ears, skin tone and texture, freckles, scars, tattoos, facial hair, hairstyle and hair color, body shape, hands, clothes, accessories (glasses, jewelry, headphones, caps, scarves) and expression.
+- Do not beautify, slim, smooth skin, whiten teeth, change age or "improve" any feature. Do not redraw the face: only upscale and sharpen what exists.
+- Do not add, remove or move people, objects, text, logos or watermarks.
+
+FRAMING:
+- Medium close-up from the top of the head to mid-chest, person centered horizontally.
+- Eyes on the upper third line. Clear headroom above the hair or cap; nothing of the head, hair, cap or headphones touches the edge.
+- Leave generous empty background on the left and right of the person (the image will be trimmed slightly at the sides).
+- If the original is cut (top of head, hands, shoulders), EXTEND the image (outpaint) to complete it naturally. Never crop into the person.
+
+STYLE:
+- Background: soft, out-of-focus studio backdrop in a deep warm gradient (charcoal at the edges to dark earth brown behind the head), very subtle film grain. No patterns, scenery or props.
+- Light: soft key light from the front-left and a gentle rim light separating hair and shoulders from the background. Keep the person's original skin tone exactly.
+- Color: natural, warm, slightly contrasted editorial look. No filters, no black and white, no heavy saturation.
+- Quality: maximum resolution, sharp eyes, clean detail, no AI artifacts, no plastic skin, no extra fingers.
+```
+
+**Horizontal follow-up** (only Robe L Ninho and Fideles Cadito): in the same chat, switch the selector to **16:9** and send the text below; save the result as `<artist-id>-web-h.jpg`.
+
+```
+Same person, same style, horizontal version: extend the background to the sides, person centered, leave headroom above and some space below, never crop the head.
+```
+
+## Per-artist steps
+
+For each artist: attach the original → selector 3:4 → master prompt → compare faces (below) → save `-web-v.jpg`. For Robe L Ninho and Fideles Cadito also do the 16:9 follow-up and save `-web-h.jpg`.
+
+| Artist | Attach this original (`che/Retratos/`) | Save as | Also `-h` |
+|---|---|---|---|
+| Robe L Ninho | `robe-l-ninho-retrato.jpg` | `robe-l-ninho-web-v.jpg` | yes → `robe-l-ninho-web-h.jpg` |
+| Fideles Cadito | `fideles-cadito-retrato.JPG` | `fideles-cadito-web-v.jpg` | yes → `fideles-cadito-web-h.jpg` |
+| Fafoman | `Fafoman-retrato.heic` (convert to JPG if Gemini refuses HEIC) | `fafoman-web-v.jpg` | no |
+| Chichi Banana | `chichi-banana-retrato.JPG` | `chichi-banana-web-v.jpg` | no |
+| DJ Acid Burrito | `Dj-acid-burrito-retrato.JPG` (landscape original: Gemini must outpaint to vertical) | `dj-acid-burrito-web-v.jpg` | no |
+| Choco | `choco-retrato.JPG` | `choco-web-v.jpg` | no |
+| Eirini Tsiakka | `Eirini Tsiakka-retrato.heic` | `eirini-tsiakka-web-v.jpg` | no |
+| DJ Joe Kiz Vibes | `Dj Joe Kiz Vide.heic` | `dj-joe-kiz-vibes-web-v.jpg` | no |
+
+Priority (tight or low-resolution originals): Robe L Ninho, Fafoman, Chichi Banana, DJ Acid Burrito, then Choco; the other three are optional but give every portrait the same background.
 
 ## Check before using each result
 
