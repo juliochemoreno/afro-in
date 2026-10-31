@@ -15,7 +15,7 @@ export interface ScrollySlide {
   // Venue slides: name with place (bottom).
   venue?: { name: string; place: string };
   // Artist slides: country (top left), name and time that day (bottom).
-  artist?: { name: string; countryCode: string; countryName: string; time?: string };
+  artist?: { name: string; countryCode?: string; countryName?: string; time?: string };
 }
 
 // The photos of one step: the first shows, the rest crossfade after it (see the script).
@@ -87,9 +87,9 @@ function srcset(image: Awaited<ReturnType<typeof getImage>>) {
                   </picture>
                   <div class="fz-slide-top">
                     <span class="fz-slide-id">
-                      {slide.artist && (
+                      {slide.artist?.countryCode && (
                         <>
-                          <Flag code={slide.artist.countryCode} name={slide.artist.countryName} />{slide.artist.countryName}
+                          <Flag code={slide.artist.countryCode} name={slide.artist.countryName ?? ""} />{slide.artist.countryName}
                         </>
                       )}
                     </span>

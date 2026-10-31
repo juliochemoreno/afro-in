@@ -1112,3 +1112,25 @@
     right: var(--fz-bleed);
   }
 }
+
+/* Artists page: the same block for every artist; the photo alternates sides and bleeds to its screen edge. */
+@media (min-width: 1024px) {
+  .fz-headliner--reverse .fz-headliner-media {
+    grid-column: 2;
+    margin-left: 0;
+    margin-right: calc(-1 * var(--fz-bleed));
+  }
+
+  .fz-headliner--reverse .fz-headliner-media picture {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18%), linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 18%), linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+  }
+
+  .fz-headliner--reverse .fz-headliner-side {
+    grid-column: 1;
+  }
+
+  .fz-headliner--center .fz-headliner-side {
+    align-self: center;
+  }
+}

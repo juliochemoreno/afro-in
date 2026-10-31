@@ -226,7 +226,7 @@ const { navLinks, ctaLink } = editionNav(lang);
 
     <section class="fz-wrap edition-block" aria-labelledby="edition-artists">
       <h2 id="edition-artists" class="fz-display edition-h2">{t("edition.artistsTitle")}</h2>
-      <p class="fz-muted edition-lead">{t("edition.artistsText").replace("{n}", String(new Set(artists.map((a) => a.data.countryCode)).size))}</p>
+      <p class="fz-muted edition-lead">{t("edition.artistsText").replace("{n}", String(new Set(artists.map((a) => a.data.countryCode).filter(Boolean)).size))}</p>
       <div class="edition-artists">
         {artistCards.map((artist) => (
           <article class="edition-artist">
@@ -239,7 +239,7 @@ const { navLinks, ctaLink } = editionNav(lang);
               style={`object-position: ${artist.photoPosition}`}
             />
             <div class="edition-artist-top">
-              <p class="edition-artist-country"><Flag code={artist.countryCode} name={artist.country[lang]} />{artist.country[lang]}</p>
+              <p class="edition-artist-country">{artist.countryCode && artist.country && <Flag code={artist.countryCode} name={artist.country[lang]} />}{artist.country?.[lang]}</p>
               {artist.dates && <p class="edition-artist-dates">{artist.dates}</p>}
             </div>
             <div class="edition-artist-bottom">
@@ -448,7 +448,7 @@ const { navLinks, ctaLink } = editionNav(lang);
 
   .edition-artists {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
   }
 
@@ -533,17 +533,17 @@ const { navLinks, ctaLink } = editionNav(lang);
     text-overflow: ellipsis;
   }
 
-  /* 8 artists: 4 columns from 1280px, 3 on small laptops, 2 on tablets and phones. */
-  @media (max-width: 1279px) {
-    .edition-artists {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
+  /* 9 artists: 3 x 3 on desktop and tablets; 2 columns on small tablets and phones, where the odd
+     last card spans both columns as a wide card. */
   @media (max-width: 900px) {
     .edition-artists {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 20px;
+    }
+
+    .edition-artist:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      aspect-ratio: 16 / 10;
     }
   }
 

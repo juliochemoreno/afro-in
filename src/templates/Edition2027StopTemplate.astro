@@ -34,7 +34,7 @@ const range = dateRange(data.startDate, data.endDate, lang, { withYear: true });
 const comingSoon = isComingSoon(data.days);
 
 const artistRefs = data.days.flatMap((day) =>
-  day.activities.flatMap((activity) => [activity.artist, activity.coArtist].filter((ref) => !!ref))
+  day.activities.flatMap((activity) => [activity.artist, activity.coArtist, ...activity.moreArtists].filter((ref) => !!ref))
 );
 const artistEntries = await getEntries(artistRefs);
 const artistsById = new Map(artistEntries.map((artist) => [artist.id, artist.data]));

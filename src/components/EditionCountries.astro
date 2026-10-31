@@ -5,14 +5,16 @@ import Flag from "@/components/Flag.astro";
 import type { Lang } from "@/lib/programacion";
 
 interface Props {
-  artists: { countryCode: string; country: Record<Lang, string> }[];
+  artists: { countryCode?: string; country?: Record<Lang, string> }[];
   lang: Lang;
 }
 
 const { artists, lang } = Astro.props;
 const t = useTranslations(lang);
 
-const countries = [...new Map(artists.map((a) => [a.countryCode, a.country[lang]])).entries()];
+const countries = [
+  ...new Map(artists.flatMap((a) => (a.countryCode && a.country ? [[a.countryCode, a.country[lang]] as const] : []))).entries(),
+];
 ---
 
 <div class="fz-countries">

@@ -1,6 +1,5 @@
 ---
 import { artistPhoto, artistPhotoMobile } from "@/lib/artistPhotos";
-import Flag from "@/components/Flag.astro";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
@@ -12,6 +11,7 @@ import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 import { artistAppearances, baseSlug, dayAnchor, dayLabel, entryLang, type Lang } from "@/lib/programacion";
 import { editionNav } from "@/lib/editionNav";
+import heroPhoto from "@/assets/img/2017/2017-afroin-img-7.jpg";
 import "@/styles/festival.css";
 
 interface Props {
@@ -27,25 +27,30 @@ const stops = (await getCollection("tour2027"))
   .sort((a, b) => a.data.order - b.data.order)
   .map((entry) => ({ slug: baseSlug(entry.filePath!), name: entry.data.name, days: entry.data.days }));
 
+const whenOf = (date: string) => {
+  const label = dayLabel(date, lang);
+  return `${label.weekdayShort} ${label.dayMonth}`;
+};
+
 const artists = (await getCollection("artists2027"))
   .sort((a, b) => a.data.order - b.data.order)
   .map((artist) => ({
     ...artist.data,
+    id: artist.id,
     photo: artistPhoto(artist.id, artist.data.photo),
-    appearances: artistAppearances(artist.id, stops).map((appearance) => {
-      const label = dayLabel(appearance.date, lang);
-      return {
-        ...appearance,
-        when: `${label.weekdayShort} ${label.dayMonth}`,
-        where: [appearance.venue, appearance.stopName].filter(Boolean).join(", "),
-        href: `${getTranslatedPath(`/programacion/2027/${appearance.stopSlug}`, lang)}#${dayAnchor(appearance.date)}`,
-      };
-    }),
+    photoMobile: artistPhotoMobile(artist.id),
+    appearances: artistAppearances(artist.id, stops).map((appearance) => ({
+      ...appearance,
+      when: whenOf(appearance.date),
+      where: [appearance.venue, appearance.stopName].filter(Boolean).join(", "),
+      href: `${getTranslatedPath(`/programacion/2027/${appearance.stopSlug}`, lang)}#${dayAnchor(appearance.date)}`,
+    })),
   }));
 
 const headliner = artists.find((artist) => artist.featured);
 const others = artists.filter((artist) => !artist.featured);
-const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artists.map((a) => a.countryCode)).size));
+const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artists.map((a) => a.countryCode).filter(Boolean)).size));
+
 ---
 
 <Layout title={t("edition.artistsMetaTitle")} description={artistsText}>
@@ -53,74 +58,103 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
   <Header navLinks={navLinks} ctaLink={ctaLink} variant="festival" />
 
   <main class="fz artists">
-    <section class="fz-wrap artists-hero">
-      <p class="fz-display fz-gold artists-kicker">AFRO IN 2027</p>
-      <h1 class="fz-display artists-title">{t("edition.artistsTitle")}</h1>
-      <p class="fz-muted artists-lead">{artistsText}</p>
-      <EditionCountries artists={artists} lang={lang} />
+    <section class="fz-photo-hero artists-hero">
+      <Image src={heroPhoto} alt="" widths={[768, 1296]} sizes="100vw" loading="eager" class="fz-photo-hero-img" />
+      <div class="fz-wrap fz-photo-hero-content">
+        <p class="fz-display fz-gold artists-kicker">AFRO IN 2027</p>
+        <h1 class="fz-display artists-title">{t("edition.artistsTitle")}</h1>
+        <p class="artists-lead">{artistsText}</p>
+        <EditionCountries artists={artists} lang={lang} />
+      </div>
     </section>
 
     {headliner && (
-      <div class="fz-wrap artists-headliner">
-        <EditionHeadliner artist={{ ...headliner, photoMobile: artistPhotoMobile(headliner.id) }} appearances={headliner.appearances} lang={lang} />
+      <div class="artist-panel" style="--i: 0">
+        <div class="fz-wrap edition-headliner">
+          <EditionHeadliner artist={headliner} appearances={headliner.appearances} lang={lang} center portrait />
+        </div>
       </div>
     )}
 
-    <section class="fz-wrap artists-grid" aria-label={t("edition.artistsTitle")}>
-      {others.map((artist) => (
-        <article class="artist">
-          <Image
-            src={artist.photo}
-            alt={artist.name}
-            widths={[320, 640]}
-            sizes="(max-width: 720px) 100vw, 380px"
-            class="artist-photo"
-            style={`object-position: ${artist.photoPosition}`}
-          />
-          <div class="artist-body">
-            <h2 class="fz-display artist-name">{artist.name}</h2>
-            <p class="fz-muted artist-country"><Flag code={artist.countryCode} name={artist.country[lang]} />{artist.country[lang]}</p>
-            {artist.appearances.length ? (
-              <ul class="artist-dates">
-                {artist.appearances.map((appearance) => (
-                  <li>
-                    <a href={appearance.href}>
-                      <span class="fz-display fz-gold artist-when">{appearance.when}</span>
-                      <span class="artist-where">
-                        {[appearance.venue, appearance.stopName].filter(Boolean).join(", ")}
-                      </span>
-                      <span class="fz-muted artist-what">{appearance.title}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p class="artist-tba">{t("edition.dateTba")}</p>
-            )}
-          </div>
-        </article>
-      ))}
-    </section>
-
-    <section class="fz-band">
-      <div class="fz-wrap">
-        <div>
-          <h2 class="fz-display artists-band-title">{t("edition.artistsPastTitle")}</h2>
-          <p class="fz-muted">{t("edition.artistsPastText")}</p>
+    {others.map((artist, index) => (
+      <div class:list={["artist-panel", { "artist-panel--last": index === others.length - 1 }]} style={`--i: ${index + 1}`}>
+        <div class="fz-wrap edition-headliner">
+          <EditionHeadliner artist={artist} appearances={artist.appearances} lang={lang} star={false} reverse={index % 2 === 0} center portrait id={`artist-${artist.id}`} />
         </div>
-        <a class="fz-button" href={getTranslatedPath("/artistas/2026", lang)}>
-          {t("edition.artistsPastLink")}
-        </a>
       </div>
-    </section>
+    ))}
+
   </main>
 
   <Footer variant="festival" />
 </Layout>
 
+<style is:global>
+  /* Desktop: stacking panels. Each artist is a full-height opaque panel stuck under the header, so
+     the next one slides up over it. Off on tablets and phones, on short windows (the panel's content
+     must fit) and for reduced motion. The last panel is not sticky: it scrolls away normally. */
+  @media (min-width: 1024px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {
+    .artists .artist-panel {
+      position: sticky;
+      top: 80px;
+      z-index: calc(var(--i) + 1);
+      min-height: calc(100svh - 80px);
+      display: flex;
+      align-items: center;
+      background: var(--fz-night);
+    }
+
+    .artists .artist-panel > .fz-wrap {
+      width: 100%;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .artists .artist-panel--last {
+      position: relative;
+    }
+  }
+
+  /* Phones and tablets: each artist's photo stays pinned under the header while that artist's text
+     slides up over it (sticky is scoped to the artist's own block, so photos never overlap). */
+  @media (max-width: 1023px) {
+    .artists .fz-headliner-media {
+      aspect-ratio: auto;
+      height: 55svh;
+      min-height: 320px;
+    }
+
+    .artists .fz-headliner-side {
+      position: relative;
+      z-index: 1;
+      background: var(--fz-night);
+      padding-top: 8px;
+    }
+
+    /* Soft edge where the text starts, so it never sits abruptly on the bright photo. */
+    .artists .fz-headliner-side::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      height: 72px;
+      pointer-events: none;
+      background: linear-gradient(transparent, var(--fz-night));
+    }
+  }
+
+  @media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
+    .artists .fz-headliner-media {
+      position: sticky;
+      top: 81px; /* the fixed header */
+    }
+  }
+</style>
+
 <style>
-  .artists-hero {
-    padding-top: 56px;
+  .artists-hero .fz-photo-hero-content {
+    padding-top: 160px;
     padding-bottom: 48px;
   }
 
@@ -139,99 +173,13 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
     margin: 20px 0 0;
     font-size: 19px;
     max-width: 56ch;
-  }
-
-  .artists-headliner {
-    padding-bottom: 56px;
-  }
-
-  .artists-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 40px 28px;
-    padding-bottom: 72px;
-  }
-
-  .artist {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .artist-photo {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 5;
-    object-fit: cover;
-    display: block;
-    outline: 1px solid rgba(242, 193, 78, 0.6);
-    outline-offset: 5px;
-  }
-
-  .artist-name {
-    margin: 0;
-    font-size: 34px;
-    line-height: 1.05;
-  }
-
-  .artist-country {
-    margin: 4px 0 0;
-    font-size: 16px;
-  }
-
-  .artist-dates {
-    list-style: none;
-    margin: 14px 0 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .artist-dates li {
-    border-top: 1px solid rgba(242, 193, 78, 0.3);
-  }
-
-  .fz .artist-dates a {
-    display: grid;
-    gap: 2px;
-    padding: 10px 0;
     color: var(--fz-cream);
-    text-decoration: none;
   }
 
-  .fz .artist-dates a:hover .artist-where {
-    text-decoration: underline;
-  }
-
-  .artist-when {
-    font-size: 20px;
-  }
-
-  .artist-what {
-    font-size: 14px;
-  }
-
-  .artist-tba {
-    margin: 14px 0 0;
-    padding-top: 10px;
-    border-top: 1px solid rgba(242, 193, 78, 0.3);
-    color: var(--fz-gold);
-    font-weight: 600;
-  }
-
-  .artists-band-title {
-    font-size: 36px;
-  }
-
-  @media (max-width: 900px) {
-    .artists-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (max-width: 720px) {
+    .artists-hero .fz-photo-hero-content {
+      padding-top: 96px;
     }
-  }
 
-  @media (max-width: 560px) {
-    .artists-grid {
-      grid-template-columns: minmax(0, 1fr);
-    }
   }
 </style>
