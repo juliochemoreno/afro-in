@@ -6,7 +6,7 @@ country:
   en: "Cuba"
   fr: "Cuba"
 photo: "../../assets/img/2027/artistas/robe-l-ninho.jpg"
-photoPosition: "50% 0%"
+photoPosition: "50% 30%"
 order: 0
 featured: true
 ---

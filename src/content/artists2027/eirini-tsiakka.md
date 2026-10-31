@@ -6,6 +6,6 @@ country:
   en: "Cyprus"
   fr: "Chypre"
 photo: "../../assets/img/2027/artistas/eirini-tsiakka.jpg"
-photoPosition: "50% 50%"
+photoPosition: "50% 30%"
 order: 5
 ---

@@ -103,15 +103,21 @@ const tour2027 = defineCollection({
       heroPosition: z.string().default("center"),
       cardImage: image(),
       cardPosition: z.string().default("center"),
-      // "large" gives the stop name a bigger title (hero and listing card).
-      titleSize: z.enum(["normal", "large"]).default("normal"),
       days: z.array(
         z.object({
           date: isoDate,
           // Photo for this day in the listing's journey (else the first artist's).
           photo: image().optional(),
           photoPosition: z.string().default("center"),
+          // More photos of the day, crossfaded after `photo` in the journey.
+          morePhotos: z.array(image()).default([]),
+          // Focal point of each photo ([photo, ...morePhotos]); photoPosition fills the gaps.
+          photoPositions: z.array(z.string()).default([]),
           venue: z.string().optional(),
+          // Short hint of the day for the day links ("Clases y charla").
+          hint: z.string().optional(),
+          // Short form for tight spots (artist cards): "La Puerta".
+          venueShort: z.string().optional(),
           venueArea: z.string().optional(),
           venueLogo: image().optional(),
           mapUrl: z.string().url().optional(),
@@ -121,7 +127,13 @@ const tour2027 = defineCollection({
               title: z.string(),
               kind: z.string().optional(),
               artist: reference("artists2027").optional(),
+              // A second artist sharing the activity (both are listed and get its dates).
+              coArtist: reference("artists2027").optional(),
               signupUrl: z.string().url().optional(),
+              // Links to the Afro Batalla registration event (see SALES).
+              signup: z.enum(["afroBatalla"]).optional(),
+              // Listed only in the artist's own dates, not in the day's agenda.
+              appearanceOnly: z.boolean().default(false),
               note: z.string().optional(),
             })
           ),
@@ -134,6 +146,9 @@ const tour2027 = defineCollection({
             .array(
               z.object({
                 period: z.string(),
+                // Inclusive dates (Bogotá) that mark the current stage when the page is viewed.
+                from: isoDate.optional(),
+                until: isoDate.optional(),
                 price: z.number().int().positive(),
                 note: z.string().optional(),
               })

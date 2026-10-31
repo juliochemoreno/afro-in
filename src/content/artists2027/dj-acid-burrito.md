@@ -6,6 +6,6 @@ country:
   en: "Colombia"
   fr: "Colombie"
 photo: "../../assets/img/2027/artistas/dj-acid-burrito.jpg"
-photoPosition: "45% 50%"
+photoPosition: "50% 30%"
 order: 7
 ---

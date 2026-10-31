@@ -6,6 +6,6 @@ country:
   en: "Colombia"
   fr: "Colombie"
 photo: "../../assets/img/2027/artistas/fafoman.jpg"
-photoPosition: "50% 0%"
+photoPosition: "50% 30%"
 order: 3
 ---
