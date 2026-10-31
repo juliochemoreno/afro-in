@@ -52,6 +52,16 @@ function loadBoldSDK(): Promise<void> {
   return boldSdkPromise;
 }
 
+// Checkout error codes (api/tickets/checkout) → translation keys.
+const ERROR_KEYS: Record<string, string> = {
+  not_open: "tix.form.err.notopen",
+  sold_out: "tix.form.err.soldout",
+  only_left: "tix.form.err.left",
+  only_left_stage: "tix.form.err.left.stage",
+  seats_taken: "tix.form.err.taken",
+  pending_payment: "tix.form.err.pending",
+};
+
 export default function TicketCheckoutForm({
   lang,
   eventSlug,
@@ -129,14 +139,17 @@ export default function TicketCheckoutForm({
         setError(
           t["tix.form.err.pricechanged"].replace(
             "{price}",
-            data.unitPrice === 0 ? "Entrada Libre (Gratis)" : formatPrice(Number(data.unitPrice))
+            data.unitPrice === 0 ? t["tix.price.free"] : formatPrice(Number(data.unitPrice))
           )
         );
         setLoading(false);
         return;
       }
       if (!res.ok) {
-        setError(data?.error || t["tix.form.err.generic"]);
+        // Known refusals have a code with a translated message.
+        const key = data?.code ? ERROR_KEYS[data.code] : undefined;
+        const msg = key ? t[key]?.replace("{n}", String(data.n ?? "")) : undefined;
+        setError(msg || data?.error || t["tix.form.err.generic"]);
         setLoading(false);
         return;
       }

@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
       if (e instanceof CheckoutError) {
         if (e.status >= 500) console.error("ticket checkout:", e.message);
-        return json({ error: e.message }, e.status);
+        return json({ error: e.message, code: e.code, ...e.params }, e.status);
       }
       throw e;
     }

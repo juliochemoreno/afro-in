@@ -76,7 +76,9 @@ export function stageStatuses<T extends StageWithSales>(
     if (foundCurrent) {
       status = ended ? "past" : "upcoming";
     } else if (ended) {
+      // A sold-out stage opens the next one even after its own end date.
       status = remaining <= 0 ? "soldout" : "past";
+      if (remaining <= 0) opened = true;
     } else if (remaining <= 0) {
       status = "soldout";
       opened = true;
@@ -160,13 +162,15 @@ export function validateStages(
     const name_es = str(raw.name_es, 80);
     if (!name_es) return { error: `${label}: el nombre (ES) es obligatorio` };
 
-    const price = Number(raw.price);
+    const numeric = (v: unknown) =>
+      typeof v === "number" || (typeof v === "string" && v.trim() !== "");
+    const price = numeric(raw.price) ? Number(raw.price) : NaN;
     if (!Number.isInteger(price) || price < 0)
       return { error: `${label}: el precio debe ser un número entero mayor o igual a 0` };
     if (price > 0 && price < opts.minAmount)
       return { error: `${label}: el precio mínimo es ${opts.minAmount} COP (o 0 si es gratis)` };
 
-    const capacity = Number(raw.capacity);
+    const capacity = numeric(raw.capacity) ? Number(raw.capacity) : NaN;
     if (!Number.isInteger(capacity) || capacity < 1)
       return { error: `${label}: el cupo debe ser al menos 1` };
 

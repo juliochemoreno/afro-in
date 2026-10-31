@@ -76,7 +76,7 @@ const STAGE_LABEL: Record<StageStatus, string> = {
   upcoming: t("tix.stages.upcoming"),
 };
 const priceLabel =
-  event.price === 0 ? "Entrada Libre" : formatPrice(event.price);
+  event.price === 0 ? t("tix.price.free") : formatPrice(event.price);
 const priceFact =
   staged && sale && sale.state !== "ended"
     ? `${stageName(sale.stage, lang)} · ${priceLabel}`
@@ -103,6 +103,13 @@ const T_KEYS = [
   "tix.form.err.email",
   "tix.form.err.generic",
   "tix.form.err.pricechanged",
+  "tix.form.err.notopen",
+  "tix.form.err.soldout",
+  "tix.form.err.left",
+  "tix.form.err.left.stage",
+  "tix.form.err.taken",
+  "tix.form.err.pending",
+  "tix.price.free",
   "tix.detail.soldout.title",
   "tix.detail.soldout.text",
 ];
@@ -170,7 +177,7 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
                     <li class={`stage stage-${s.status}`}>
                       <span class="stage-name">{stageName(s, lang)}</span>
                       <span class="stage-price">
-                        {s.price === 0 ? "Entrada Libre" : formatPrice(s.price)}
+                        {s.price === 0 ? t("tix.price.free") : formatPrice(s.price)}
                       </span>
                       <span class="stage-dates">{stageDates(s)}</span>
                       <span class="stage-status">{STAGE_LABEL[s.status]}</span>

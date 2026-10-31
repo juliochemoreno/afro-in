@@ -103,11 +103,15 @@ function nowIso(): string {
 // both stored forms. An event is on sale until it starts.
 
 // A pending order holds its tickets for HOLD_MINUTES so concurrent buyers do
-// not oversell a small quota. created_at is UTC 'YYYY-MM-DD HH:MM:SS', the
-// format datetime('now') returns, so the comparison is a plain string one.
+// not oversell a small quota. A paid order whose tickets are not issued yet
+// (between Bold's approval and issueTicketsForOrder) holds them too, with no
+// time limit. created_at is UTC 'YYYY-MM-DD HH:MM:SS', the format
+// datetime('now') returns, so the comparison is a plain string one.
 const HOLD_SINCE = `datetime('now', '-${HOLD_MINUTES} minutes')`;
+const IS_HOLDING = `((status = 'pending' AND created_at > ${HOLD_SINCE})
+   OR (status = 'completed' AND tickets_issued = 0))`;
 const HELD_FOR_EVENT = `(SELECT COALESCE(SUM(quantity), 0) FROM ticket_orders
-   WHERE event_id = e.id AND status = 'pending' AND created_at > ${HOLD_SINCE})`;
+   WHERE event_id = e.id AND ${IS_HOLDING})`;
 
 /**
  * Price stages of the given events with their issued (`sold`), held and paid
@@ -130,9 +134,8 @@ export async function loadStagesWithSales(
               (SELECT COUNT(*) FROM tickets t
                  JOIN ticket_orders o ON o.id = t.ticket_order_id
                 WHERE o.stage_id = s.id) AS sold,
-              (SELECT COALESCE(SUM(o.quantity), 0) FROM ticket_orders o
-                WHERE o.stage_id = s.id AND o.status = 'pending'
-                  AND o.created_at > ${HOLD_SINCE}) AS held,
+              (SELECT COALESCE(SUM(quantity), 0) FROM ticket_orders
+                WHERE stage_id = s.id AND ${IS_HOLDING}) AS held,
               (SELECT COALESCE(SUM(o.amount), 0) FROM ticket_orders o
                 WHERE o.stage_id = s.id AND o.status = 'completed') AS revenue
        FROM event_price_stages s
@@ -235,7 +238,8 @@ function toPublic(
   }
   const views = stageStatuses(stages, today);
   const sale = resolveSale(stages, today);
-  const price = sale.state === "ended" ? row.price : sale.stage.price;
+  const price =
+    sale.state === "ended" ? views[views.length - 1].price : sale.stage.price;
   const remaining =
     sale.state === "current" ? Math.min(sale.remaining, eventRemaining) : 0;
   const soldOut =
@@ -358,8 +362,9 @@ export async function createPendingTicketOrder(
   if (stages.length > 0) {
     const sale = resolveSale(stages, bogotaToday());
     if (sale.state === "upcoming")
-      throw new CheckoutError("La venta aún no está abierta");
-    if (sale.state === "ended") throw new CheckoutError("Entradas agotadas");
+      throw new CheckoutError("La venta aún no está abierta", 400, "not_open");
+    if (sale.state === "ended")
+      throw new CheckoutError("Entradas agotadas", 400, "sold_out");
     stageId = sale.stage.id;
     stageRemaining = sale.remaining;
     price = Number(sale.stage.price);
@@ -380,11 +385,33 @@ export async function createPendingTicketOrder(
   // the check atomically, so concurrent buyers cannot both take the last seats.
   const usage = await eventUsage(db, event.id);
   const remaining = Math.min(event.capacity - usage.sold - usage.held, stageRemaining);
-  if (remaining <= 0) throw new CheckoutError("Entradas agotadas");
+  if (remaining <= 0) throw new CheckoutError("Entradas agotadas", 400, "sold_out");
   if (qty > remaining) {
     const left = remaining === 1 ? "Solo queda 1 entrada" : `Solo quedan ${remaining} entradas`;
-    throw new CheckoutError(stageId != null ? `${left} a este precio` : left);
+    throw new CheckoutError(
+      stageId != null ? `${left} a este precio` : left,
+      400,
+      stageId != null ? "only_left_stage" : "only_left",
+      { n: remaining }
+    );
   }
+
+  // One buyer cannot hold more than MAX_QTY seats of an event with unpaid
+  // orders (each retry of a closed payment window would otherwise add a hold).
+  const pendingRow = await db
+    .prepare(
+      `SELECT COALESCE(SUM(quantity), 0) AS n FROM ticket_orders
+       WHERE event_id = ? AND lower(buyer_email) = lower(?)
+         AND status = 'pending' AND created_at > ${HOLD_SINCE}`
+    )
+    .bind(event.id, email)
+    .first<{ n: number }>();
+  if (Number(pendingRow?.n ?? 0) + qty > MAX_QTY)
+    throw new CheckoutError(
+      `Ya tienes un pago en curso para este evento. Termínalo o espera ${HOLD_MINUTES} minutos.`,
+      409,
+      "pending_payment"
+    );
 
   const isFree = unit === 0;
   // Refuse a paid checkout before writing anything when Bold is not configured.
@@ -412,8 +439,7 @@ export async function createPendingTicketOrder(
                 JOIN ticket_orders o ON o.id = t.ticket_order_id
                WHERE o.stage_id = ?17)
           + (SELECT COALESCE(SUM(quantity), 0) FROM ticket_orders
-              WHERE stage_id = ?17 AND status = 'pending'
-                AND created_at > ${HOLD_SINCE})
+              WHERE stage_id = ?17 AND ${IS_HOLDING})
           + ?10 <= (SELECT capacity FROM event_price_stages WHERE id = ?17)`
       : "";
   const insertOrder = db
@@ -467,7 +493,8 @@ export async function createPendingTicketOrder(
   if (!inserted)
     throw new CheckoutError(
       "Las entradas se acaban de agotar o quedan menos de las que pediste. Recarga la página e inténtalo de nuevo.",
-      409
+      409,
+      "seats_taken"
     );
   const newOrderId = await orderIdByBoldId(db, orderId);
 
@@ -618,10 +645,16 @@ export async function issueTicketsForOrder(
 ): Promise<{ issued: number; codes: string[] }> {
   const order = await db
     .prepare(
-      `SELECT id, status, event_id, quantity FROM ticket_orders WHERE bold_order_id = ?`
+      `SELECT id, status, event_id, quantity, stage_id FROM ticket_orders WHERE bold_order_id = ?`
     )
     .bind(boldOrderId)
-    .first<{ id: number; status: string; event_id: number; quantity: number }>();
+    .first<{
+      id: number;
+      status: string;
+      event_id: number;
+      quantity: number;
+      stage_id: number | null;
+    }>();
 
   if (!order || order.status !== "completed") return { issued: 0, codes: [] };
 
@@ -650,6 +683,23 @@ export async function issueTicketsForOrder(
     console.error(
       `Ticket oversell: order ${boldOrderId} issues ${order.quantity} but event ${order.event_id} is at ${cap.sold}/${cap.capacity}`
     );
+  }
+  if (order.stage_id != null) {
+    const st = await db
+      .prepare(
+        `SELECT s.capacity AS capacity,
+                (SELECT COUNT(*) FROM tickets t
+                   JOIN ticket_orders o ON o.id = t.ticket_order_id
+                  WHERE o.stage_id = s.id) AS sold
+         FROM event_price_stages s WHERE s.id = ?`
+      )
+      .bind(order.stage_id)
+      .first<{ capacity: number; sold: number }>();
+    if (st && Number(st.sold) + order.quantity > Number(st.capacity)) {
+      console.error(
+        `Ticket stage oversell: order ${boldOrderId} issues ${order.quantity} but stage ${order.stage_id} is at ${st.sold}/${st.capacity}`
+      );
+    }
   }
 
   const repair = db

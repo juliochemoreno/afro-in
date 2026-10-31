@@ -182,3 +182,21 @@ test("a free stage is allowed", () => {
   l[0].price = 0;
   assert.ok("stages" in validateStages(l, OPTS));
 });
+
+test("a sold-out stage opens the next one even after its own end date", () => {
+  const list = stages([[50, 0], [0, 0], [0, 0]]);
+  list[1] = { ...list[1], starts_on: "2026-11-25" }; // gap 16–24 Nov
+  const sale = resolveSale(list, "2026-11-20");
+  assert.equal(sale.state === "current" && sale.stage.id, 2);
+});
+
+test("an empty price or quota is refused, never read as 0", () => {
+  for (const v of [null, "", "  "]) {
+    const l: any[] = valid();
+    l[0].price = v;
+    assert.ok("error" in validateStages(l, OPTS), `price ${JSON.stringify(v)}`);
+    const c: any[] = valid();
+    c[0].capacity = v;
+    assert.ok("error" in validateStages(c, OPTS), `capacity ${JSON.stringify(v)}`);
+  }
+});

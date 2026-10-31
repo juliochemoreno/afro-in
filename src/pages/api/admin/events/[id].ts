@@ -38,6 +38,7 @@ export const PUT: APIRoute = async (ctx) => {
   if (err) return json({ error: err }, 400);
 
   let stageStatements: D1PreparedStatement[] = [];
+  let removedNames: string[] = [];
   if (parsed.stages) {
     const exists = await db.prepare("SELECT id FROM events WHERE id = ?").bind(id).first();
     if (!exists) return json({ error: "No existe" }, 404);
@@ -61,6 +62,7 @@ export const PUT: APIRoute = async (ctx) => {
         { error: `La etapa «${locked.name_es}» tiene órdenes; no se puede borrar.` },
         409
       );
+    removedNames = removed.map((r) => r.name_es);
     stageStatements = stageSyncStatements(
       db,
       id,
@@ -81,6 +83,16 @@ export const PUT: APIRoute = async (ctx) => {
       ...stageStatements,
     ]);
     if (results[0].meta.changes === 0) return json({ error: "No existe" }, 404);
+    // Deletes come right after the event update; one that changed nothing
+    // means an order arrived for that stage meanwhile, so it was kept.
+    const kept = removedNames.filter((_, i) => results[1 + i].meta.changes === 0);
+    if (kept.length > 0)
+      return json(
+        {
+          error: `La etapa «${kept[0]}» recibió una orden mientras guardabas y no se borró. Los demás cambios se guardaron; recarga la página.`,
+        },
+        409
+      );
     return json({ id });
   } catch (e: any) {
     if (String(e?.message || e).includes("UNIQUE"))
