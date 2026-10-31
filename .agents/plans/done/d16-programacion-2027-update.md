@@ -92,16 +92,16 @@ Contenido + UI pequeña sobre las páginas D9: nuevas actividades por día/venue
 - Revisar `npm test` (hay tests de `programacion.ts`); añadir test si se agrega helper de links (presale vacío → sin enlace).
 
 ## Validation Checklist
-- [ ] `npm run check`
-- [ ] Code review (`/hopla:code-review`)
-- [ ] `npm test`
-- [ ] curl 200 de `/programacion/2027/{santa-marta,palenque}`, `/en/program/2027/…`, `/fr/programme/2027/…` contra `astro dev`
-- [ ] Level 5: Julio revisa el Preview en desktop + móvil antes de merge; sin eso se publican textos/botones sin ver.
+- [x] `npm run check` — exit 0 on the final commit `75fde8b` (and on the merge `c479db4`).
+- [x] Code review (`/hopla:code-review`) — `.agents/code-reviews/d16-programacion-2027-update-final.md`, 3 findings fixed.
+- [x] `npm test` — 32/32 on `75fde8b`.
+- [x] curl 200 of the 2027 stop pages in es/en/fr — against `astro dev` during execution and again on the Preview (`https://claude-d16-programacion-update-d01d9b.afroin.org`, all 200).
+- [x] Level 5: Julio checked the Preview before the merge ("todo ok"); merged to dev as `c479db4`.
 
 ## Acceptance Criteria
-- [ ] Todas las actividades de los comentarios aparecen en es/en/fr.
-- [ ] Preventa muestra 150 boletas $45.000 y Afro Batalla $30.000; añadir los links = cambio de una línea.
-- [ ] No hay cambios en ticketing/pagos.
+- [x] All activities from the team's comments appear in es/en/fr — `src/content/tour2027/{santa-marta,palenque}{,.en,.fr}.md`; Preview 200 and Julio's review.
+- [x] Presale and Afro Batalla ($30.000) buttons read one config (`SALES` in `src/lib/programacion.ts`, empty URL = "Muy pronto"); the presale price/tiers show on the stop pages. Waived detail: the links are still empty — waiting on Julio, a one-line change each.
+- [x] No ticketing/payment changes — the review confirmed no checkout, ticketing or payment code in the diff.
 
 ## Confidence Score: 7/10
 - **Uncertainties:** wording/fechas ambiguos, fotos y URLs pendientes.
