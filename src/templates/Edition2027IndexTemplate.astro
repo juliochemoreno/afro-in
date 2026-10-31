@@ -54,6 +54,7 @@ const stopCards = stops.map((stop) => {
     tickets: stop.data.tickets,
     cardImage: stop.data.cardImage,
     cardPosition: stop.data.cardPosition,
+    large: stop.data.titleSize === "large",
   };
 });
 
@@ -146,6 +147,7 @@ const { navLinks, ctaLink } = editionNav(lang);
               tickets={stop.tickets!}
               lang={lang}
               heading={`${t("edition.ticketsTitle")} · ${stop.name}`}
+              presale
               bare
             />
           ))}
@@ -164,7 +166,7 @@ const { navLinks, ctaLink } = editionNav(lang);
           <a class="edition-stop" href={stop.href}>
             <Image src={stop.cardImage} alt="" widths={[480, 960]} sizes="(max-width: 720px) 100vw, 580px" class="edition-stop-photo" style={`object-position: ${stop.cardPosition}`} />
             <span class="fz-display fz-gold edition-stop-range">{stop.range}</span>
-            <span class="fz-display edition-stop-name">{stop.name}</span>
+            <span class:list={["fz-display", "edition-stop-name", { "edition-stop-name-large": stop.large }]}>{stop.name}</span>
             <span class="fz-muted">{stop.place}</span>
             <span class="edition-stop-link">
               {stop.comingSoon ? t("edition.comingSoon") : t("edition.viewProgram")}
@@ -314,6 +316,10 @@ const { navLinks, ctaLink } = editionNav(lang);
     line-height: 1;
   }
 
+  .edition-stop-name-large {
+    font-size: 72px;
+  }
+
   .edition-stop-link {
     margin-top: 8px;
     font-weight: 600;
@@ -359,6 +365,7 @@ const { navLinks, ctaLink } = editionNav(lang);
     height: auto;
     aspect-ratio: 4 / 5;
     object-fit: cover;
+    object-position: 50% 20%;
     display: block;
     outline: 1px solid rgba(242, 193, 78, 0.6);
     outline-offset: 5px;
@@ -401,6 +408,10 @@ const { navLinks, ctaLink } = editionNav(lang);
 
     .edition-stop-name {
       font-size: 40px;
+    }
+
+    .edition-stop-name-large {
+      font-size: 52px;
     }
 
     .edition-h2 {

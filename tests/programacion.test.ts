@@ -15,6 +15,7 @@ import {
   joinList,
   journeyDays,
   parseIsoDate,
+  PRESALE,
 } from "../src/lib/programacion.ts";
 
 test("entry language and slug come from the file path", () => {
@@ -146,4 +147,13 @@ test("activity byline names the artist only when the title does not", () => {
 test("day anchors use the full date", () => {
   assert.equal(dayAnchor("2027-01-16"), "d-2027-01-16");
   assert.throws(() => dayAnchor("16"));
+});
+
+test("presale config keeps the agreed prices, with every link a site path or empty", () => {
+  assert.equal(PRESALE.presale.price, 45000);
+  assert.equal(PRESALE.presale.capacity, 150);
+  assert.equal(PRESALE.afroBatalla.price, 30000);
+  for (const { url } of [PRESALE.presale, PRESALE.afroBatalla]) {
+    assert.match(url, /^(\/eventos\/[a-z0-9-]+)?$/);
+  }
 });

@@ -101,6 +101,8 @@ const tour2027 = defineCollection({
       heroPosition: z.string().default("center"),
       cardImage: image(),
       cardPosition: z.string().default("center"),
+      // "large" gives the stop name a bigger title (hero and listing card).
+      titleSize: z.enum(["normal", "large"]).default("normal"),
       days: z.array(
         z.object({
           date: isoDate,

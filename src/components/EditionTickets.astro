@@ -1,7 +1,8 @@
 ---
 // Ticket tiers of an edition stop, as information only (no sale here).
 import { useTranslations } from "@/i18n/utils";
-import { formatCop, type Lang } from "@/lib/programacion";
+import { PRESALE, formatCop, type Lang } from "@/lib/programacion";
+import { getTranslatedPath } from "@/i18n/utils";
 
 interface Props {
   tickets: {
@@ -12,11 +13,32 @@ interface Props {
   heading?: string;
   // Inside another block (the headliner): no frame of its own.
   bare?: boolean;
+  // Adds the presale and Afro Batalla registration blocks (see PRESALE).
+  presale?: boolean;
 }
 
-const { tickets, lang, heading, bare = false } = Astro.props;
+const { tickets, lang, heading, bare = false, presale = false } = Astro.props;
 const t = useTranslations(lang);
 const Heading = bare ? "h3" : "h2";
+
+const offers = presale
+  ? [
+      {
+        title: t("edition.presaleTitle"),
+        note: t("edition.presaleNote").replace("{n}", String(PRESALE.presale.capacity)),
+        price: PRESALE.presale.price,
+        url: PRESALE.presale.url,
+        cta: t("edition.presaleCta"),
+      },
+      {
+        title: t("edition.batallaTitle"),
+        note: t("edition.batallaNote"),
+        price: PRESALE.afroBatalla.price,
+        url: PRESALE.afroBatalla.url,
+        cta: t("edition.batallaCta"),
+      },
+    ]
+  : [];
 ---
 
 <section class:list={[{ "fz-frame": !bare }]} aria-label={heading ?? t("edition.ticketsTitle")}>
@@ -31,6 +53,22 @@ const Heading = bare ? "h3" : "h2";
         </li>
       ))}
     </ul>
+    {offers.length > 0 && (
+      <ul class="fz-offers">
+        {offers.map((offer) => (
+          <li>
+            <span class="fz-display fz-offer-title">{offer.title}</span>
+            <span class="fz-display fz-tier-price">{formatCop(offer.price, lang)}</span>
+            <span class="fz-muted">{offer.note}</span>
+            {offer.url ? (
+              <a class="fz-button fz-button-solid fz-offer-cta" href={getTranslatedPath(offer.url, lang)}>{offer.cta}</a>
+            ) : (
+              <span class="fz-button fz-offer-cta fz-offer-cta-soon" aria-disabled="true">{t("edition.offerSoon")}</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
     {tickets.includes && <p class="fz-tickets-foot">{tickets.includes}</p>}
     <p class="fz-muted">{t("edition.ticketsSoon")}</p>
   </div>

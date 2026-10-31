@@ -103,7 +103,7 @@ const { navLinks, ctaLink } = editionNav(lang);
         <div class="stop-hero-text">
         <a class="stop-back" href={getTranslatedPath("/programacion", lang)}>{t("edition.backToEdition")}</a>
         <p class="fz-display fz-gold stop-range">{range}</p>
-        <h1 class="fz-display stop-name">{data.name}</h1>
+        <h1 class:list={["fz-display", "stop-name", { "stop-name-large": data.titleSize === "large" }]}>{data.name}</h1>
         <p class="stop-intro">{data.intro}</p>
         {!comingSoon && (
           <nav class="stop-daynav" aria-label={t("edition.days")}>
@@ -150,7 +150,7 @@ const { navLinks, ctaLink } = editionNav(lang);
 
     {data.tickets && (
       <div class="fz-wrap stop-tickets">
-        <EditionTickets tickets={data.tickets} lang={lang} />
+        <EditionTickets tickets={data.tickets} lang={lang} presale />
       </div>
     )}
 
@@ -195,6 +195,10 @@ const { navLinks, ctaLink } = editionNav(lang);
     font-size: clamp(56px, 8vw, 120px);
     line-height: 0.9;
     overflow-wrap: anywhere;
+  }
+
+  .stop-name-large {
+    font-size: clamp(64px, 11vw, 168px);
   }
 
   .stop-intro {
