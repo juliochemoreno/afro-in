@@ -77,9 +77,12 @@ const artists2027 = defineCollection({
   schema: ({ image }) =>
     z.object({
       name: z.string(),
-      countryCode: z.string().regex(/^[A-Z]{2}$/),
-      country: z.object({ es: z.string(), en: z.string(), fr: z.string() }),
+      // Optional until the artist's country is confirmed: no flag or country is shown without it.
+      countryCode: z.string().regex(/^[A-Z]{2}$/).optional(),
+      country: z.object({ es: z.string(), en: z.string(), fr: z.string() }).optional(),
       photo: image(),
+      // CSS object-position of the 4:5 frames, keeping head and hands in view.
+      photoPosition: z.string().default("50% 20%"),
       order: z.number(),
       // The edition's star artist, shown in its own block.
       featured: z.boolean().default(false),
@@ -107,7 +110,15 @@ const tour2027 = defineCollection({
           // Photo for this day in the listing's journey (else the first artist's).
           photo: image().optional(),
           photoPosition: z.string().default("center"),
+          // More photos of the day, crossfaded after `photo` in the journey.
+          morePhotos: z.array(image()).default([]),
+          // Focal point of each photo ([photo, ...morePhotos]); photoPosition fills the gaps.
+          photoPositions: z.array(z.string()).default([]),
           venue: z.string().optional(),
+          // Short hint of the day for the day links ("Clases y charla").
+          hint: z.string().optional(),
+          // Short form for tight spots (artist cards): "La Puerta".
+          venueShort: z.string().optional(),
           venueArea: z.string().optional(),
           venueLogo: image().optional(),
           mapUrl: z.string().url().optional(),
@@ -117,7 +128,15 @@ const tour2027 = defineCollection({
               title: z.string(),
               kind: z.string().optional(),
               artist: reference("artists2027").optional(),
+              // A second artist sharing the activity (both are listed and get its dates).
+              coArtist: reference("artists2027").optional(),
+              // More artists sharing the activity (a third, fourth...).
+              moreArtists: z.array(reference("artists2027")).default([]),
               signupUrl: z.string().url().optional(),
+              // Links to the Afro Batalla registration event (see SALES).
+              signup: z.enum(["afroBatalla"]).optional(),
+              // Listed only in the artist's own dates, not in the day's agenda.
+              appearanceOnly: z.boolean().default(false),
               note: z.string().optional(),
             })
           ),
@@ -130,6 +149,9 @@ const tour2027 = defineCollection({
             .array(
               z.object({
                 period: z.string(),
+                // Inclusive dates (Bogotá) that mark the current stage when the page is viewed.
+                from: isoDate.optional(),
+                until: isoDate.optional(),
                 price: z.number().int().positive(),
                 note: z.string().optional(),
               })

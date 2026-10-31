@@ -1,54 +1,41 @@
 ---
+// Home section of the 2027 edition, in the home's own style: pill kicker, centered title and
+// subtitle, two rounded cards (badge, numbered circle, dates, place, highlights, link to the stop)
+// and the program / presale buttons.
 import MapPin from "lucide-astro/MapPin";
 import Calendar from "lucide-astro/Calendar";
-import Music from "lucide-astro/Music";
-import Users from "lucide-astro/Users";
 import { Image } from "astro:assets";
-import santaMartaImg from "../assets/img/programacion/santa-marta-art.webp";
-import palenqueImg from "../assets/img/programacion/palenque-art.webp";
-import {
-  getLangFromUrl,
-  useTranslations,
-  getTranslatedPath,
-} from "../i18n/utils";
+import { getCollection } from "astro:content";
+import { getLangFromUrl, useTranslations, getTranslatedPath } from "../i18n/utils";
+import { SALES, baseSlug, dateRange, entryLang, joinList, stopPlace } from "../lib/programacion";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 
-const destinations = [
-  {
-    id: 1,
-    name: t("events.sm.name"),
-    dates: t("events.sm.dates"),
-    image: santaMartaImg,
-    location: t("events.sm.location"),
-    highlights: [
-      t("events.sm.h1"),
-      t("events.sm.h2"),
-      t("events.sm.h3"),
-      t("events.sm.h4"),
-      t("events.sm.more"),
-    ],
-    badge: t("events.sm.badge"),
-  },
-  {
-    id: 2,
-    name: t("events.plk.name"),
-    dates: t("events.plk.dates"),
-    image: palenqueImg,
-    location: t("events.plk.location"),
-    highlights: [
-      t("events.plk.h1"),
-      t("events.plk.h2"),
-      t("events.plk.h3"),
-      t("events.plk.h4"),
-      t("events.plk.more"),
-    ],
-    badge: t("events.plk.badge"),
-  },
-];
----
+const stops = (await getCollection("tour2027"))
+  .filter((entry) => entryLang(entry.filePath!) === lang)
+  .sort((a, b) => a.data.order - b.data.order);
 
+const destinations = stops.map((stop, index) => {
+  const slug = baseSlug(stop.filePath!);
+  const key = slug === "santa-marta" ? "sm" : "plk";
+  // Venues of the stop (short names) when it has them, else the town.
+  const venues = [...new Set(stop.data.days.map((day) => day.venueShort ?? day.venue).filter((v): v is string => !!v))];
+  return {
+    id: index + 1,
+    name: stop.data.name,
+    dates: dateRange(stop.data.startDate, stop.data.endDate, lang),
+    image: stop.data.cardImage,
+    position: stop.data.cardPosition,
+    location: venues.length ? joinList(venues, lang) : stopPlace(stop.data.location, stop.data.name),
+    highlights: [1, 2, 3, 4].map((n) => t(`events.${key}.h${n}` as never)),
+    badge: t(index === 0 ? "events.stop1" : "events.stop2"),
+    href: getTranslatedPath(`/programacion/2027/${slug}`, lang),
+  };
+});
+
+const presaleUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : "";
+---
 <section class="events section" id="afrotour">
   <div class="container">
     <div
@@ -73,6 +60,7 @@ const destinations = [
                   src={dest.image}
                   alt={dest.name}
                   class="destination-img"
+                  style={`object-position: ${dest.position}`}
                   loading="lazy"
                   width={800}
                   height={500}
@@ -101,6 +89,7 @@ const destinations = [
                     <li>{highlight}</li>
                   ))}
                 </ul>
+                <a href={dest.href} class="btn-program">{t("events.stopLink")} →</a>
               </div>
             </div>
           ))
@@ -109,12 +98,25 @@ const destinations = [
     </div>
 
     <div class="events-cta text-center">
-      <a
-        href={getTranslatedPath("/programacion", lang)}
-        class="btn btn-primary btn-large"
-      >
-        {t("events.cta")}
-      </a>
+      <div class="events-buttons">
+        <a
+          href={getTranslatedPath("/programacion", lang)}
+          class="btn btn-primary btn-large"
+        >
+          {t("events.cta")}
+        </a>
+        {
+          presaleUrl ? (
+            <a href={presaleUrl} class="btn btn-outline btn-large">
+              {t("events.presale")}
+            </a>
+          ) : (
+            <span class="btn btn-outline btn-large btn-soon" aria-disabled="true">
+              {t("events.presale")} · {t("edition.offerSoon")}
+            </span>
+          )
+        }
+      </div>
     </div>
   </div>
 </section>
@@ -319,6 +321,19 @@ const destinations = [
     flex-direction: column;
     align-items: center;
     gap: var(--space-md);
+  }
+
+  .events-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-md);
+  }
+
+  .btn-soon {
+    opacity: 0.6;
+    cursor: default;
+    pointer-events: none;
   }
 
   .events-cta .btn {
