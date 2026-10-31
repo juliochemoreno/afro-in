@@ -74,7 +74,7 @@ const journey: JourneyStep[] = journeyDays(
     ...label,
     city: joinList([...new Set(entries.map((entry) => entry.stop.name))], lang),
     photo: withPhoto?.day.photo ?? firstArtist?.photo ?? entries[0].stop.cardImage,
-    photoPosition: withPhoto?.day.photoPosition ?? "center",
+    photoPosition: withPhoto ? withPhoto.day.photoPosition : (firstArtist?.photoPosition ?? "center"),
     entries: entries.map(({ stop, day }) => ({
       stopName: stop.name,
       venue: day.venue,
@@ -192,6 +192,7 @@ const { navLinks, ctaLink } = editionNav(lang);
               widths={[320, 640]}
               sizes="(max-width: 720px) 50vw, 380px"
               class="edition-artist-photo"
+              style={`object-position: ${artist.photoPosition}`}
             />
             <div>
               <h3 class="fz-display edition-artist-name">{artist.name}</h3>
@@ -365,7 +366,6 @@ const { navLinks, ctaLink } = editionNav(lang);
     height: auto;
     aspect-ratio: 4 / 5;
     object-fit: cover;
-    object-position: 50% 20%;
     display: block;
     outline: 1px solid rgba(242, 193, 78, 0.6);
     outline-offset: 5px;

@@ -32,6 +32,7 @@ days:
         artist: "robe-l-ninho"
   - date: "2027-01-16"
     photo: "../../assets/img/2027/artistas/robe-l-ninho.jpg"
+    photoPosition: "50% 0%"
     venue: "Co·KoA Conceptstore"
     venueArea: "Santa Marta"
     venueLogo: "../../assets/img/aliados/cokoa.png"

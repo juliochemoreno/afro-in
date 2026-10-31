@@ -80,6 +80,8 @@ const artists2027 = defineCollection({
       countryCode: z.string().regex(/^[A-Z]{2}$/),
       country: z.object({ es: z.string(), en: z.string(), fr: z.string() }),
       photo: image(),
+      // CSS object-position of the 4:5 frames, keeping head and hands in view.
+      photoPosition: z.string().default("50% 20%"),
       order: z.number(),
       // The edition's star artist, shown in its own block.
       featured: z.boolean().default(false),

@@ -6,5 +6,6 @@ country:
   en: "Guinea-Bissau"
   fr: "Guinée-Bissau"
 photo: "../../assets/img/2027/artistas/dj-joe-kiz-vibes.jpg"
+photoPosition: "50% 30%"
 order: 6
 ---

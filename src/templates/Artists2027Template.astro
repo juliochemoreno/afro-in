@@ -73,6 +73,7 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
             widths={[320, 640]}
             sizes="(max-width: 720px) 100vw, 380px"
             class="artist-photo"
+            style={`object-position: ${artist.photoPosition}`}
           />
           <div class="artist-body">
             <h2 class="fz-display artist-name">{artist.name}</h2>
@@ -160,7 +161,6 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
     height: auto;
     aspect-ratio: 4 / 5;
     object-fit: cover;
-    object-position: 50% 20%;
     display: block;
     outline: 1px solid rgba(242, 193, 78, 0.6);
     outline-offset: 5px;
