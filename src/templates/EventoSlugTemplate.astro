@@ -6,6 +6,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import FestivalFont from "@/components/FestivalFont.astro";
 import Pin from "@/components/Pin.astro";
+import Clock from "lucide-astro/Clock";
 import TicketCheckoutForm from "@/components/TicketCheckoutForm";
 import "@/styles/checkout-fields.css";
 import "@/styles/festival.css";
@@ -26,23 +27,19 @@ const { event, lang = "es" } = Astro.props;
 const t = useTranslations(lang as any);
 
 const tag = localeTag(lang);
-// event_date is Bogotá wall-clock time: format its day at noon UTC so no
-// runtime time zone moves it.
-const atNoon = new Date(`${event.event_date.slice(0, 10)}T12:00:00Z`);
-const weekdayLong = atNoon.toLocaleDateString(tag, { weekday: "long", timeZone: "UTC" });
-const dayMonth = atNoon.toLocaleDateString(tag, { day: "numeric", month: "long", timeZone: "UTC" });
-// "Domingo 17 de enero" / "Sunday, January 17", like the 2027 day headings.
-const dateHeading = (lang === "en" ? `${weekdayLong}, ${dayMonth}` : `${weekdayLong} ${dayMonth}`).replace(
-  /^./,
-  (c) => c.toUpperCase()
-);
 const year = event.event_date.slice(0, 4);
 const time = eventTime(event.event_date, lang);
 const cal = calParts(event.event_date, lang);
+// Short date over the title: "Dom 20 Dic 2026" (Julio: weekday and month abbreviated).
+const cap = (w: string) => w.replace(/^./, (c) => c.toUpperCase());
+const dateShort = [cap(cal.weekday), cal.day, cap(cal.month), year].filter(Boolean).join(" ");
+
 
 const name =
   (lang === "en" ? event.name_en : lang === "fr" ? event.name_fr : event.name_es) ||
   event.name_es;
+// Long event names step the title down so they still fit in a few lines.
+const titleSize = name.length > 40 ? "is-long" : name.length > 24 ? "is-mid" : "";
 const description =
   (lang === "en"
     ? event.description_en
@@ -70,6 +67,15 @@ const fmtDay = (iso: string) =>
     month: "short",
     timeZone: "UTC",
   });
+// "30 nov" (no "de"): the short form for the stage ladder (Julio).
+const fmtDayShort = (iso: string) => fmtDay(iso).replace(/\s+de\s+/g, " ").replace(/\.$/, "");
+// The stage on sale says until when its price lasts; the next ones, from when.
+const stageWhen = (s: { status: string; starts_on: string; ends_on: string | null }) =>
+  s.status === "current"
+    ? s.ends_on
+      ? t("tix.stages.until").replace("{date}", fmtDayShort(s.ends_on))
+      : t("tix.stages.untilEvent")
+    : t("tix.stages.since").replace("{date}", fmtDayShort(s.starts_on));
 const fmtDayLong = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString(tag, {
     day: "numeric",
@@ -77,19 +83,22 @@ const fmtDayLong = (iso: string) =>
     year: "numeric",
     timeZone: "UTC",
   });
-const stageDates = (s: { starts_on: string; ends_on: string | null }) =>
-  s.ends_on
-    ? `${fmtDay(s.starts_on)} – ${fmtDay(s.ends_on)}`
-    : t("tix.stages.from").replace("{date}", fmtDay(s.starts_on));
 const STAGE_LABEL: Record<StageStatus, string> = {
   current: t("tix.stages.now"),
   soldout: t("tix.stages.soldout"),
   past: t("tix.stages.ended"),
   upcoming: t("tix.stages.upcoming"),
 };
+// "Quedan 3 a este precio": shown beside the quantity in the form when few are left (Julio).
+const remainingNote = showRemaining
+  ? event.remaining === 1
+    ? t(staged ? "tix.form.left.stage.one" : "tix.form.left.any.one")
+    : t(staged ? "tix.form.left.stage" : "tix.form.left.any").replace("{n}", String(event.remaining))
+  : undefined;
 const priceLabel = (price: number) => (price === 0 ? t("tix.price.free") : formatPrice(price));
 
 const T_KEYS = [
+  "tix.form.qtyShort",
   "tix.form.quantity",
   "tix.form.qty.less",
   "tix.form.qty.more",
@@ -132,84 +141,71 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
   <Header navLinks={navLinks} variant="festival" />
   <main class="fz tx-page evento-page">
     <div class="fz-wrap">
-      <a class="evento-back" href={getTranslatedPath("/eventos", lang)}>{t("tix.detail.back")}</a>
-
+      {/* No "back to events" link: the menu's "Eventos" does it (Julio). */}
       <div class="evento-grid">
         <div class="evento-media">
           {
-            event.image_r2_key ? (
-              <img class="evento-photo" src={`/media/${event.image_r2_key}`} alt={name} />
-            ) : (
+            /* The panel sits under the photo, so a missing or broken photo shows it. */
+            <>
               <span class="evento-fallback fz-display" aria-hidden="true">AFRO IN</span>
-            )
+              {event.image_r2_key && (
+                <img class="evento-photo" src={`/media/${event.image_r2_key}`} alt={name} onerror="this.hidden=true" />
+              )}
+            </>
           }
         </div>
 
         <div class="evento-side">
-          <p class="fz-display fz-gold evento-kicker">AFRO IN{event.city && ` · ${event.city}`}</p>
-          <h1 class="fz-display evento-title">{name}</h1>
-
-          <div class="evento-when">
-            <span class="fz-cal evento-cal" aria-hidden="true">
-              <span class="fz-cal-wd">{cal.weekday}</span>
-              <span class="fz-cal-num fz-display">{cal.day}</span>
-            </span>
-            <span class="evento-when-text">
-              <span class="fz-display evento-date">{dateHeading}</span>
-              <span class="evento-when-sub">{[year, time].filter(Boolean).join(" · ")}</span>
-            </span>
-          </div>
-          {
-            (event.venue || place) && (
-              <p class="fz-venue evento-venue">
+          {/* Option B (Julio): the date over the title, then time and venue on one line. */}
+          <p class="fz-display evento-kicker">{dateShort}</p>
+          <h1 class:list={["fz-display evento-title", titleSize]}>{name}</h1>
+          <p class="evento-meta">
+            {time && (
+              <span class="evento-meta-item">
+                <Clock class="evento-meta-icon" size={20} aria-hidden="true" />
+                {time}
+              </span>
+            )}
+            {(event.venue || place) && (
+              <span class="evento-meta-item">
                 <Pin heavy />
-                <span class="fz-display fz-venue-name">{event.venue || place}</span>
-                {event.venue && place && <span class="fz-muted fz-venue-area">· {place}</span>}
-              </p>
-            )
-          }
+                <span>
+                  {event.venue || place}
+                  {event.venue && place && <><span class="evento-sep" aria-hidden="true">·</span>{place}</>}
+                </span>
+              </span>
+            )}
+          </p>
 
-          <section class="fz-frame evento-tickets" aria-labelledby="evento-tickets-title">
-            <div class="fz-frame-inner fz-tickets evento-tickets-inner">
+          <section class="evento-tickets" aria-labelledby="evento-tickets-title">
+            <div class="fz-tickets evento-tickets-inner">
               <h2 id="evento-tickets-title" class="fz-display">
                 {staged ? t("tix.stages.title") : event.price === 0 ? t("tix.detail.reserve") : t("tix.detail.buy")}
               </h2>
               {
                 staged ? (
+                  <>
                   <ul class="fz-tiers evento-tiers">
                     {event.stages.map((s) => (
                       <li data-stage={s.status}>
-                        <span class:list={["fz-tier-flag", { "fz-tier-current": s.status === "current" }]}>
-                          {STAGE_LABEL[s.status]}
+                        <span class="evento-tier-name">
+                          {stageName(s, lang)}
+                          {s.status === "current" && <span class="sr-only"> ({t("tix.stages.now")})</span>}
                         </span>
-                        <span class="evento-tier-name">{stageName(s, lang)}</span>
-                        <span class="fz-display fz-tier-price">
-                          {priceLabel(s.price)}
+                        <span class="fz-display fz-tier-price">{priceLabel(s.price)}</span>
+                        <span class="evento-tier-dates">
+                          {s.status === "soldout" || s.status === "past" ? STAGE_LABEL[s.status] : stageWhen(s)}
                         </span>
-                        <span class="fz-muted evento-tier-dates">{stageDates(s)}</span>
-                        {s.status === "current" && showRemaining && (
-                          <span class="evento-tier-left">
-                            {t("tix.detail.remaining.stage").replace("{n}", String(event.remaining))}
-                          </span>
-                        )}
                       </li>
                     ))}
                   </ul>
+                  </>
                 ) : (
-                  <p class="evento-single">
-                    <span class="fz-display fz-tier-price">
-                      {priceLabel(event.price)}
-                    </span>
-                    {showRemaining && (
-                      <span class="evento-tier-left">
-                        {t("tix.detail.remaining").replace("{n}", String(event.remaining))}
-                      </span>
-                    )}
-                  </p>
+                  null
                 )
               }
 
-              <div class="evento-buy">
+              <div class:list={["evento-buy", { "evento-buy--single": !staged }]}>
                 {staged && (
                   <h3 class="fz-display">
                     {event.price === 0 ? t("tix.detail.reserve") : t("tix.detail.buy")}
@@ -229,6 +225,8 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
                     countries={countries}
                     price={event.price}
                     remaining={event.remaining}
+                    remainingNote={remainingNote}
+                    qtyPrice={!staged && event.price > 0 ? priceLabel(event.price) : undefined}
                     successPath={successPath}
                     t={strings}
                   />
@@ -257,11 +255,9 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
     min-height: 100vh;
     padding-bottom: 80px;
   }
-  .fz .evento-back {
-    display: inline-block;
-    margin: 32px 0 24px;
-    font-size: 15px;
-    text-decoration: none;
+  /* The space the old "back" link used to give above the event. */
+  .evento-page .evento-grid {
+    margin-top: 40px;
   }
 
   /* Like the 2027 headliner: the photo stays in view on the left and melts
@@ -301,104 +297,194 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
   }
   .evento-kicker {
     margin: 0;
-    font-size: 24px;
+    font-size: 26px;
+    color: var(--tx-accent);
   }
   .evento-title {
-    margin: 4px 0 0;
+    margin: 6px 0 0;
     font-size: clamp(48px, 6vw, 84px);
     line-height: 0.95;
     color: var(--tx-fg);
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
-  .evento-when {
+  .evento-title.is-mid {
+    font-size: clamp(40px, 4.6vw, 64px);
+  }
+  .evento-title.is-long {
+    font-size: clamp(32px, 3.6vw, 48px);
+    line-height: 1;
+  }
+  .evento-meta {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-top: 24px;
-    padding-top: 16px;
-    border-top: 1px solid var(--tx-line);
-  }
-  .evento-cal {
-    width: 52px;
-    --fz-cal-num: 28px;
-  }
-  .evento-when-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
-  .evento-date {
-    font-size: 36px;
-    line-height: 1.05;
-    color: var(--tx-fg);
-  }
-  .evento-when-sub {
-    font-size: 15px;
-    color: var(--tx-muted);
-  }
-  .evento-venue {
-    margin: 16px 0 0;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin: 20px 0 0;
     padding-top: 14px;
     border-top: 1px solid var(--tx-line);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--tx-fg);
   }
-
+  .evento-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .evento-meta .evento-meta-icon,
+  .evento-meta .fz-pin {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    color: var(--tx-accent);
+  }
+  .evento-sep {
+    margin: 0 0.45em;
+    color: var(--tx-muted);
+  }
   /* Tickets: the 2027 block (gold double frame, stages with a gold top line,
      price in Anton), then the buy form inside the same frame. */
+  /* A soft panel groups the purchase form; no gold frame (Julio). */
   .evento-tickets {
     margin-top: 32px;
+    background: var(--tx-surface);
   }
   .fz-tickets.evento-tickets-inner h2 {
     color: var(--tx-fg);
   }
+  /* Stages as a ladder, like the 2027 ticket block (Julio): a rail on top,
+     gold up to the stage on sale; that stage says "Ahora" and stands out. */
   .fz-tiers.evento-tiers {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
+    position: relative;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    grid-auto-flow: column;
+    gap: 16px 12px;
+    padding-top: 20px;
+  }
+  .fz-tiers.evento-tiers::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: var(--tx-line);
   }
   .evento-tiers li {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: 4px 16px;
-    padding: 14px 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 0;
+    border: 0;
   }
-  .evento-tiers .fz-tier-flag {
-    grid-column: 1 / -1;
-    justify-self: start;
+  .evento-tiers li::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    left: 0;
+    right: -12px;
+    height: 5px;
+  }
+  .evento-tiers li[data-stage="current"]::before,
+  .evento-tiers li[data-stage="past"]::before,
+  .evento-tiers li[data-stage="soldout"]::before {
+    background: var(--tx-accent);
+  }
+  .evento-tiers li[data-stage="current"]::before {
+    right: 50%;
   }
   .evento-tier-name {
-    font-weight: 600;
-    font-size: 17px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tx-fg);
   }
-  .evento-tiers .fz-tier-price {
-    grid-row: span 2;
-    text-align: right;
+  /* The stage on sale is the gold one; the others stay in the text color (Julio). */
+  .evento-tiers li .fz-tier-price {
+    font-size: 20px;
+    line-height: 1.05;
     white-space: nowrap;
+    color: var(--tx-fg);
   }
   .evento-tier-dates {
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--tx-muted);
   }
-  .evento-tier-left {
-    grid-column: 1 / -1;
-    font-size: 14px;
-    font-weight: 600;
+  .evento-tiers li[data-stage="current"] .evento-tier-name {
     color: var(--tx-accent);
   }
-  .evento-tiers li[data-stage="soldout"] > :not(.fz-tier-flag) {
-    opacity: 0.45;
+  .evento-tiers li[data-stage="current"] .fz-tier-price {
+    font-size: 26px;
+    color: var(--tx-accent);
+  }
+  /* The other stages are slightly faded (Julio). */
+  .evento-tiers li:not([data-stage="current"]) {
+    opacity: 0.7;
+  }
+  .evento-tier-flag {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 1px 8px;
+    border: 1px solid var(--tx-line);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tx-muted);
+  }
+  .evento-tiers .evento-tier-name,
+  .evento-tiers .evento-tier-dates {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .evento-tier-left {
+    margin: 14px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tx-accent);
   }
   .evento-tiers li[data-stage="past"] .fz-tier-price,
   .evento-tiers li[data-stage="soldout"] .fz-tier-price {
     text-decoration: line-through;
+    color: var(--tx-muted);
   }
-  .evento-tiers li[data-stage="upcoming"] .fz-tier-price {
-    color: var(--tx-fg);
-  }
-  .evento-single {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin: 0;
+  /* Phones: the ladder stands up, rail on the left (like the 2027 block). */
+  @media (max-width: 560px) {
+    .fz-tiers.evento-tiers {
+      grid-template-columns: minmax(0, 1fr);
+      grid-auto-flow: row;
+      gap: 0;
+      padding: 0 0 0 20px;
+    }
+    .fz-tiers.evento-tiers::before {
+      top: 0;
+      bottom: 0;
+      right: auto;
+      width: 5px;
+      height: auto;
+    }
+    .evento-tiers li {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--tx-line);
+    }
+    .evento-tiers li:last-child {
+      border-bottom: 0;
+    }
+    .evento-tiers li::before {
+      top: 0;
+      bottom: 0;
+      left: -20px;
+      right: auto;
+      width: 5px;
+      height: auto;
+    }
+    .evento-tiers li[data-stage="current"]::before {
+      right: auto;
+    }
   }
   .evento-page .fz-tier-price {
     color: var(--tx-accent);
@@ -407,6 +493,11 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid var(--tx-line);
+  }
+  .evento-buy.evento-buy--single {
+    margin-top: 8px;
+    padding-top: 0;
+    border-top: 0;
   }
   .fz-tickets .evento-buy h3 {
     margin: 0 0 4px;
@@ -446,6 +537,44 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
     flex-direction: column;
     gap: 6px;
   }
+  .evento-page .tix-qty-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  /* "Comprar entradas" already says it: the quantity question stays for screen
+     readers only (Julio). */
+  .evento-page .tix-qty .tix-qty-label .tix-qty-q {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .evento-page .tix-qty-price strong {
+    font-family: "Anton", sans-serif;
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1;
+    color: var(--tx-accent);
+  }
+  .evento-page .tix-qty-price span {
+    font-size: 15px;
+    color: var(--tx-muted);
+  }
+  .evento-page .tix-qty-caption {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--tx-muted);
+  }
+  .evento-page .tix-qty-left {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tx-accent);
+  }
   .evento-page .tix-form .ck-field > label,
   .evento-page .tix-qty label {
     font-size: 13px;
@@ -464,6 +593,22 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
     color: var(--tx-fg);
     font-family: inherit;
     font-size: 16px;
+  }
+  /* Fields that have a fitting icon show it on the left (Julio's general rule). */
+  .evento-page .tix-input-icon {
+    position: relative;
+    display: block;
+  }
+  .evento-page .tix-input-icon svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--tx-muted);
+    pointer-events: none;
+  }
+  .evento-page .tix-form .tix-input-icon input {
+    padding-left: 42px;
   }
   .evento-page .tix-form .ck-field input::placeholder {
     color: var(--tx-placeholder);
@@ -624,16 +769,16 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
       -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 62%, transparent 100%);
       mask-image: linear-gradient(to bottom, #000 0, #000 62%, transparent 100%);
     }
-    .fz .evento-back {
-      margin: 20px 0 16px;
+    .evento-page .evento-grid {
+      margin-top: 20px;
     }
   }
   @media (max-width: 720px) {
     .evento-kicker {
-      font-size: 18px;
+      font-size: 20px;
     }
-    .evento-date {
-      font-size: 28px;
+    .evento-meta {
+      font-size: 16px;
     }
     .evento-about h2 {
       font-size: 32px;

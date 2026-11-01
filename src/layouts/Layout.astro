@@ -34,6 +34,8 @@ const pedidoUrl = getTranslatedPath("/pedido", lang);
 const siteUrl =
   Astro.site?.toString().replace(/\/$/, "") || "https://afroin.org";
 const currentPath = Astro.url.pathname;
+// The floating WhatsApp button is off for now (Julio, 2026-11-01).
+const SHOW_WHATSAPP = false;
 
 const esPath = getTranslatedPath(currentPath, "es");
 const enPath = getTranslatedPath(currentPath, "en");
@@ -249,6 +251,7 @@ const locale = lang === "en" ? "en_US" : lang === "fr" ? "fr_FR" : "es_CO";
     </div> -->
 
     <!-- WhatsApp Float -->
+    {SHOW_WHATSAPP && (
     <a
       href="https://wa.me/41782231433"
       class="whatsapp-float"
@@ -266,6 +269,7 @@ const locale = lang === "en" ? "en_US" : lang === "fr" ? "fr_FR" : "es_CO";
         ></path>
       </svg>
     </a>
+    )}
 
     <script is:inline>
       document.addEventListener("astro:page-load", () => {

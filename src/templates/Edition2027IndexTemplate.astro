@@ -18,7 +18,7 @@ import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 import {
   baseSlug,
-  dateRange,
+  dateRange, dayCount, stubRange,
   dayAnchor,
   dayLabel,
   shortDateList,
@@ -54,6 +54,8 @@ const stopCards = stops.map((stop) => {
     id: stop.id,
     name: stop.data.name,
     range: dateRange(stop.data.startDate, stop.data.endDate, lang),
+    days: dayCount(stop.data.startDate, stop.data.endDate),
+    stub: stubRange(stop.data.startDate, stop.data.endDate, lang),
     place: `${stopPlace(stop.data.location, stop.data.name)}, ${t("edition.stopCountry")}`,
     comingSoon: isComingSoon(stop.data.days),
     href: getTranslatedPath(`/programacion/2027/${baseSlug(stop.filePath!)}`, lang),
@@ -121,6 +123,7 @@ const headlinerAppearances = headliner
     ).map((a) => {
       const label = dayLabel(a.date, lang);
       return {
+        date: a.date,
         when: `${label.weekdayShort} ${label.dayMonth}`,
         where: [a.venue, a.stopName].filter(Boolean).join(", "),
         title: a.title,
@@ -189,7 +192,7 @@ const { navLinks, ctaLink } = editionNav(lang);
             <EditionTickets
               tickets={stop.tickets!}
               lang={lang}
-              heading={`${t("edition.ticketsTitle")} · ${stop.name}`}
+              pass={{ place: stop.name, range: stop.range, stub: stop.stub, days: stop.days }}
               bare
             />
           ))}

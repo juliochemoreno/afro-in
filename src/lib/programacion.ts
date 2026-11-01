@@ -78,6 +78,20 @@ function withYearSuffix(text: string, year: number, lang: Lang): string {
 
 // "15 – 17 de enero" / "January 15 – 17" / "15 – 17 janvier"; withYear adds
 // the year, and a range across years always shows both.
+// Compact range for a ticket stub: "15–17 ene", or "30 dic–2 ene" across months.
+export function stubRange(startIso: string, endIso: string, lang: Lang): string {
+  const month = (iso: string) => format(iso, lang, { month: "short" }).replace(/\.$/, "");
+  const day = (iso: string) => String(parseIsoDate(iso).getUTCDate());
+  return month(startIso) === month(endIso)
+    ? `${day(startIso)}–${day(endIso)} ${month(endIso)}`
+    : `${day(startIso)} ${month(startIso)}–${day(endIso)} ${month(endIso)}`;
+}
+
+// Days from start to end, both included (2027-01-15 → 2027-01-17 = 3).
+export function dayCount(startIso: string, endIso: string): number {
+  return Math.round((parseIsoDate(endIso).getTime() - parseIsoDate(startIso).getTime()) / 86_400_000) + 1;
+}
+
 export function dateRange(
   startIso: string,
   endIso: string,
