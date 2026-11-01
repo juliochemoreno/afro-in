@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   bogotaToday,
   nowBogotaWallClock,
+  publicSale,
   resolveSale,
   stageName,
   stageStatuses,
@@ -199,4 +200,16 @@ test("an empty price or quota is refused, never read as 0", () => {
     c[0].capacity = v;
     assert.ok("error" in validateStages(c, OPTS), `capacity ${JSON.stringify(v)}`);
   }
+});
+
+test("the public sale exposes only the stage in force, never counts", () => {
+  // Stage 1 sold out on 2026-11-05: stage 2 opens early.
+  const sale = resolveSale(stages([[50, 0], [0, 0], [0, 0]]), "2026-11-05");
+  assert.deepEqual(publicSale(sale), { state: "current", current: { id: 2, price: 35000 } });
+  assert.deepEqual(publicSale(resolveSale(stages(), "2026-10-20")), { state: "upcoming", current: null });
+  assert.deepEqual(publicSale(resolveSale(stages([[50, 0], [150, 0], [150, 0]]), "2026-12-20")), {
+    state: "ended",
+    current: null,
+  });
+  assert.deepEqual(publicSale(null), { state: "ended", current: null });
 });

@@ -102,6 +102,19 @@ export function resolveSale(stages: StageWithSales[], today: string): Sale {
   return { state: "ended" };
 }
 
+/** What the public web may know about the sale: no counts, only the stage in force. */
+export interface PublicSale {
+  state: "current" | "upcoming" | "ended";
+  current: { id: number; price: number } | null;
+}
+
+export function publicSale(sale: Sale | null): PublicSale {
+  if (!sale) return { state: "ended", current: null };
+  if (sale.state === "current")
+    return { state: "current", current: { id: sale.stage.id, price: sale.stage.price } };
+  return { state: sale.state, current: null };
+}
+
 export function stageName(
   stage: Pick<StageRow, "name_es" | "name_en" | "name_fr">,
   lang: string

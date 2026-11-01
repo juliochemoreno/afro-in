@@ -133,6 +133,32 @@ export function tierStage(today: string, from?: string, until?: string): TierSta
   return "current";
 }
 
+export interface TierWindow {
+  from?: string;
+  until?: string;
+  price: number;
+}
+
+// Stage of every tier when the real sale of the pass is known (what
+// /api/tickets/stages answers). A tier is matched to the stage in force by its
+// price; an unknown or unmatched sale falls back to the date of each tier.
+export function tierStagesFromSale(
+  tiers: TierWindow[],
+  sale: { state: string; current: { price: number } | null } | null | undefined,
+  today: string
+): TierStage[] {
+  const byDate = () => tiers.map((t) => tierStage(today, t.from, t.until));
+  if (!sale) return byDate();
+  if (sale.state === "ended") return tiers.map(() => "past");
+  if (sale.state === "upcoming") {
+    return byDate().map((stage) => (stage === "current" ? "upcoming" : stage));
+  }
+  if (sale.state !== "current" || !sale.current) return byDate();
+  const matches = tiers.flatMap((t, i) => (t.price === sale.current!.price ? [i] : []));
+  if (matches.length !== 1) return byDate();
+  return tiers.map((_, i): TierStage => (i < matches[0] ? "past" : i === matches[0] ? "current" : "upcoming"));
+}
+
 // Today's ISO date in Bogotá (UTC-5, no daylight saving).
 export function bogotaToday(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(now);
