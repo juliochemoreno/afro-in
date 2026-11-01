@@ -215,28 +215,28 @@ Verified 2026-11-01 on `dev` = `204ab4b` (`git log --oneline -1 origin/dev` → 
 - Then one fresh-context review of the whole branch (strongest model), then PR to `dev`.
 
 ## Validation Checklist
-- [ ] **Level 1 — Lint & Format:** no linter in this repo (`.agents/orchestrator.md`); skip.
-- [ ] **Level 2 — Type Check / build:** `npm run check` (astro build + tsc + wrangler dry-run)
-- [ ] **Level 2.5 — Code Review:** `code-review` skill on the Phase 1 commit, then one fresh-context review of the branch (strongest model), saved to `.agents/code-reviews/d23-event-end-date.md`
-- [ ] **Level 3 — Unit Tests:** `npm test`
-- [ ] **Level 4 — Integration (staging D1, via the branch Preview or `astro dev` with remote bindings):**
+- [x] **Level 1 — Lint & Format:** no linter in this repo (`.agents/orchestrator.md`); skip. — Waived: no linter exists.
+- [x] **Level 2 — Type Check / build:** `npm run check` (astro build + tsc + wrangler dry-run) — Done: exit 0 on cd641f8.
+- [x] **Level 2.5 — Code Review:** `code-review` skill on the Phase 1 commit, then one fresh-context review of the branch (strongest model), saved to `.agents/code-reviews/d23-event-end-date.md` — Done: phase 1 + full branch, 0 critical/high, both mediums fixed.
+- [x] **Level 3 — Unit Tests:** `npm test` — Done: 75/75 (also 75/75 on the dev merge 904d34a).
+- [x] **Level 4 — Integration (staging D1, via the branch Preview or `astro dev` with remote bindings):** — Done on the branch Preview (phase 1): list/page/checkout for ongoing, ended and one-day events as expected; SQL cutoff verified on staging D1. Admin same-day error checked by unit tests, not by hand.
   - Apply 0012 to staging (Task 1 command). In staging only, create or edit a test event with start = today − 1 day 20:00 and `end_date` = today + 1 (admin form on the Preview). Check: `/eventos` lists it; `/eventos/<slug>` 200 in es/en/fr; `POST /api/tickets/checkout` creates a pending order (do not pay; or use a free test event).
   - Set its `end_date` to yesterday (admin) → list hides it, page 404, checkout returns "El evento no está disponible".
   - An existing one-day staging event behaves as before.
   - Admin: save with an `end_date` on the start day → error "El último día debe ser después de la fecha de inicio".
-- [ ] **Level 5 — Human Review (Julio, on the branch Preview, before merge):**
+- [x] **Level 5 — Human Review (Julio, on the branch Preview, before merge):** — Done locally instead of the Preview (Julio: local first, one production step at the end); approved 2026-11-01 after two design changes (stub "3 días", cards "Hasta dom 17").
   - Events list card for a multi-day event: gold block `vie–dom / 15–17 / ene` fits and reads well (light and dark theme). If skipped: the card layout ships unseen.
   - Event page kicker `Vie 15 – Dom 17 Ene 2027` over the title, in es/en/fr. If skipped: copy/format ships unseen.
   - Tickets page / stub for an order of the multi-day event: range in the block and the subtitle, print view. If skipped: the stub may overflow on phones or print.
   - Admin form: "Último día" field wording and placement. If skipped: admin wording ships unseen.
 
 ## Acceptance Criteria
-- [ ] With `end_date = 2027-01-17`, the pass is listed, its page loads and the checkout charges the current stage on 16 and 17 Jan (Bogotá), and none of that happens from 18 Jan 00:00.
-- [ ] Events without `end_date` behave exactly as before (unit tests + staging check).
-- [ ] The admin can set, change and clear the last day; invalid values are refused with a Spanish message, on the client and on the server.
-- [ ] Card, page kicker, ticket stub and receipt subtitle show the range in es/en/fr as specified.
-- [ ] `npm run check` and `npm test` pass; review artifact saved.
-- [ ] Production migration command handed to Julio; no production data or `main` touched.
+- [x] With `end_date = 2027-01-17`, the pass is listed, its page loads and the checkout charges the current stage on 16 and 17 Jan (Bogotá), and none of that happens from 18 Jan 00:00. — Evidence: `isEventOver` tests at 2027-01-16/17/18 boundaries; staging run with an ongoing multi-day event. The production pass gets its end date from Julio after the release.
+- [x] Events without `end_date` behave exactly as before (unit tests + staging check). — Evidence: one-day tests; staging one-day past event hidden, `dev-evento-de-prueba` unchanged.
+- [x] The admin can set, change and clear the last day; invalid values are refused with a Spanish message, on the client and on the server. — Evidence: `validateEndDate` and `eventUpdate` tests, same function on client and server. Waived for a manual admin click-through (admin login not exercised); Julio uses the field in production after the release.
+- [x] Card, page kicker, ticket stub and receipt subtitle show the range in es/en/fr as specified. — Evidence: helper tests in es/en/fr; local check in the browser. Spec changed by Julio: cards show the start-day block + "Hasta dom 17", stub shows "3 días".
+- [x] `npm run check` and `npm test` pass; review artifact saved. — Evidence: above; `.agents/code-reviews/d23-event-end-date.md`.
+- [x] Production migration command handed to Julio; no production data or `main` touched. — Evidence: Julio ran 0012 himself (verified read-only). Production release waived here: orchestrator's end-of-day release.
 
 ## Confidence Score: 8/10
 - **Strengths:** The three gates are explicit and few; stage logic does not read `event_date`, so prices need no change; `SELECT *` carries the column to the ticket pages and the admin grid; display helpers are pure and tested.
