@@ -1,8 +1,7 @@
 import type { APIRoute } from "astro";
 import { requireAdmin, adminUnauthorized } from "@/lib/adminAuth";
 import {
-  EVENT_COLUMNS,
-  eventValues,
+  eventUpdate,
   parseStages,
   stageSyncStatements,
   validateEventInput,
@@ -71,15 +70,16 @@ export const PUT: APIRoute = async (ctx) => {
     );
   }
 
-  const setClause = EVENT_COLUMNS.map((c) => `${c} = ?`).join(", ");
+  // An admin tab opened before end_date existed sends no end_date: keep it.
+  const update = eventUpdate(body);
   try {
     // Event and its stages in one batch (a single transaction).
     const results = await db.batch([
       db
         .prepare(
-          `UPDATE events SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+          `UPDATE events SET ${update.set}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
         )
-        .bind(...eventValues(body), id),
+        .bind(...update.values, id),
       ...stageStatements,
     ]);
     if (results[0].meta.changes === 0) return json({ error: "No existe" }, 404);

@@ -4,25 +4,9 @@
 import { BOLD_MIN_AMOUNT } from "@/lib/orders";
 import { validateEndDate, validateStages, type CleanStage } from "@/lib/ticketStages";
 
-export const EVENT_COLUMNS = [
-  "slug",
-  "name_es",
-  "name_en",
-  "name_fr",
-  "description_es",
-  "description_en",
-  "description_fr",
-  "venue",
-  "city",
-  "department",
-  "country",
-  "event_date",
-  "end_date",
-  "price",
-  "capacity",
-  "image_r2_key",
-  "visible",
-] as const;
+// Column mapping lives in a module without "@/" imports so the tests can load it.
+export { EVENT_COLUMNS, eventUpdate, eventValues } from "@/lib/eventColumns";
+
 
 const str = (v: unknown, max = 300): string | null => {
   const s = typeof v === "string" ? v.trim() : "";
@@ -133,28 +117,5 @@ export function stageSyncStatements(
         ? upd.bind(...STAGE_VALUES(s), s.id, eventId)
         : ins.bind(eventId, ...STAGE_VALUES(s))
     ),
-  ];
-}
-
-/** Ordered values matching EVENT_COLUMNS for binding into a prepared statement. */
-export function eventValues(body: any): unknown[] {
-  return [
-    str(body.slug, 160),
-    str(body.name_es, 200),
-    str(body.name_en, 200),
-    str(body.name_fr, 200),
-    str(body.description_es, 4000),
-    str(body.description_en, 4000),
-    str(body.description_fr, 4000),
-    str(body.venue, 200),
-    str(body.city, 120),
-    str(body.department, 120),
-    str(body.country, 120) || "Colombia",
-    str(body.event_date, 40),
-    str(body.end_date, 10),
-    Math.trunc(Number(body.price)),
-    Math.trunc(Number(body.capacity)),
-    str(body.image_r2_key, 300),
-    body.visible ? 1 : 0,
   ];
 }
