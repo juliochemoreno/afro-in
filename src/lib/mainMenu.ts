@@ -29,7 +29,7 @@ type PathFn = (path: string, lang: string) => string;
 
 export function buildMainMenu(t: T, path: PathFn, lang: string) {
   const items: MenuLink[] = [
-    { href: path("/programacion", lang), label: t("nav.festival") },
+    { href: path("/programacion", lang), label: t("nav.tour") },
     { href: path("/eventos", lang), label: t("nav.events") },
     { href: path("/tienda", lang), label: t("nav.store") },
     {
