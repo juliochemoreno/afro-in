@@ -117,7 +117,7 @@ export function joinList(items: string[], lang: Lang): string {
 // current price stage into a link, `afroBatalla` gives the Afro Batalla
 // activities their sign-up button (see activitySignup.ts).
 export const SALES = {
-  tickets: { url: "" },
+  tickets: { url: "/eventos/pase-afroin-2027-santa-marta" },
   afroBatalla: { price: 30000, url: "" },
 };
 
