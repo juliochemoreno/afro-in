@@ -639,7 +639,8 @@ const tokenImage = tokenOrder?.event?.image_r2_key
 
   /* Desktop: tickets on the left, order details and actions on the right. */
   @media (min-width: 960px) {
-    .tix-wrap {
+    /* Only the tickets view widens; pending/failed receipts keep 640px. */
+    .tix-wrap:has(.tix-list) {
       max-width: 940px;
     }
     .tix-list {

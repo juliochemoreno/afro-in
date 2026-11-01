@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { requireAdmin, adminUnauthorized } from "@/lib/adminAuth";
+import { validateEndDate } from "@/lib/ticketStages";
 import {
   eventUpdate,
   parseStages,
@@ -35,6 +36,18 @@ export const PUT: APIRoute = async (ctx) => {
   if ("error" in parsed) return json({ error: parsed.error }, 400);
   const err = validateEventInput(body);
   if (err) return json({ error: err }, 400);
+
+  // An admin tab opened before end_date existed sends no end_date, so the
+  // stored one is kept (eventUpdate). If the new start date leaves that stored
+  // last day on or before the start, clear it: it would end the event early.
+  if (!Object.prototype.hasOwnProperty.call(body, "end_date")) {
+    const stored = (await db
+      .prepare("SELECT end_date FROM events WHERE id = ?")
+      .bind(id)
+      .first()) as { end_date: string | null } | null;
+    if (stored?.end_date && "error" in validateEndDate(String(body.event_date), stored.end_date))
+      body.end_date = null;
+  }
 
   let stageStatements: D1PreparedStatement[] = [];
   let removedNames: string[] = [];

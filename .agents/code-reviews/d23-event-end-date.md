@@ -16,3 +16,18 @@
 | L5 | Low | Ticket stub block has no month for a range. | Not changed: the subtitle carries month and year (same as one-day events today). |
 
 **Checked and fine:** SQL/TS cutoff agree at 23:59:58 / 23:59:59 / 00:00; every date-based rejection goes through `isEventOver` (grep of `event_date`); paid-order issuing has no date check (correct); `EVENT_COLUMNS`/`eventValues` order and counts (17); empty → NULL on client and server; same validation on both sides; UTC-based formatting, no day shift; admin "Pasado" now in Bogotá time; stub `.is-range` layout and print.
+
+## Full branch, fresh-context review, 2026-11-01
+
+**Scope:** `origin/dev...HEAD` (phase 1, the old-tab end_date fix, merge of dev with PR #23, phase 2, desktop tickets page). `npm test` 75/75.
+
+**Result:** no Critical or High findings.
+
+| # | Severity | Finding | Outcome |
+|---|---|---|---|
+| M1 | Medium | An old admin tab (no `end_date` key) that moves the event later keeps a stored last day on or before the new start → event hidden and sales closed early. | **Fixed:** the PUT reads the stored `end_date` when the key is missing and clears it if `validateEndDate` refuses it against the new start date. |
+| M2 | Medium | `.tix-wrap` widened to 940px for every phase, so pending/failed receipt boxes grew too. | **Fixed:** `.tix-wrap:has(.tix-list)` only. |
+| L1 | Low | `display: contents` on the `<aside>` may drop its landmark on phones. | Not changed: only order info and actions, single column, no focus-order change. |
+| L2 | Low | "Hasta dom 17 · 9:00 p. m." could read as "until 9 pm Sunday". | Not changed: wording chosen by Julio; revisit if users are confused. |
+
+**Checked and fine:** SQL/TS cutoff identical (NULL and '' fall back to `event_date`); only gate sites are `getVisibleEvents`, `getEventBySlug`, checkout, admin "Pasado"; `EVENT_COLUMNS`/`eventValues` 17/17; client and server validation; UTC-based helpers in es/en/fr; merged templates reference no removed variables; mobile order, desktop grid and sticky panel; print shows only tickets; pass season 2027-01-17.
