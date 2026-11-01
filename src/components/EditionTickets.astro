@@ -57,9 +57,14 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
   }
 
   // The real stage of the pass, or null when the request fails or is slow.
+  // no-store: the zone's Browser Cache TTL stretches the endpoint's 60 s to
+  // hours in the browser; the edge cache still serves it for 60 s.
   async function fetchSale() {
     try {
-      const res = await fetch("/api/tickets/stages", { signal: AbortSignal.timeout(SALE_TIMEOUT_MS) });
+      const res = await fetch("/api/tickets/stages", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(SALE_TIMEOUT_MS),
+      });
       if (!res.ok) return null;
       const sale = await res.json();
       return sale && typeof sale.state === "string" ? sale : null;
