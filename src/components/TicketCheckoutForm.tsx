@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Mail, User } from "lucide-react";
 import PhoneField from "@/components/checkout/PhoneField";
 import type { CountryEntry } from "@/components/CountryCombobox";
 import { formatPrice } from "@/lib/cart";
@@ -244,32 +245,38 @@ export default function TicketCheckoutForm({
 
       <div className={fieldClass("name")}>
         <label htmlFor="tix-name">{t["tix.form.name"]}</label>
-        <input
-          id="tix-name"
-          type="text"
-          autoComplete="name"
-          maxLength={100}
-          placeholder={t["tix.form.name.ph"]}
-          value={form.name}
-          onChange={set("name")}
-          aria-invalid={!!errors.name || undefined}
-          aria-describedby={describedBy("name")}
-        />
+        <span className="tix-input-icon">
+          <User aria-hidden="true" size={18} />
+          <input
+            id="tix-name"
+            type="text"
+            autoComplete="name"
+            maxLength={100}
+            placeholder={t["tix.form.name.ph"]}
+            value={form.name}
+            onChange={set("name")}
+            aria-invalid={!!errors.name || undefined}
+            aria-describedby={describedBy("name")}
+          />
+        </span>
         {errorText("name")}
       </div>
       <div className={fieldClass("email")}>
         <label htmlFor="tix-email">{t["tix.form.email"]}</label>
-        <input
-          id="tix-email"
-          type="email"
-          autoComplete="email"
-          maxLength={120}
-          placeholder={t["tix.form.email.ph"]}
-          value={form.email}
-          onChange={set("email")}
-          aria-invalid={!!errors.email || undefined}
-          aria-describedby={describedBy("email")}
-        />
+        <span className="tix-input-icon">
+          <Mail aria-hidden="true" size={18} />
+          <input
+            id="tix-email"
+            type="email"
+            autoComplete="email"
+            maxLength={120}
+            placeholder={t["tix.form.email.ph"]}
+            value={form.email}
+            onChange={set("email")}
+            aria-invalid={!!errors.email || undefined}
+            aria-describedby={describedBy("email")}
+          />
+        </span>
         {errorText("email")}
       </div>
       <div className={fieldClass("phone")}>
@@ -290,16 +297,8 @@ export default function TicketCheckoutForm({
         {errorText("phone")}
       </div>
 
-      <div className="tix-total">
-        <span>{t["tix.form.total"]}</span>
-        <strong>
-          {price === 0 ? (
-            t["tix.form.total.free"]
-          ) : (
-            formatPrice(total)
-          )}
-        </strong>
-      </div>
+      {/* No separate total row: the price per ticket is above the form and the
+          pay button says the total (Julio). */}
 
       {error && <p className="ck-error">{error}</p>}
 
@@ -313,7 +312,7 @@ export default function TicketCheckoutForm({
           ? t["tix.form.processing"]
           : price === 0
             ? t["tix.form.reserve"]
-            : t["tix.form.pay"]}
+            : t["tix.form.pay"].replace("{total}", formatPrice(total))}
       </button>
       <p className="tix-secure">{t["tix.form.securenote"]}</p>
     </div>
