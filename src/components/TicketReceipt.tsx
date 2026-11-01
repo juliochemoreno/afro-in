@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import TicketList, { type TicketView } from "@/components/TicketList";
+import { shortDate } from "@/lib/eventDisplay";
 
 interface Props {
   t: Record<string, string>;
@@ -11,25 +12,16 @@ interface Props {
   /** When set (permanent [token] page in pending state), confirm this id
    *  instead of reading it from the URL / sessionStorage. */
   initialOrderId?: string;
+  lang?: string;
 }
 
 type Phase = "loading" | "success" | "pending" | "failed";
 
-function eventSubtitle(event: any): string | null {
+function eventSubtitle(event: any, lang: string): string | null {
   if (!event) return null;
   const parts: string[] = [];
-  if (event.event_date) {
-    const d = new Date(event.event_date);
-    if (!isNaN(d.getTime())) {
-      parts.push(
-        d.toLocaleDateString(undefined, {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })
-      );
-    }
-  }
+  const day = event.event_date ? shortDate(event.event_date, lang) : null;
+  if (day) parts.push(day);
   const place = [event.venue, event.city].filter(Boolean).join(", ");
   if (place) parts.push(place);
   return parts.join(" · ") || null;
@@ -40,6 +32,7 @@ export default function TicketReceipt({
   eventsPath,
   ticketsPath,
   initialOrderId,
+  lang,
 }: Props) {
   const [phase, setPhase] = React.useState<Phase>("loading");
   const [order, setOrder] = React.useState<any>(null);
@@ -123,13 +116,15 @@ export default function TicketReceipt({
           <div className="receipt-badge ok" aria-hidden="true">
             ✓
           </div>
-          <h1>{t["tix.receipt.success.title"]}</h1>
+          <h2>{t["tix.receipt.success.title"]}</h2>
           <p className="receipt-text">{t["tix.receipt.success.text"]}</p>
         </div>
         <TicketList
           eventName={order.event_name}
-          eventSubtitle={eventSubtitle(event)}
+          eventSubtitle={eventSubtitle(event, lang ?? "es")}
           eventImage={eventImage}
+          eventDate={event?.event_date ?? null}
+          lang={lang}
           orderNumber={order.id}
           tickets={tickets}
           permalink={permalink}
@@ -162,7 +157,7 @@ export default function TicketReceipt({
       <div className={`receipt-badge ${head.cls}`} aria-hidden="true">
         {head.icon}
       </div>
-      <h1>{head.title}</h1>
+      <h2>{head.title}</h2>
       <p className="receipt-text">{head.text}</p>
       <a href={eventsPath} className="btn btn-primary">
         {t["tix.receipt.continue"]}

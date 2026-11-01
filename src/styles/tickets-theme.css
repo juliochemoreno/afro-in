@@ -1,0 +1,131 @@
+/* Color tokens of the ticketing pages (events list, event page, tickets; D18).
+   They follow the device: the dark 2027 look by default, a cream page with
+   dark text when the device is in light mode (Julio, 2026-10-31). Header and
+   footer stay as they are. Use with `.fz` on the same element. */
+
+.fz.tx-page {
+  --tx-bg: #161616;
+  --tx-fg: #f3e9d2;
+  --tx-muted: #bfb39c;
+  --tx-accent: #e6b84a; /* gold text and lines */
+  --tx-gold: #e6b84a; /* gold fills (calendar block, current stage bar) */
+  --tx-line: rgba(230, 184, 74, 0.45);
+  --tx-surface: #1f1f1f; /* photo placeholder */
+  --tx-soft: rgba(243, 233, 210, 0.06); /* highlighted row */
+  --tx-scrim: #161616; /* photos fade into the page */
+  --tx-field: rgba(243, 233, 210, 0.04);
+  --tx-field-line: rgba(243, 233, 210, 0.28);
+  --tx-placeholder: rgba(243, 233, 210, 0.58);
+  --tx-error: #ff8a8a;
+  --tx-error-bg: rgba(227, 28, 37, 0.1);
+  --tx-flag-bg: rgba(22, 22, 22, 0.78);
+  --tx-flag-fg: #f3e9d2;
+
+  background: var(--tx-bg);
+  color: var(--tx-fg);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  .fz.tx-page {
+    --tx-bg: #f6efe0;
+    --tx-fg: #1b1714;
+    --tx-muted: #5c5345;
+    --tx-accent: #845700;
+    --tx-line: rgba(132, 87, 0, 0.35);
+    --tx-surface: #ebe1cc;
+    --tx-soft: rgba(132, 87, 0, 0.08);
+    --tx-scrim: #f6efe0;
+    --tx-field: #fffdf8;
+    --tx-field-line: rgba(27, 23, 20, 0.3);
+    --tx-placeholder: rgba(27, 23, 20, 0.62);
+    --tx-error: #b3121a;
+    --tx-error-bg: #fff0ef;
+    --tx-flag-bg: rgba(246, 239, 224, 0.9);
+    --tx-flag-fg: #1b1714;
+
+    /* festival.css classes used on these pages (.fz a, .fz-gold, .fz-muted,
+       .fz-frame, .fz-button) follow the same palette. */
+    --fz-night: var(--tx-bg);
+    --fz-cream: var(--tx-fg);
+    --fz-muted: var(--tx-muted);
+    --fz-gold: var(--tx-accent);
+    --fz-line: var(--tx-line);
+
+    color-scheme: light;
+  }
+}
+
+.fz.tx-page a:not(.btn):not(.fz-button):hover {
+  color: var(--tx-fg);
+}
+.fz.tx-page .fz-gold {
+  color: var(--tx-accent);
+}
+.fz.tx-page .fz-muted {
+  color: var(--tx-muted);
+}
+
+/* Photo hero of these pages (festival.css .fz-photo-hero): the photo stays
+   dark with cream text in both themes. */
+.fz.tx-page .tx-hero {
+  --fz-cream: #f3e9d2;
+  --fz-gold: #e6b84a;
+  --fz-muted: #d9ccb3;
+  color: #f3e9d2;
+  min-height: min(56vh, 520px);
+}
+.fz.tx-page .tx-hero .fz-gold {
+  color: #e6b84a;
+}
+.tx-hero .fz-photo-hero-content {
+  padding-top: 120px;
+  padding-bottom: 40px;
+}
+.tx-hero-kicker {
+  margin: 0 0 6px;
+  font-size: 24px;
+  letter-spacing: 0.02em;
+}
+.tx-hero-title {
+  margin: 0;
+  font-size: clamp(56px, 9vw, 120px);
+  line-height: 0.95;
+}
+.tx-hero-lead {
+  margin: 14px 0 0;
+  max-width: 560px;
+  font-size: 18px;
+  color: #f3e9d2;
+}
+@media (prefers-color-scheme: light) {
+  /* The page under the hero is cream: end the wash dark, not in the page color. */
+  .fz.tx-page .tx-hero::after {
+    background: linear-gradient(180deg, rgba(22, 22, 22, 0.45) 0%, rgba(22, 22, 22, 0.72) 60%, rgba(22, 22, 22, 0.88) 100%);
+  }
+}
+@media (max-width: 720px) {
+  .fz.tx-page .tx-hero {
+    min-height: 44vh;
+  }
+  .tx-hero .fz-photo-hero-content {
+    padding-top: 96px;
+    padding-bottom: 28px;
+  }
+  .tx-hero-kicker {
+    font-size: 18px;
+  }
+}
+
+/* Section titles at the 2027 scale. */
+.tx-h2 {
+  margin: 0 0 8px;
+  font-size: 64px;
+  line-height: 1;
+  color: var(--tx-fg);
+}
+@media (max-width: 720px) {
+  .tx-h2 {
+    font-size: 40px;
+  }
+}

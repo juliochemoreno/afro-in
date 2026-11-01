@@ -14,6 +14,8 @@ interface Props {
   eventName: string;
   eventSubtitle?: string | null;
   eventImage?: string | null;
+  eventDate?: string | null;
+  lang?: string;
   orderNumber: number | string;
   tickets: TicketView[];
   /** Permanent link to this order, or null to hide the save-link block. */
@@ -25,6 +27,8 @@ export default function TicketList({
   eventName,
   eventSubtitle,
   eventImage,
+  eventDate,
+  lang,
   orderNumber,
   tickets,
   permalink,
@@ -69,6 +73,9 @@ export default function TicketList({
       usedLabel={t["tix.ticket.used"]}
       eventName={eventName}
       eventSubtitle={eventSubtitle}
+      eventDate={eventDate}
+      lang={lang}
+      kindLabel={t["tix.ticket.kind"]}
       indexLabel={isSlider ? `${i + 1} / ${tickets.length}` : undefined}
     />
   );
@@ -95,7 +102,7 @@ export default function TicketList({
             className="tix-slider-arrow prev"
             onClick={() => goTo(Math.max(0, active - 1))}
             disabled={active === 0}
-            aria-label="Anterior"
+            aria-label={t["tix.receipt.prev"]}
           >
             <ChevronLeft className="size-5" />
           </button>
@@ -113,7 +120,7 @@ export default function TicketList({
             className="tix-slider-arrow next"
             onClick={() => goTo(Math.min(tickets.length - 1, active + 1))}
             disabled={active === tickets.length - 1}
-            aria-label="Siguiente"
+            aria-label={t["tix.receipt.next"]}
           >
             <ChevronRight className="size-5" />
           </button>
@@ -125,7 +132,7 @@ export default function TicketList({
                 type="button"
                 className={`tix-dot ${i === active ? "on" : ""}`}
                 onClick={() => goTo(i)}
-                aria-label={`Entrada ${i + 1}`}
+                aria-label={t["tix.receipt.ticketn"].replace("{n}", String(i + 1))}
               />
             ))}
           </div>
@@ -133,6 +140,10 @@ export default function TicketList({
       ) : (
         <div className="tix-single">{tickets.map((tk, i) => stub(tk, i))}</div>
       )}
+
+      <button type="button" className="tix-print" onClick={() => window.print()}>
+        {t["tix.receipt.print"]}
+      </button>
 
       {permalink && (
         <div className="tix-savelink">

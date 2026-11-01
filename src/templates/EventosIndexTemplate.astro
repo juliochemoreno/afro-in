@@ -1,11 +1,20 @@
 ---
+// Events list in the 2027 look (D18, option B): photo cards with no box, the
+// date as a gold calendar block and the stage on sale.
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import ImagePlaceholder from "@/components/ImagePlaceholder.astro";
+import FestivalFont from "@/components/FestivalFont.astro";
+import Pin from "@/components/Pin.astro";
 import { getVisibleEvents } from "@/lib/tickets";
 import { formatPrice } from "@/lib/cart";
+import { stageName } from "@/lib/ticketStages";
+import { calParts, cardStatus, localeTag } from "@/lib/eventDisplay";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+// Static asset (no astro:assets optimizing: this page is SSR, rule 4).
+import heroPhoto from "@/assets/img/2017/2017-afroin-img-1.jpg";
+import "@/styles/festival.css";
+import "@/styles/tickets-theme.css";
 
 interface Props {
   lang?: string;
@@ -17,174 +26,321 @@ const t = useTranslations(lang as any);
 const db = (Astro.locals as any).runtime?.env?.DB;
 const events = db ? await getVisibleEvents(db) : [];
 
-const localeTag = lang === "en" ? "en-US" : lang === "fr" ? "fr-FR" : "es-CO";
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(localeTag, {
+const fmtDay = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString(localeTag(lang), {
     day: "numeric",
-    month: "long",
-    year: "numeric",
+    month: "short",
+    timeZone: "UTC",
   });
 
-const localizedName = (e: (typeof events)[number]) =>
-  (lang === "en" ? e.name_en : lang === "fr" ? e.name_fr : e.name_es) ||
-  e.name_es;
+const cards = events.map((e) => {
+  const status = cardStatus(e);
+  const flag =
+    status.kind === "soldout"
+      ? t("tix.list.soldout")
+      : status.kind === "opens"
+        ? t("tix.list.opens").replace("{date}", fmtDay(status.opensOn))
+        : status.kind === "stage"
+          ? stageName(status.stage, lang)
+          : null;
+  return {
+    slug: e.slug,
+    name: (lang === "en" ? e.name_en : lang === "fr" ? e.name_fr : e.name_es) || e.name_es,
+    image: e.image_r2_key ? `/media/${e.image_r2_key}` : null,
+    cal: calParts(e.event_date, lang),
+    place: [e.venue, e.city].filter(Boolean).join(" · "),
+    flag,
+    soldOut: status.kind === "soldout",
+    free: e.price === 0,
+    price: e.price === 0 ? t("tix.price.free") : formatPrice(e.price),
+  };
+});
 
 const navLinks = [
   { href: getTranslatedPath("/", lang), label: t("nav.home") },
   { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
   { href: getTranslatedPath("/eventos", lang), label: t("nav.events") },
 ];
-const eventPath = (slug: string) =>
-  getTranslatedPath(`/eventos/${slug}`, lang);
+const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
 ---
 
-<Layout title={`${t("tix.list.title")} | AFRO IN`}>
-  <Header navLinks={navLinks} />
-  <main class="events-page">
-    <div class="container">
-      <div class="events-hero">
-        <h1>{t("tix.list.title")}</h1>
-        <p>{t("tix.list.subtitle")}</p>
+<Layout title={t("tix.list.title")}>
+  <FestivalFont slot="head" />
+  <Header navLinks={navLinks} variant="festival" />
+  <main class="fz tx-page events">
+    <section class="fz-photo-hero tx-hero">
+      <img src={heroPhoto.src} alt="" class="fz-photo-hero-img" style="object-position: 50% 30%" decoding="async" />
+      <div class="fz-wrap fz-photo-hero-content">
+        <p class="fz-display fz-gold tx-hero-kicker">AFRO IN</p>
+        <h1 class="fz-display tx-hero-title">{t("tix.list.title")}</h1>
+        <p class="tx-hero-lead">{t("tix.list.subtitle")}</p>
       </div>
+    </section>
 
+    <section class="fz-wrap events-list" aria-labelledby="events-list-title">
+      <h2 id="events-list-title" class="fz-display tx-h2">{t("tix.list.upcoming")}</h2>
       {
-        events.length === 0 ? (
-          <p class="events-empty">{t("tix.list.empty")}</p>
-        ) : (
-          <div class="events-grid">
-            {events.map((e) => (
-              <a href={eventPath(e.slug)} class="event-card">
-                <div class="event-image">
-                  {e.image_r2_key ? (
-                    <img src={`/media/${e.image_r2_key}`} alt={localizedName(e)} />
-                  ) : (
-                    <ImagePlaceholder />
-                  )}
-                  {e.soldOut && (
-                    <span class="event-soldout">{t("tix.list.soldout")}</span>
-                  )}
-                </div>
-                <div class="event-body">
-                  <h2>{localizedName(e)}</h2>
-                  <p class="event-date">{fmtDate(e.event_date)}</p>
-                  {(e.venue || e.city) && (
-                    <p class="event-venue">
-                      {[e.venue, e.city].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                  <span class="event-price">{formatPrice(e.price)}</span>
-                </div>
-              </a>
-            ))}
+        cards.length === 0 ? (
+          <div class="events-empty">
+            <p class="fz-muted">{t("tix.list.empty")}</p>
+            <a class="fz-button" href={getTranslatedPath("/programacion", lang)}>
+              {t("tix.list.empty.cta")}
+            </a>
           </div>
+        ) : (
+          <ul class="ev-grid">
+            {cards.map((c) => (
+              <li>
+                <a href={eventPath(c.slug)} class:list={["ev-card", { "is-soldout": c.soldOut }]}>
+                  <span class="ev-photo">
+                    {c.image ? (
+                      <img src={c.image} alt="" loading="lazy" decoding="async" />
+                    ) : (
+                      <span class="ev-fallback fz-display" aria-hidden="true">AFRO IN</span>
+                    )}
+                    <span class="ev-top">
+                      <span class="fz-cal ev-cal" aria-hidden="true">
+                        <span class="fz-cal-wd">{c.cal.weekday}</span>
+                        <span class="fz-cal-num fz-display">{c.cal.day}</span>
+                      </span>
+                      {c.flag && <span class="ev-flag">{c.flag}</span>}
+                    </span>
+                    <span class="ev-bottom">
+                      <span class="fz-display ev-name">{c.name}</span>
+                      {c.place && (
+                        <span class="ev-place">
+                          <Pin />
+                          <span>{c.place}</span>
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                  <span class="ev-foot">
+                    <span class="ev-date">
+                      {c.cal.weekday} {c.cal.day} {c.cal.month}
+                    </span>
+                    <span class="ev-price">
+                      <span class="fz-display">
+                        {c.price}
+                        {!c.free && <span class="ev-cur">COP</span>}
+                      </span>
+                      <span class="ev-arrow" aria-hidden="true">→</span>
+                    </span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
         )
       }
-    </div>
+    </section>
   </main>
-  <Footer />
+  <Footer variant="festival" />
 </Layout>
 
 <style>
-  .events-page {
-    padding: var(--space-xl) 0;
-    padding-top: 120px;
+  .events {
     min-height: 100vh;
-    background: var(--color-cream);
+    padding-bottom: 80px;
   }
-  .events-hero {
-    text-align: center;
-    margin-bottom: var(--space-xl);
+  .events-list {
+    padding-top: var(--fz-section-pad);
   }
-  .events-hero h1 {
-    font-size: clamp(2rem, 5vw, 3rem);
-    color: var(--color-secondary);
-    margin-bottom: var(--space-md);
-  }
-  .events-hero p {
-    font-size: 1.2rem;
-    color: var(--color-text-light);
-    max-width: 600px;
-    margin: 0 auto;
+  .events-list .tx-h2 {
+    margin-bottom: 32px;
   }
   .events-empty {
-    text-align: center;
-    color: var(--color-text-light);
-    padding: var(--space-xl) 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding-top: 24px;
+    border-top: 1px solid var(--tx-line);
   }
-  .events-grid {
+  .events-empty p {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .ev-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-lg);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px 24px;
   }
-  .event-card {
-    background: var(--color-white);
-    border: 1px solid var(--color-cream-dark);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  .fz .ev-card {
+    display: flex;
+    flex-direction: column;
+    color: var(--tx-fg);
+    text-decoration: none;
   }
-  .event-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-  }
-  .event-image {
+  /* Photo card like the 2027 guest cards: the photo fills it, date and flag on
+     top, name and venue at the bottom, over soft scrims. */
+  .ev-photo {
     position: relative;
-    aspect-ratio: 16 / 10;
-    background: var(--color-cream);
+    display: block;
+    aspect-ratio: 4 / 5;
     overflow: hidden;
+    background: #2a2018;
   }
-  .event-image img {
+  .ev-photo img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
   }
-  .event-soldout {
+  .ev-photo::before {
+    content: "";
     position: absolute;
-    top: var(--space-sm);
-    right: var(--space-sm);
-    padding: var(--space-xs) var(--space-sm);
-    background: var(--color-secondary);
-    color: var(--color-white);
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(rgba(14, 10, 8, 0.7), transparent 30%, transparent 50%, rgba(14, 10, 8, 0.92));
+    pointer-events: none;
   }
-  .event-body {
-    padding: var(--space-lg);
+  .ev-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 20%;
+    font-size: 48px;
+    color: rgba(230, 184, 74, 0.3);
   }
-  .event-body h2 {
-    font-size: 1.25rem;
-    color: var(--color-secondary);
-    margin-bottom: var(--space-xs);
+  .ev-top,
+  .ev-bottom {
+    position: absolute;
+    z-index: 2;
+    left: 12px;
+    right: 12px;
   }
-  .event-date {
-    color: var(--color-primary);
+  .ev-top {
+    top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .ev-cal {
+    width: 48px;
+    --fz-cal-num: 26px;
+  }
+  .ev-flag {
+    min-width: 0;
+    padding: 2px 10px;
+    border: 1px solid rgba(242, 193, 78, 0.45);
+    background: rgba(22, 22, 22, 0.55);
+    color: #f3e9d2;
+    font-size: 13px;
     font-weight: 600;
-    font-size: 0.95rem;
-    text-transform: capitalize;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .event-venue {
-    color: var(--color-text-light);
-    font-size: 0.9rem;
-    margin-top: 2px;
+  .ev-bottom {
+    bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
-  .event-price {
-    display: inline-block;
-    margin-top: var(--space-sm);
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: var(--color-secondary);
+  .ev-name {
+    font-size: clamp(26px, 2.4vw, 32px);
+    line-height: 1.05;
+    color: #f3e9d2;
   }
-  @media (max-width: 968px) {
-    .events-grid {
-      grid-template-columns: repeat(2, 1fr);
+  .ev-place {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    font-size: 14px;
+    color: #d9ccb3;
+  }
+  .ev-place span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ev-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 0 0;
+    border-top: 1px solid var(--tx-line);
+    margin-top: 12px;
+  }
+  .ev-date {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--tx-accent);
+  }
+  .ev-price {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    color: var(--tx-accent);
+    white-space: nowrap;
+  }
+  .ev-price .fz-display {
+    font-size: 26px;
+    line-height: 1;
+  }
+  .ev-cur {
+    margin-left: 4px;
+    font-size: 0.45em;
+    letter-spacing: 0.06em;
+  }
+  .ev-arrow {
+    font-size: 20px;
+    transition: transform 0.2s ease;
+  }
+  .ev-card.is-soldout .ev-price {
+    color: var(--tx-muted);
+  }
+  .ev-card.is-soldout .ev-price .fz-display {
+    text-decoration: line-through;
+  }
+  .ev-card.is-soldout .ev-photo img {
+    filter: grayscale(0.6);
+  }
+  .ev-card:hover .ev-photo img,
+  .ev-card:focus-visible .ev-photo img {
+    transform: scale(1.03);
+  }
+  .ev-card:hover .ev-arrow,
+  .ev-card:focus-visible .ev-arrow {
+    transform: translateX(4px);
+  }
+  .fz .ev-card:focus-visible {
+    outline: 2px solid var(--tx-accent);
+    outline-offset: 6px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ev-photo img,
+    .ev-arrow {
+      transition: none;
     }
   }
-  @media (max-width: 600px) {
-    .events-grid {
-      grid-template-columns: 1fr;
+  @media (max-width: 1023px) {
+    .ev-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 639px) {
+    .events-list .tx-h2 {
+      margin-bottom: 24px;
+    }
+    .ev-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 36px;
     }
   }
 </style>
