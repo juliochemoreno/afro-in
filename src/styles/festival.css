@@ -93,6 +93,12 @@
   padding: 32px;
 }
 
+/* On its own (stop page): no frame, a thin gold rule above it (Julio). */
+.fz-tickets.fz-tickets-plain {
+  padding: 28px 0 0;
+  border-top: 1px solid var(--fz-gold);
+}
+
 .fz-tickets h2,
 .fz-tickets h3 {
   margin: 0 0 20px;
@@ -167,6 +173,376 @@
 
 .fz-tickets-foot {
   margin-top: 24px !important;
+}
+
+.fz-tickets .fz-tickets-sub {
+  margin: -8px 0 20px;
+  font-size: 16px;
+  color: var(--fz-muted);
+}
+
+/* Edition tickets: a price ladder (every stage, the one in force says "Ahora"
+   instead of its price), then the pass card with that price and the button. */
+.fz-tickets .fz-tiers,
+.fz-headliner-extra .fz-tickets .fz-tiers {
+  position: relative;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  padding-top: 22px;
+}
+
+/* The ladder's rail; the gold part reaches the stage in force. */
+.fz-tickets .fz-tiers::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: #3a352b;
+}
+
+.fz-tickets .fz-tiers li {
+  position: relative;
+  gap: 2px;
+  padding: 0 12px 0 0;
+  border-top: 0;
+}
+
+.fz-tickets .fz-tiers li::before {
+  content: "";
+  position: absolute;
+  top: -22px;
+  left: 0;
+  right: 0;
+  height: 5px;
+}
+
+.fz-tickets .fz-tiers li[data-stage="past"]::before,
+.fz-tickets .fz-tiers li[data-stage="current"]::before {
+  background: var(--fz-gold);
+}
+
+.fz-tickets .fz-tiers li[data-stage="current"]::before {
+  right: 60%;
+}
+
+.fz-tier-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fz-cream);
+}
+
+.fz-tickets .fz-tier-price {
+  font-size: 30px;
+  color: #cfc3aa;
+}
+
+.fz-tier-now {
+  font-size: 38px;
+  line-height: 1.05;
+  color: var(--fz-gold);
+}
+
+.fz-tickets li[data-stage="current"] .fz-tier-price {
+  display: none;
+}
+
+.fz-tier-period {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--fz-muted, #a59a86);
+}
+
+.fz-tickets li[data-stage="upcoming"] {
+  opacity: 0.6;
+}
+
+.fz-tickets li[data-stage="past"] .fz-tier-price {
+  text-decoration: line-through;
+}
+
+.fz-tickets li .fz-tier-flag {
+  margin-top: 6px;
+}
+
+/* A cream pointer from the stage in force down to its pass card. */
+.fz-tickets li[data-stage="current"]::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  bottom: -21px;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid var(--fz-cream);
+}
+
+/* The ticket stands upright: event and dates, the price, and a perforated stub
+   with the button. */
+.fz-pass {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  background: var(--fz-cream);
+  color: #161616;
+}
+
+.fz-pass[hidden] {
+  display: none;
+}
+
+.fz-pass-head {
+  padding: 22px 22px 16px;
+}
+
+.fz-tickets .fz-pass-event {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a3a2c;
+}
+
+.fz-tickets .fz-pass-dates {
+  margin-top: 6px;
+  font-size: 32px;
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: #161616;
+}
+
+.fz-pass-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px 22px 20px;
+  border-top: 1px solid #d8cbb0;
+}
+
+.fz-tickets .fz-pass-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a6f5c;
+}
+
+.fz-tickets .fz-pass-price {
+  margin-top: 6px;
+  font-size: 50px;
+  line-height: 1;
+  color: #161616;
+}
+
+.fz-tickets .fz-pass-foot {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #5b5143;
+}
+
+.fz-pass-stub {
+  position: relative;
+  padding: 18px 22px 22px;
+  border-top: 2px dashed #b9ab8e;
+}
+
+/* Notches at both ends of the perforation. */
+.fz-pass-stub::before,
+.fz-pass-stub::after {
+  content: "";
+  position: absolute;
+  top: -11px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--fz-bg, #161616);
+}
+
+.fz-pass-stub::before {
+  left: -10px;
+}
+
+.fz-pass-stub::after {
+  right: -10px;
+}
+
+.fz-pass-buy {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Narrow blocks (phones, the column beside Robe): the ticket lies down, a
+   date stub on the left, the price and the button on the right (Julio). */
+@container (max-width: 719px) {
+  .fz-pass {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+  }
+
+  .fz-pass-head {
+    position: relative;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 16px 8px;
+    border-right: 2px dashed #b9ab8e;
+    text-align: center;
+  }
+
+  .fz-tickets .fz-pass-event {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .fz-tickets .fz-pass-dates {
+    margin-top: 0;
+    font-size: 26px;
+    white-space: normal;
+  }
+
+  .fz-pass-body {
+    border-top: 0;
+    padding: 16px 16px 10px;
+  }
+
+  .fz-tickets .fz-pass-price {
+    font-size: 40px;
+  }
+
+  .fz-pass-stub {
+    border-top: 0;
+    padding: 0 16px 16px;
+  }
+
+  /* The notches move to the ends of the vertical perforation. */
+  .fz-pass-stub::before,
+  .fz-pass-stub::after {
+    display: none;
+  }
+
+  .fz-pass-head::before,
+  .fz-pass-head::after {
+    content: "";
+    position: absolute;
+    right: -11px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--fz-bg, #161616);
+  }
+
+  .fz-pass-head::before {
+    top: -10px;
+  }
+
+  .fz-pass-head::after {
+    bottom: -10px;
+  }
+}
+
+/* Wide blocks (the stop page on desktop): the stages stand in a column on the
+   left and the ticket on the right, both the same height (Julio). */
+.fz-tickets-body {
+  container-type: inline-size;
+}
+
+@container (min-width: 720px) {
+  .fz-tickets-body > * {
+    min-width: 0;
+  }
+
+  .fz-tickets-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 40px;
+    align-items: stretch;
+  }
+
+  .fz-tickets-layout .fz-pass {
+    margin-top: 0;
+  }
+
+  .fz-tickets .fz-tickets-layout .fz-tiers {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: 1fr;
+    padding: 0 0 0 22px;
+  }
+
+  /* The rail runs down the left edge; the gold part covers the stage in force. */
+  .fz-tickets .fz-tickets-layout .fz-tiers::before {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: 5px;
+    height: auto;
+  }
+
+  .fz-tickets .fz-tickets-layout .fz-tiers li {
+    justify-content: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--fz-line);
+  }
+
+  .fz-tickets .fz-tickets-layout .fz-tiers li:last-child {
+    border-bottom: 0;
+  }
+
+  .fz-tickets .fz-tickets-layout .fz-tiers li::before {
+    top: 0;
+    bottom: 0;
+    left: -22px;
+    right: auto;
+    width: 5px;
+    height: auto;
+  }
+
+  .fz-tickets .fz-tickets-layout .fz-tiers li[data-stage="current"]::before {
+    right: auto;
+  }
+
+  .fz-tickets .fz-tickets-layout li[data-stage="current"]::after {
+    display: none;
+  }
+
+  .fz-tickets .fz-tickets-layout .fz-tier-price {
+    font-size: 36px;
+  }
+
+  .fz-tickets-layout .fz-tier-now {
+    font-size: 44px;
+  }
+}
+
+@media (max-width: 720px) {
+  .fz-tickets .fz-tiers,
+  .fz-headliner-extra .fz-tickets .fz-tiers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .fz-tickets .fz-tier-price {
+    font-size: 22px;
+  }
+
+  .fz-tier-now {
+    font-size: 26px;
+  }
+
+
+  .fz-tickets .fz-pass-price {
+    font-size: 44px;
+  }
 }
 
 .fz-band {
@@ -255,9 +631,10 @@
   width: 100%;
 }
 
-/* Desktop: the hero fills the screen below the site header, so the next block shows only on scroll. */
+/* Desktop: the hero fills the screen below the site header, so the next block shows only on scroll.
+   The 2027 index keeps the shorter hero (Julio), so its intro peeks below. */
 @media (min-width: 721px) {
-  .fz-photo-hero {
+  .fz-photo-hero:not(.edition-hero) {
     min-height: calc(100svh - 80px);
   }
 }
@@ -450,6 +827,26 @@
 .fz-headliner-dates .fz-display {
   font-size: 22px;
   grid-row: span 2;
+}
+
+/* With the gold calendar block the date column only needs the block's width. */
+.fz .fz-headliner-dates a.fz-headliner-date--cal {
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+}
+
+.fz-headliner-cal {
+  grid-row: span 2;
+  --fz-cal-num: 26px;
+}
+
+.fz-headliner-cal .fz-cal {
+  width: 52px;
+}
+
+.fz-headliner-dates .fz-headliner-cal .fz-cal-num {
+  font-size: var(--fz-cal-num);
+  grid-row: auto;
 }
 
 .fz-headliner-extra {

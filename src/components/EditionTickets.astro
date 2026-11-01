@@ -1,6 +1,8 @@
 ---
-// Price stages of an edition stop. The stage in force is marked in the browser
-// (see the script below), so a prerendered page never shows a stale one.
+// Price stages of an edition stop: a ladder with every stage, then a pass card
+// with the stage in force (its price and the buy button). The stage in force is
+// marked in the browser (see the script below), so a prerendered page never
+// shows a stale one; its price shows once, in the card, not in the ladder.
 import { useTranslations, getTranslatedPath } from "@/i18n/utils";
 import { SALES, formatCop, type Lang } from "@/lib/programacion";
 
@@ -11,36 +13,63 @@ interface Props {
   };
   lang: Lang;
   heading?: string;
-  // Inside another block (the headliner): no frame of its own.
+  // The stop the ticket is for: titles the block "Nos vemos en <place>" with
+  // "<days> días de festival" under it; the stub shows the dates ("15–17 ene").
+  pass?: { place: string; range: string; stub: string; days: number };
+  // Inside another block (the headliner): smaller heading, no rule of its own.
   bare?: boolean;
 }
 
-const { tickets, lang, heading, bare = false } = Astro.props;
+const { tickets, lang, heading, pass, bare = false } = Astro.props;
 const t = useTranslations(lang);
 const Heading = bare ? "h3" : "h2";
+const title = pass ? t("edition.passTitle").replace("{place}", pass.place) : (heading ?? t("edition.ticketsTitle"));
+const subtitle = pass
+  ? t("edition.passSubtitle").replace("{days}", String(pass.days))
+  : null;
 const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : "";
 ---
 
-<section class:list={[{ "fz-frame": !bare }]} aria-label={heading ?? t("edition.ticketsTitle")}>
-  <div class:list={["fz-tickets", { "fz-frame-inner": !bare, "fz-tickets-bare": bare }]}>
-    <Heading class="fz-display">{heading ?? t("edition.ticketsTitle")}</Heading>
-    <ul class="fz-tiers" data-tiers>
-      {tickets.tiers.map((tier) => (
-        <li data-from={tier.from} data-until={tier.until} data-price={tier.price}>
-          <span class="fz-tier-flag fz-tier-current" hidden>{t("edition.stageCurrent")}</span>
-          <span class="fz-tier-flag fz-tier-done" hidden>{t("edition.stageDone")}</span>
-          <span>{tier.period}</span>
-          <span class="fz-display fz-tier-price">{formatCop(tier.price, lang)}</span>
-          {tier.note && <span class="fz-muted">{tier.note}</span>}
+<section aria-label={title}>
+  <div class:list={["fz-tickets", bare ? "fz-tickets-bare" : "fz-tickets-plain"]}>
+    <Heading class="fz-display">{title}</Heading>
+    {subtitle && <p class="fz-tickets-sub">{subtitle}</p>}
+    <div class="fz-tickets-body" data-tiers-root>
+      <div class="fz-tickets-layout">
+      <ol class="fz-tiers" data-tiers>
+        {tickets.tiers.map((tier, i) => (
+          <li data-from={tier.from} data-until={tier.until} data-price={tier.price}>
+            <span class="fz-tier-label">{t("edition.stageNumber")} {i + 1}</span>
+            <span class="fz-display fz-tier-now" hidden>{t("edition.now")}</span>
+            <span class="fz-display fz-tier-price">{formatCop(tier.price, lang)}</span>
+            <span class="fz-tier-period">{tier.period}</span>
+            <span class="fz-tier-flag fz-tier-done" hidden>{t("edition.stageDone")}</span>
+            {tier.note && <span class="fz-tier-note" hidden>{tier.note}</span>}
+          </li>
+        ))}
+      </ol>
+      <div class="fz-pass" data-pass hidden>
+        {pass && (
+          <div class="fz-pass-head">
+            <p class="fz-pass-event">AFRO IN 2027</p>
+            <p class="fz-display fz-pass-dates" aria-label={pass.range}>{pass.stub}</p>
+          </div>
+        )}
+        <div class="fz-pass-body">
+          <p class="fz-pass-kicker" data-pass-note></p>
+          <p class="fz-display fz-pass-price" data-pass-price></p>
+          {tickets.includes && <p class="fz-pass-foot">{tickets.includes}</p>}
+        </div>
+        <div class="fz-pass-stub">
           {buyUrl ? (
-            <a class="fz-button fz-button-solid fz-tier-buy" href={buyUrl} hidden>{t("edition.presaleCta")}</a>
+            <a class="fz-button fz-button-solid fz-pass-buy" href={buyUrl}>{t("edition.ticketCta")}</a>
           ) : (
-            <span class="fz-button fz-tier-buy fz-tier-buy-soon" aria-disabled="true" hidden>{t("edition.offerSoon")}</span>
+            <span class="fz-button fz-pass-buy fz-tier-buy-soon" aria-disabled="true">{t("edition.offerSoon")}</span>
           )}
-        </li>
-      ))}
-    </ul>
-    {tickets.includes && <p class="fz-tickets-foot">{tickets.includes}</p>}
+        </div>
+      </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -51,9 +80,19 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
 
   function applyStage(item: HTMLLIElement, stage: string) {
     item.dataset.stage = stage;
-    item.querySelector<HTMLElement>(".fz-tier-current")!.hidden = stage !== "current";
+    item.querySelector<HTMLElement>(".fz-tier-now")!.hidden = stage !== "current";
     item.querySelector<HTMLElement>(".fz-tier-done")!.hidden = stage !== "past";
-    item.querySelector<HTMLElement>(".fz-tier-buy")!.hidden = stage !== "current";
+  }
+
+  // The ticket card shows the stage in force (price and note); no stage in force, no card.
+  function fillPass(list: HTMLElement) {
+    const card = list.closest("[data-tiers-root]")?.querySelector<HTMLElement>("[data-pass]");
+    if (!card) return;
+    const current = list.querySelector<HTMLLIElement>(':scope > li[data-stage="current"]');
+    card.hidden = !current;
+    if (!current) return;
+    card.querySelector("[data-pass-price]")!.textContent = current.querySelector(".fz-tier-price")!.textContent;
+    card.querySelector("[data-pass-note]")!.textContent = current.querySelector(".fz-tier-note")?.textContent ?? "";
   }
 
   // The real stage of the pass, or null when the request fails or is slow.
@@ -78,12 +117,13 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
   // out opens the next one early) refine it when they arrive.
   async function showStages() {
     const today = bogotaToday();
-    const lists = [...document.querySelectorAll<HTMLUListElement>("[data-tiers]")];
-    lists.forEach((list) =>
+    const lists = [...document.querySelectorAll<HTMLOListElement>("[data-tiers]")];
+    lists.forEach((list) => {
       list.querySelectorAll<HTMLLIElement>(":scope > li").forEach((item) => {
         applyStage(item, tierStage(today, item.dataset.from, item.dataset.until));
-      })
-    );
+      });
+      fillPass(list);
+    });
     if (!lists.length) return;
 
     const sale = await fetchSale();
@@ -101,6 +141,7 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
         today
       );
       items.forEach((item, i) => applyStage(item, stages[i]));
+      fillPass(list);
     });
   }
 

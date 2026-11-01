@@ -2,7 +2,7 @@
 import afroinLogo from "../assets/img/logos/afroin.png";
 import CartWidget from "./CartWidget.astro";
 import LanguagePicker from "./LanguagePicker.astro";
-import { buildMainMenu, isPalenquePath } from "../lib/mainMenu";
+import { buildMainMenu, isPalenquePath, PASS_CTA_ENABLED } from "../lib/mainMenu";
 import {
   getLangFromUrl,
   useTranslations,
@@ -33,6 +33,7 @@ const { items: navLinks, passUrl, joinUrl } = buildMainMenu(
 
 // Palenque has no pass: its pages keep the join CTA.
 const palenque = isPalenquePath(Astro.url.pathname);
+const showPass = PASS_CTA_ENABLED && !palenque;
 
 const currentPath = Astro.url.pathname;
 
@@ -155,14 +156,14 @@ function isActive(href: string): boolean {
           <CartWidget />
         </div>
         <a
-          href={palenque ? joinUrl : passUrl}
+          href={showPass ? passUrl : joinUrl}
           class="btn btn-primary nav-cta py-1.5 px-3 sm:py-2 sm:px-6 flex items-center justify-center text-xs sm:text-base font-bold"
           data-pass-href={passUrl}
           data-join-href={joinUrl}
           data-pass-label={t("nav.buyPass")}
           data-join-label={t("nav.join")}
-          data-fixed={palenque ? "join" : undefined}
-          >{palenque ? t("nav.join") : t("nav.buyPass")}</a
+          data-fixed={showPass ? undefined : "join"}
+          >{showPass ? t("nav.buyPass") : t("nav.join")}</a
         >
         </>
       )}
