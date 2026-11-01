@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { calParts } from "@/lib/eventDisplay";
 
 // Load a tiny QR generator from CDN at runtime (same pattern as the Bold SDK) so
 // we don't add an npm dependency. The ticket code is encoded entirely in the
@@ -50,6 +51,11 @@ interface Props {
   usedLabel: string;
   eventName: string;
   eventSubtitle?: string | null;
+  /** Event date (YYYY-MM-DDTHH:MM, Bogotá) for the calendar block. */
+  eventDate?: string | null;
+  lang?: string;
+  /** "Entrada" / "Ticket" / "Billet". */
+  kindLabel: string;
   indexLabel?: string;
 }
 
@@ -60,8 +66,12 @@ export default function TicketQR({
   usedLabel,
   eventName,
   eventSubtitle,
+  eventDate,
+  lang = "es",
+  kindLabel,
   indexLabel,
 }: Props) {
+  const cal = eventDate ? calParts(eventDate, lang) : null;
   const [dataUrl, setDataUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -86,17 +96,21 @@ export default function TicketQR({
     <article className={`tix-stub ${used ? "used" : ""}`}>
       <header className="tix-stub-banner">
         <div className="tix-stub-top">
-          <span className="tix-stub-brand">
-            <span className="tix-stub-dot" />
-            AFRO IN
+          <span className="tix-stub-brand">AFRO IN</span>
+          <span className="tix-stub-kind">
+            {kindLabel}
+            {indexLabel && ` ${indexLabel}`}
           </span>
-          <span className="tix-stub-kind">ENTRADA</span>
         </div>
-        <div className="tix-stub-headline">
-          <span className="tix-stub-name">{eventName}</span>
-          {eventSubtitle && (
-            <span className="tix-stub-sub">{eventSubtitle}</span>
+        <span className="tix-stub-name">{eventName}</span>
+        <div className="tix-stub-meta">
+          {cal && cal.day && (
+            <span className="tix-stub-cal" aria-hidden="true">
+              <span className="tix-stub-cal-wd">{cal.weekday}</span>
+              <span className="tix-stub-cal-num">{cal.day}</span>
+            </span>
           )}
+          {eventSubtitle && <span className="tix-stub-sub">{eventSubtitle}</span>}
         </div>
       </header>
 
@@ -104,11 +118,14 @@ export default function TicketQR({
 
       <div className="tix-stub-body">
         <div className="tix-stub-qr">
-          {dataUrl ? (
-            <img src={dataUrl} alt={code} width={200} height={200} />
-          ) : (
-            <div className="tix-stub-qr-ph" />
-          )}
+          {/* Pure white box: the QR keeps its contrast and quiet zone in any theme. */}
+          <div className="tix-stub-qr-box">
+            {dataUrl ? (
+              <img src={dataUrl} alt={code} width={200} height={200} />
+            ) : (
+              <div className="tix-stub-qr-ph" />
+            )}
+          </div>
           {used && <span className="tix-stub-used">{usedLabel}</span>}
         </div>
 
@@ -117,7 +134,6 @@ export default function TicketQR({
           <span className="tix-stub-code-value">{code}</span>
         </div>
 
-        {indexLabel && <span className="tix-stub-index">{indexLabel}</span>}
       </div>
     </article>
   );

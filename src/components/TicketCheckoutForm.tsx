@@ -52,18 +52,30 @@ function loadBoldSDK(): Promise<void> {
   return boldSdkPromise;
 }
 
+// Checkout error codes (api/tickets/checkout) → translation keys.
+const ERROR_KEYS: Record<string, string> = {
+  not_open: "tix.form.err.notopen",
+  sold_out: "tix.form.err.soldout",
+  only_left: "tix.form.err.left",
+  only_left_stage: "tix.form.err.left.stage",
+  seats_taken: "tix.form.err.taken",
+  pending_payment: "tix.form.err.pending",
+};
+
 export default function TicketCheckoutForm({
   lang,
   eventSlug,
   eventName,
   countries,
-  price,
+  price: initialPrice,
   remaining,
   successPath,
   t,
 }: Props) {
   const maxQty = Math.max(1, Math.min(MAX_QTY, remaining));
   const [qty, setQty] = React.useState(1);
+  // The price shown; the server may answer that it changed (staged prices).
+  const [price, setPrice] = React.useState(initialPrice);
   const [form, setForm] = React.useState({ name: "", email: "", phone: "" });
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -111,6 +123,8 @@ export default function TicketCheckoutForm({
         body: JSON.stringify({
           eventSlug,
           quantity: qty,
+          // Lets the server refuse if the price moved on; it never sets the charge.
+          expectedUnitPrice: price,
           buyer: {
             name: form.name,
             email: form.email,
@@ -119,8 +133,23 @@ export default function TicketCheckoutForm({
         }),
       });
       const data = (await res.json()) as any;
+      if (res.status === 409 && data?.code === "price_changed" && Number.isFinite(data.unitPrice)) {
+        // Show the new price; paying again accepts it.
+        setPrice(Number(data.unitPrice));
+        setError(
+          t["tix.form.err.pricechanged"].replace(
+            "{price}",
+            data.unitPrice === 0 ? t["tix.price.free"] : formatPrice(Number(data.unitPrice))
+          )
+        );
+        setLoading(false);
+        return;
+      }
       if (!res.ok) {
-        setError(data?.error || t["tix.form.err.generic"]);
+        // Known refusals have a code with a translated message.
+        const key = data?.code ? ERROR_KEYS[data.code] : undefined;
+        const msg = key ? t[key]?.replace("{n}", String(data.n ?? "")) : undefined;
+        setError(msg || data?.error || t["tix.form.err.generic"]);
         setLoading(false);
         return;
       }
@@ -197,16 +226,16 @@ export default function TicketCheckoutForm({
             type="button"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
             disabled={qty <= 1}
-            aria-label="-"
+            aria-label={t["tix.form.qty.less"]}
           >
             −
           </button>
-          <span>{qty}</span>
+          <span aria-live="polite">{qty}</span>
           <button
             type="button"
             onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
             disabled={qty >= maxQty}
-            aria-label="+"
+            aria-label={t["tix.form.qty.more"]}
           >
             +
           </button>
@@ -263,7 +292,16 @@ export default function TicketCheckoutForm({
 
       <div className="tix-total">
         <span>{t["tix.form.total"]}</span>
-        <strong>{price === 0 ? "Entrada Libre (Gratis)" : formatPrice(total)}</strong>
+        <strong>
+          {price === 0 ? (
+            t["tix.form.total.free"]
+          ) : (
+            <>
+              {formatPrice(total)}
+              <span className="tix-cur">COP</span>
+            </>
+          )}
+        </strong>
       </div>
 
       {error && <p className="ck-error">{error}</p>}
@@ -277,7 +315,7 @@ export default function TicketCheckoutForm({
         {loading
           ? t["tix.form.processing"]
           : price === 0
-            ? "Reservar entradas gratis"
+            ? t["tix.form.reserve"]
             : t["tix.form.pay"]}
       </button>
       <p className="tix-secure">{t["tix.form.securenote"]}</p>

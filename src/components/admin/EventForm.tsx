@@ -13,9 +13,12 @@ import {
   Clock,
   Search,
   Check,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { MAX_STAGES, validateStages } from "@/lib/ticketStages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +57,64 @@ function formatTimeAmPm(timeStr: string): string {
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
 }
+
+// A price stage as the admin page loads it (with its sales).
+export interface StageRowWithSales {
+  id: number;
+  name_es: string;
+  name_en: string | null;
+  name_fr: string | null;
+  price: number;
+  capacity: number;
+  starts_on: string;
+  ends_on: string | null;
+  sold: number;
+  held: number;
+  revenue: number;
+  status: "past" | "soldout" | "current" | "upcoming";
+  has_orders: boolean;
+}
+
+interface StageForm {
+  id?: number;
+  name_es: string;
+  name_en: string;
+  name_fr: string;
+  price: string;
+  capacity: string;
+  starts_on: string;
+  ends_on: string;
+  // Read-only sales (absent on rows added in this form).
+  sold?: number;
+  held?: number;
+  revenue?: number;
+  status?: StageRowWithSales["status"];
+  has_orders?: boolean;
+}
+
+const EMPTY_STAGE: StageForm = {
+  name_es: "",
+  name_en: "",
+  name_fr: "",
+  price: "",
+  capacity: "",
+  starts_on: "",
+  ends_on: "",
+};
+
+const STAGE_STATUS: Record<StageRowWithSales["status"], { label: string; cls: string }> = {
+  current: { label: "Actual", cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" },
+  soldout: { label: "Agotada", cls: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300" },
+  past: { label: "Terminada", cls: "bg-muted text-muted-foreground" },
+  upcoming: { label: "Próxima", cls: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300" },
+};
+
+const formatCop = (n: number) =>
+  new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 export interface EventRow {
   id?: number;
@@ -95,6 +156,8 @@ interface FormState {
   image_r2_key: string | null;
   image_url: string | null;
   visible: boolean;
+  stages_on: boolean;
+  stages: StageForm[];
 }
 
 const EMPTY: FormState = {
@@ -116,9 +179,43 @@ const EMPTY: FormState = {
   image_r2_key: null,
   image_url: null,
   visible: true,
+  stages_on: false,
+  stages: [],
 };
 
-function toForm(e: EventRow): FormState {
+function toStageForm(s: StageRowWithSales): StageForm {
+  return {
+    id: s.id,
+    name_es: s.name_es || "",
+    name_en: s.name_en || "",
+    name_fr: s.name_fr || "",
+    price: String(s.price),
+    capacity: String(s.capacity),
+    starts_on: s.starts_on || "",
+    ends_on: s.ends_on || "",
+    sold: Number(s.sold) || 0,
+    held: Number(s.held) || 0,
+    revenue: Number(s.revenue) || 0,
+    status: s.status,
+    has_orders: !!s.has_orders,
+  };
+}
+
+// The stage fields the API takes (sales are read-only).
+function stagePayload(s: StageForm) {
+  return {
+    ...(s.id != null ? { id: s.id } : {}),
+    name_es: s.name_es,
+    name_en: s.name_en,
+    name_fr: s.name_fr,
+    price: s.price === "" ? NaN : Number(s.price),
+    capacity: s.capacity === "" ? NaN : Number(s.capacity),
+    starts_on: s.starts_on,
+    ends_on: s.ends_on,
+  };
+}
+
+function toForm(e: EventRow, stages: StageRowWithSales[] = []): FormState {
   const p = e.price != null ? Number(e.price) : 0;
   return {
     id: e.id,
@@ -140,17 +237,24 @@ function toForm(e: EventRow): FormState {
     image_r2_key: e.image_r2_key || null,
     image_url: e.image_r2_key ? `/media/${e.image_r2_key}` : null,
     visible: e.visible == null ? true : !!e.visible,
+    stages_on: stages.length > 0,
+    stages: stages.map(toStageForm),
   };
 }
 
 export default function EventForm({
   event,
+  stages = [],
   googleMapsApiKey,
 }: {
   event: EventRow | null;
+  stages?: StageRowWithSales[];
   googleMapsApiKey?: string;
 }) {
-  const initial = React.useMemo(() => (event ? toForm(event) : EMPTY), [event]);
+  const initial = React.useMemo(
+    () => (event ? toForm(event, stages) : EMPTY),
+    [event, stages]
+  );
   const [form, setForm] = React.useState<FormState>(initial);
   const [slugManuallyEdited, setSlugManuallyEdited] = React.useState(Boolean(event?.slug));
   const snapshot = React.useRef(JSON.stringify(initial));
@@ -350,6 +454,28 @@ export default function EventForm({
 
   const isDirty = JSON.stringify(form) !== snapshot.current;
 
+  const setStage = (i: number, patch: Partial<StageForm>) =>
+    setForm((f) => ({
+      ...f,
+      stages: f.stages.map((s, j) => (j === i ? { ...s, ...patch } : s)),
+    }));
+  const addStage = () =>
+    setForm((f) => {
+      // A new stage starts the day after the previous one ends.
+      const last = f.stages[f.stages.length - 1];
+      let starts_on = "";
+      if (last?.ends_on) {
+        const d = new Date(`${last.ends_on}T00:00:00Z`);
+        d.setUTCDate(d.getUTCDate() + 1);
+        starts_on = d.toISOString().slice(0, 10);
+      }
+      return { ...f, stages: [...f.stages, { ...EMPTY_STAGE, starts_on }] };
+    });
+  const removeStage = (i: number) =>
+    setForm((f) => ({ ...f, stages: f.stages.filter((_, j) => j !== i) }));
+  const stageQuota = form.stages.reduce((n, s) => n + (Number(s.capacity) || 0), 0);
+  const stageNameKey = `name_${lang}` as "name_es" | "name_en" | "name_fr";
+
   const handleUpload = async (file: File) => {
     setUploading(true);
     setError(null);
@@ -377,15 +503,35 @@ export default function EventForm({
     setSaving(true);
     setError(null);
     try {
-      if (!form.is_free && Number(form.price) < 1500) {
+      const stagesOn = form.stages_on && form.stages.length > 0;
+      if (form.stages_on && form.stages.length === 0) {
+        setError("Agrega al menos una etapa o desactiva los precios por etapas.");
+        setSaving(false);
+        return;
+      }
+      if (stagesOn) {
+        // Same rules as the server (lib/ticketStages.ts), checked before saving.
+        const check = validateStages(form.stages.map(stagePayload), {
+          eventDate: form.event_date,
+          minAmount: 1000,
+        });
+        if ("error" in check) {
+          setError(check.error);
+          setSaving(false);
+          return;
+        }
+      } else if (!form.is_free && Number(form.price) < 1500) {
         setError("El precio mínimo para eventos pagos es 1.500 COP (o marca la casilla de evento gratuito).");
         setSaving(false);
         return;
       }
+      const { stages_on: _on, stages: _stages, ...fields } = form;
       const payload = {
-        ...form,
-        price: form.is_free ? 0 : Number(form.price),
+        ...fields,
+        price: stagesOn ? Number(form.stages[0].price) : form.is_free ? 0 : Number(form.price),
         capacity: Number(form.capacity),
+        // An empty list removes the stages (the server refuses if one has orders).
+        stages: stagesOn ? form.stages.map(stagePayload) : [],
       };
       const url = form.id
         ? `/api/admin/events/${form.id}`
@@ -654,6 +800,135 @@ export default function EventForm({
               </div>
             </CardContent>
           </Card>
+
+          {form.stages_on && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Precios por etapas</CardTitle>
+                <CardDescription>
+                  Cada etapa vende solo su cupo, entre sus fechas (hora de Colombia). Si una
+                  etapa se agota, la siguiente empieza de inmediato. El nombre se edita en el
+                  idioma seleccionado arriba.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {form.stages.map((st, i) => {
+                  const isLast = i === form.stages.length - 1;
+                  const status = st.status ? STAGE_STATUS[st.status] : null;
+                  return (
+                    <div key={st.id ?? `new-${i}`} className="space-y-3 rounded-lg border p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-muted-foreground text-xs font-semibold">
+                          Etapa {i + 1}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {status && (
+                            <span className={cn("rounded px-2 py-0.5 text-[11px] font-semibold", status.cls)}>
+                              {status.label}
+                            </span>
+                          )}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            disabled={st.has_orders}
+                            title={
+                              st.has_orders
+                                ? "Esta etapa tiene órdenes: no se puede borrar"
+                                : "Quitar etapa"
+                            }
+                            aria-label="Quitar etapa"
+                            onClick={() => removeStage(i)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                        <div className="col-span-2 xl:col-span-1">
+                        <Field label={`Nombre (${lang.toUpperCase()})`} htmlFor={`st-name-${i}`}>
+                          <Input
+                            id={`st-name-${i}`}
+                            value={st[stageNameKey]}
+                            onChange={(e) => setStage(i, { [stageNameKey]: e.target.value })}
+                            placeholder={lang === "es" ? "Ej. Preventa 1" : st.name_es || ""}
+                          />
+                        </Field>
+                        </div>
+                        <Field label="Precio COP" htmlFor={`st-price-${i}`}>
+                          <Input
+                            id={`st-price-${i}`}
+                            type="number"
+                            min={0}
+                            value={st.price}
+                            onChange={(e) => setStage(i, { price: e.target.value })}
+                            placeholder="20000"
+                          />
+                        </Field>
+                        <Field label="Cupo de la etapa" htmlFor={`st-cap-${i}`}>
+                          <Input
+                            id={`st-cap-${i}`}
+                            type="number"
+                            min={1}
+                            value={st.capacity}
+                            onChange={(e) => setStage(i, { capacity: e.target.value })}
+                            placeholder="50"
+                          />
+                        </Field>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="Desde" htmlFor={`st-from-${i}`}>
+                          <Input
+                            id={`st-from-${i}`}
+                            type="date"
+                            value={st.starts_on}
+                            onChange={(e) => setStage(i, { starts_on: e.target.value })}
+                          />
+                        </Field>
+                        <Field
+                          label={isLast ? "Hasta (vacío = hasta el evento)" : "Hasta"}
+                          htmlFor={`st-until-${i}`}
+                        >
+                          <Input
+                            id={`st-until-${i}`}
+                            type="date"
+                            value={st.ends_on}
+                            onChange={(e) => setStage(i, { ends_on: e.target.value })}
+                          />
+                        </Field>
+                      </div>
+                      {st.id != null && (
+                        <p className="text-muted-foreground text-xs">
+                          Vendidas {st.sold ?? 0} / {st.capacity || "?"}
+                          {st.held ? ` · ${st.held} apartadas (pagos en curso)` : ""}
+                          {" · "}
+                          {formatCop(st.revenue ?? 0)} recaudado
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={addStage}
+                    disabled={form.stages.length >= MAX_STAGES}
+                  >
+                    <Plus className="size-4" />
+                    Agregar etapa
+                  </Button>
+                  <span className="text-muted-foreground text-xs">
+                    Suma de cupos de etapas: {stageQuota} · Cupo total del evento:{" "}
+                    {form.capacity || "?"}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="order-first space-y-6 lg:order-none">
@@ -723,6 +998,33 @@ export default function EventForm({
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
                 <div className="space-y-0.5 pr-2">
+                  <Label htmlFor="e-stages" className="text-sm font-semibold cursor-pointer">
+                    Precios por etapas
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    Preventas con precios y cupos que cambian por fecha.
+                  </p>
+                </div>
+                <Switch
+                  id="e-stages"
+                  checked={form.stages_on}
+                  onCheckedChange={(checked) =>
+                    setForm((f) => ({
+                      ...f,
+                      stages_on: checked,
+                      is_free: checked ? false : f.is_free,
+                      stages:
+                        checked && f.stages.length === 0
+                          ? [{ ...EMPTY_STAGE, price: f.price === "0" ? "" : f.price }]
+                          : f.stages,
+                    }))
+                  }
+                />
+              </div>
+
+              {!form.stages_on && (
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
+                <div className="space-y-0.5 pr-2">
                   <Label htmlFor="e-free" className="text-sm font-semibold cursor-pointer">
                     Evento gratuito
                   </Label>
@@ -743,7 +1045,14 @@ export default function EventForm({
                 />
               </div>
 
+              )}
+
               <div className="grid grid-cols-2 gap-3">
+                {form.stages_on ? (
+                  <p className="text-muted-foreground self-center text-xs">
+                    El precio lo pone la etapa actual.
+                  </p>
+                ) : (
                 <Field label="Precio COP" htmlFor="e-price">
                   <Input
                     id="e-price"
@@ -760,6 +1069,7 @@ export default function EventForm({
                     </span>
                   )}
                 </Field>
+                )}
                 <Field label="Cupo / Capacidad" htmlFor="e-cap">
                   <Input
                     id="e-cap"

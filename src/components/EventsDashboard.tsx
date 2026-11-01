@@ -32,6 +32,34 @@ interface EventRow {
   visible: number;
   sold: number;
   checked_in: number;
+  // Price stages (see lib/tickets.ts getEventsForAdmin).
+  stages?: unknown[];
+  current_stage_name?: string | null;
+  current_price?: number | null;
+  sale_state?: "current" | "upcoming" | "ended";
+}
+
+function PriceCell(p: any) {
+  const d = p.data as EventRow;
+  if (!d.stages?.length) {
+    return (
+      <div className="flex h-full items-center justify-end">{COP.format(Number(d.price))}</div>
+    );
+  }
+  return (
+    <div className="flex h-full flex-col items-end justify-center leading-tight">
+      <span className="text-foreground">
+        {d.current_price != null ? COP.format(Number(d.current_price)) : "—"}
+      </span>
+      <span className="text-muted-foreground truncate text-xs">
+        {d.sale_state === "ended"
+          ? "Etapas terminadas"
+          : d.sale_state === "upcoming"
+            ? `Próxima: ${d.current_stage_name}`
+            : d.current_stage_name}
+      </span>
+    </div>
+  );
 }
 
 function formatDate(ts: string): string {
@@ -256,8 +284,7 @@ export default function EventsDashboard() {
         field: "price",
         width: 130,
         type: "rightAligned",
-        valueFormatter: (p) =>
-          p.value != null ? COP.format(Number(p.value)) : "",
+        cellRenderer: PriceCell,
       },
       {
         headerName: "Vendidas",
