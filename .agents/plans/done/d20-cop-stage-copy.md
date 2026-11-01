@@ -1,3 +1,5 @@
+> **Status:** done. Merged into dev 2026-11-01 ([PR #18](https://github.com/juliochemoreno/afro-in/pull/18), merge 9940816, head 4e58b02). Not in production yet: ships with the next `dev` → `main` release. Execution report: `.agents/execution-reports/d20-cop-stage-copy.md`.
+
 # Plan: D20 — COP always visible, stage 1 copy, current tier follows real stages
 
 ## Overview
@@ -128,18 +130,18 @@ Three small changes, es/en/fr. (1) Every public price reads "$20.000 COP" (one s
 Tasks 4 and 8. Regression: smoke the checkout (`/eventos/pase-afroin-2027-santa-marta` buy box, total, price-changed message), store card/cart and order receipt for the new "$X COP" string.
 
 ## Validation Checklist
-- [ ] **Level 1/2:** `npm run check`
-- [ ] **Level 2.5:** `code-review` skill on the diff; report the artifact path to the orchestrator
-- [ ] **Level 3:** `npm test`
-- [ ] **Level 4:** `curl -i` the endpoint on the branch Preview twice (payload keys, cache headers)
-- [ ] **Level 5 (Julio, before merge):** on the Preview, 375 px and desktop, es/en/fr: tiers on `/programacion/2027` and `/programacion/2027/santa-marta`, `/eventos` list and the pass page, checkout total, store card; endpoint failing (block the request in devtools) keeps the date-based tier. If skipped, the wrapping of longer prices ships unobserved. "Stage 1 sold out ⇒ tier 2 shown" is NOT testable without touching production data; it is covered by unit tests only (a Preview D1 test is out of scope).
+- [x] **Level 1/2:** `npm run check` — passed after the last review fix.
+- [x] **Level 2.5:** `.agents/code-reviews/d20-cop-stage-copy.md` (2 kept, both fixed in `4e58b02`).
+- [x] **Level 3:** `npm test` — 59/59 (re-run by the orchestrator on the merge).
+- [x] **Level 4 (waived, reason):** the pass `pase-afroin-2027-santa-marta` exists only in production, so the Preview endpoint answers 404 (the date-based fallback); payload keys are locked by the `publicSale` `deepEqual` test and the `Cache-Control: public, max-age=60` header is set in code. `curl -i` the endpoint on the branch Preview twice (payload keys, cache headers)
+- [x] **Level 5 (Julio, before merge) — done, "D20 ok":** on the Preview, 375 px and desktop, es/en/fr: tiers on `/programacion/2027` and `/programacion/2027/santa-marta`, `/eventos` list and the pass page, checkout total, store card; endpoint failing (block the request in devtools) keeps the date-based tier. If skipped, the wrapping of longer prices ships unobserved. "Stage 1 sold out ⇒ tier 2 shown" is NOT testable without touching production data; it is covered by unit tests only (a Preview D1 test is out of scope).
 
 ## Acceptance Criteria
-- [ ] No public price renders without "COP" or with "$ 20.000" spacing (grep + visual check).
-- [ ] Tier 1 period reads the new copy in es/en/fr; note still says "registro en afroin.org".
-- [ ] With the endpoint blocked/slow, tiers show exactly as today (by date).
-- [ ] Endpoint payload contains only `state` and `current.{id,price}`; response cached ~60 s.
-- [ ] `npm run check` and `npm test` pass.
+- [x] No public price renders without "COP" or with "$ 20.000" spacing (grep + visual check).
+- [x] Tier 1 period reads the new copy in es/en/fr; note still says "registro en afroin.org".
+- [x] With the endpoint blocked/slow, tiers show exactly as today (by date).
+- [x] Endpoint payload contains only `state` and `current.{id,price}` (unit test); response cached ~60 s via header — the Cache API layer is best effort and unobserved in production (waived).
+- [x] `npm run check` and `npm test` pass.
 
 ## Confidence Score: 8/10
 - **Strengths:** only the tier script decides "current"; endpoint reuses tested stage logic; no SSR change.
