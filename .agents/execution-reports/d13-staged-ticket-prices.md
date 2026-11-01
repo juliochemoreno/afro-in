@@ -1,16 +1,17 @@
-# Execution report — D13 staged ticket prices (phases 1–3)
+# Execution report — D13 staged ticket prices (phases 1–4)
 
 ## Meta Information
 
-- **Plan:** `d13-staged-ticket-prices` (`.agents/plans/d13-staged-ticket-prices.md`). Phases 1–3 are done and merged into `dev`. **Phase 4 is still pending** (Task 9, `SALES.tickets.url`): it waits for Julio to name the event that uses the stages.
+- **Plan:** `d13-staged-ticket-prices`, archived at `.agents/plans/done/d13-staged-ticket-prices.md` with every box ticked or waived with a reason. All 4 phases are done.
 - **Branch / PR:** `claude/d13-staged-tickets-0aa889` → `dev`, juliochemoreno/afro-in#13. Commits: `57ab9e0`, `faaa5e0`, `6a9d9dd`, `cc4f713`.
+- **Phase 4:** juliochemoreno/afro-in#16 into `dev`: commit `7fafe87`, merge `291655b`. `SALES.tickets.url` now points at `/eventos/pase-afroin-2027-santa-marta`. Julio chose one festival pass for all of Santa Marta, not a single event. Phase 4 is **not in production yet**: it ships with the next `dev` → `main` release.
 - **Production release (2026-10-31):** phases 1–3 shipped to production with D18 in release PR juliochemoreno/afro-in#15 (`dev` → `main`, merge commit `58e72d2`), deployed by Workers Builds with Julio's OK. Migration `0011_create_event_price_stages.sql` was applied to the production D1 first, with Julio's OK, and verified: the `event_price_stages` table, the `ticket_orders.stage_id` column and the 3 indexes exist, and existing orders were untouched. The orchestrator's smoke check passed (home, events list and event page in es/en/fr, tickets page, store, admin login).
 - **Files added:**
   - `migrations/0011_create_event_price_stages.sql`
   - `src/lib/ticketStages.ts`
   - `tests/ticket-stages.test.ts`
   - `.agents/code-reviews/d13-staged-ticket-prices.md`
-  - `.agents/plans/d13-staged-ticket-prices.md`
+  - `.agents/plans/done/d13-staged-ticket-prices.md`
 - **Files modified:**
   - `seeds/preview.sql`
   - `src/lib/tickets.ts`, `src/lib/eventAdmin.ts`, `src/lib/orders.ts`
@@ -38,6 +39,7 @@
   - a buyer email cannot hold more than 10 unpaid seats;
   - admin create/edit, refusal to delete a stage with orders, a foreign stage id → 400, and no session → 401.
 - **Browser (local):** checked the admin stage editor save flow and the public stage list. The checkout form showed the new total after a 409 `price_changed`.
+- **Phase 4:** ✓ `npm test` 57/57 and ✓ `npm run check`. In the built HTML the link is `/eventos/…`, `/en/events/…` and `/fr/evenements/…` on the home page and the Santa Marta pages. A missing or hidden event redirects with a 302 to the events list in the visitor's language, so visitors never hit a 404.
 - **Level 5 (Julio, branch Preview, Bold TEST mode):** ✓ The orchestrator confirmed TEST purchase order #5 in staging D1: completed, amount 1000 (the stage 1 price), `stage_id` 1, ticket issued. The admin editor and the three languages were also OK.
 
 ## Code Review Findings
@@ -96,7 +98,7 @@
 ## Scope Assessment
 
 - **Planned tasks:** 9 (8 in phases 1–3, plus Task 9 in phase 4).
-- **Executed tasks:** 8, all of phases 1–3.
+- **Executed tasks:** 9.
 - **Unplanned additions:**
   - the review fixes (translated error codes, the per-buyer hold cap, the stage oversell log, the 409 on a racing delete);
   - applying the migration and seed to the staging D1;
@@ -105,9 +107,19 @@
 
 ## Skipped Items
 
-- **Task 9 (phase 4):** point `SALES.tickets.url` at the staged event. Reason: Julio has not named the event yet; D16 is already merged, so that no longer blocks it.
 - **Per-IP rate limit on `/api/tickets/checkout`:** Reason: it is a Cloudflare dashboard rule, which only Julio can set.
 - **Production migration `0011`:** not run from this session, because it was Julio's to run. Done 2026-10-31 with Julio's OK, before release PR juliochemoreno/afro-in#15 (see Meta Information).
+
+## Pending for Julio
+
+- **Create the festival pass in the production admin.** Slug `pase-afroin-2027-santa-marta`, name "Pase Festival AFRO IN 2027 · Santa Marta", event date 15 Jan 2027, a description that covers 15–17 Jan. Turn on "Precios por etapas" with three stages:
+  - "Registro en afroin.org": 20.000 COP, quota 50, from 1 Nov 2026 to 15 Nov 2026;
+  - 35.000 COP from 16 Nov 2026 to 16 Dec 2026;
+  - 45.000 COP from 17 Dec 2026, with no end date.
+
+  Keep these dates and prices the same as the static tiers in `src/content/tour2027/santa-marta*.md`. The static tiers decide which tier shows the buy button; the admin stages set the price that is charged. Julio confirmed that the tier 1 note ("registro en afroin.org") stays, because it is the real name of stage 1. Until the event exists, the buy links redirect to the events list.
+- **Phase 4 reaches production only with the next `dev` → `main` release.** Until then, production still shows the disabled "Muy pronto" buttons.
+- **Optional:** a Cloudflare rate-limit rule on `/api/tickets/checkout` (review finding #2).
 
 ## Technical Patterns Discovered
 

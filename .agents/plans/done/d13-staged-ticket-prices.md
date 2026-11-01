@@ -1,3 +1,5 @@
+> **Status:** done. Phases 1–3 released to production 2026-10-31 (PR #13 into dev, release PR #15 dev → main, 58e72d2; migration 0011 applied in production first). Phase 4 (PR #16, merged into dev at 291655b) reaches production with the next dev → main release. Execution report: `.agents/execution-reports/d13-staged-ticket-prices.md`.
+
 # Plan: D13 — Staged ticket prices (presales) for any event
 
 ## Overview
@@ -220,11 +222,11 @@ Confirm or correct each before execution:
 - Regression: an event WITHOUT stages buys, shows price and sells out exactly as before (Level 4 rows 1–2); courtesy tickets still work; check-in unchanged.
 
 ## Validation Checklist
-- [ ] **Level 1 — Lint & Format:** no linter in this project (orchestrator.md).
-- [ ] **Level 2 — Type Check / build:** `npm run check` (astro build + tsc + wrangler dry-run).
-- [ ] **Level 2.5 — Code Review:** `/hopla:code-review` per phase (money path) + one fresh-context branch review before the PR + a design review of the money path (checkout price, guard, holds).
-- [ ] **Level 3 — Unit Tests:** `npm test`.
-- [ ] **Level 4 — Integration (local `astro dev`, local D1 with migrations + `seeds/local.sql` + staged seed, Bold TEST keys):** curl matrix:
+- [x] **Level 1 — Lint & Format:** no linter in this project (orchestrator.md). — **waived:** the project has no linter.
+- [x] **Level 2 — Type Check / build:** `npm run check` (astro build + tsc + wrangler dry-run). — ✓ passed after phase 3, after the review fixes (cc4f713), on the dev merge (orchestrator) and for phase 4 (7fafe87).
+- [x] **Level 2.5 — Code Review:** `/hopla:code-review` per phase (money path) + one fresh-context branch review before the PR + a design review of the money path (checkout price, guard, holds). — ✓ one fresh-context branch review at 6a9d9dd that included the money-path design review: `.agents/code-reviews/d13-staged-ticket-prices.md` (0 high, 2 medium, 6 low; all fixed in cc4f713 except the per-IP rate limit, which is a Cloudflare dashboard rule and so Julio's to set). Phase 4 was reviewed inline in the same file. **Waived:** separate reviews per phase; one branch review covered phases 1–3.
+- [x] **Level 3 — Unit Tests:** `npm test`. — ✓ 49/49 after phase 3 (17 in `tests/ticket-stages.test.ts`), 57/57 on dev for phase 4.
+- [x] **Level 4 — Integration (local `astro dev`, local D1 with migrations + `seeds/local.sql` + staged seed, Bold TEST keys):** curl matrix: — ✓ rows 1–9 run with curl against `astro dev` and a local D1. Extra rows: an approved order with no tickets issued yet still holds its seats, and one buyer email cannot hold more than 10 unpaid seats. **Waived:** Bold TEST keys locally (fake keys were used, so no payment was possible); Level 5 covered the real Bold round trip.
   1. Unstaged event: checkout 201, `amount = price*qty` (regression).
   2. Unstaged event at capacity incl. a fresh pending hold → 400 "agotadas"; same hold older than 30 min (`UPDATE … created_at = datetime('now','-31 minutes')`) → 201.
   3. Staged event, stage 1 current: `amount = stage1.price*qty`; forged `price`/`amount` in body ignored.
@@ -234,21 +236,21 @@ Confirm or correct each before execution:
   7. Before first stage → 400 "La venta aún no está abierta"; all ended → "Entradas agotadas".
   8. Two parallel checkouts for the last ticket (`curl … & curl …`) → exactly one 201.
   9. Admin endpoints without cookie → 401; stage delete with orders → 409.
-- [ ] **Level 5 — Human Review (Julio, on the branch's Worker Preview with Bold TEST mode, before merge to `dev`):**
+- [x] **Level 5 — Human Review (Julio, on the branch's Worker Preview with Bold TEST mode, before merge to `dev`):** — ✓ Julio on the branch Preview: A, the admin stage editor, OK; B, the public page in es/en/fr, OK; C, Bold TEST order #5 in staging D1, completed, amount 1000 (stage 1 price), `stage_id` 1, ticket issued.
   - A. Admin: create an event with 3 stages, edit one, try to delete one with sales; the form and the events grid read correctly. If skipped: admin UX ships unseen.
   - B. Public page es/en/fr: current stage + full list + "venta abre" state look right. If skipped: wording/styling ships unseen.
   - C. One Bold TEST purchase on the staged event: Bold shows the stage price; receipt + QR arrive; the stage's "Vendidas" increases. If skipped: the real Bold round trip with `stage_id` is unobserved.
 
 ## Acceptance Criteria
-- [ ] An admin can add, edit and remove price stages on any event; events without stages behave as before.
-- [ ] Checkout charges the current stage price computed on the server (Bogotá date + stage sales), never a client value.
-- [ ] A sold-out stage opens the next one immediately; a stage ended by date does not carry its leftovers.
-- [ ] A quantity above the stage's remaining tickets is refused with the "a este precio" message.
-- [ ] A started payment holds its tickets for 30 minutes; the last ticket cannot be sold twice by concurrent checkouts.
-- [ ] The public event page (es/en/fr) shows the current stage and all stages with their status.
-- [ ] The admin shows sold / quota / revenue per stage.
-- [ ] `npm run check` and `npm test` pass.
-- [ ] Migration `0011` applied on staging (`--config wrangler.preview-migrations.jsonc`); production instructions in the report.
+- [x] An admin can add, edit and remove price stages on any event; events without stages behave as before. — ✓ curl row 9 + Level 5 A; unstaged regression rows 1–2.
+- [x] Checkout charges the current stage price computed on the server (Bogotá date + stage sales), never a client value. — ✓ rows 3 and 6; the Bold signature uses the server amount (review, money-path section).
+- [x] A sold-out stage opens the next one immediately; a stage ended by date does not carry its leftovers. — ✓ unit tests and row 5.
+- [x] A quantity above the stage's remaining tickets is refused with the "a este precio" message. — ✓ row 4. The message is now translated via the `only_left_stage` code.
+- [x] A started payment holds its tickets for 30 minutes; the last ticket cannot be sold twice by concurrent checkouts. — ✓ row 2 (the hold expires) and row 8 (3 parallel checkouts → exactly one 201).
+- [x] The public event page (es/en/fr) shows the current stage and all stages with their status. — ✓ Level 5 B; restyled later by D18.
+- [x] The admin shows sold / quota / revenue per stage. — ✓ Level 5 A ("Vendidas X / Y · apartadas · recaudado").
+- [x] `npm run check` and `npm test` pass. — ✓ see Levels 2 and 3.
+- [x] Migration `0011` applied on staging (`--config wrangler.preview-migrations.jsonc`); production instructions in the report. — ✓ on staging via `wrangler.preview-migrations.jsonc`; applied in production 2026-10-31 with Julio's OK, before release PR #15.
 
 ## Confidence Score: 8/10
 - **Strengths:** ticketing v1 is small and well structured; the Bold contract (server-signed amount) does not change; stage logic is pure and fully unit-testable.
