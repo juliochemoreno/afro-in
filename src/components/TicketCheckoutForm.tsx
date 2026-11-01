@@ -17,6 +17,8 @@ interface Props {
   remaining: number;
   /** Short "Quedan 3 a este precio" note shown beside the quantity (few left only). */
   remainingNote?: string;
+  /** Single-price events: the price shown beside the quantity ("$50.000 COP"). */
+  qtyPrice?: string;
   /** Localized success page path, e.g. /entradas. */
   successPath: string;
   t: Record<string, string>;
@@ -67,6 +69,7 @@ const ERROR_KEYS: Record<string, string> = {
 
 export default function TicketCheckoutForm({
   remainingNote,
+  qtyPrice,
   lang,
   eventSlug,
   eventName,
@@ -224,8 +227,17 @@ export default function TicketCheckoutForm({
   return (
     <div className="tix-form">
       <div className="tix-qty">
+        {/* Left of the stepper: the price (single-price events) or a short
+            caption, plus the few-left note; the full question is for screen readers. */}
         <span className="tix-qty-label">
-          <label>{t["tix.form.quantity"]}</label>
+          <label className="tix-qty-q">{t["tix.form.quantity"]}</label>
+          {qtyPrice ? (
+            <span className="tix-qty-price">
+              <strong>{qtyPrice}</strong>
+            </span>
+          ) : (
+            !remainingNote && <span className="tix-qty-caption" aria-hidden="true">{t["tix.form.qtyShort"]}</span>
+          )}
           {remainingNote && <span className="tix-qty-left">{remainingNote}</span>}
         </span>
         <div className="tix-stepper">

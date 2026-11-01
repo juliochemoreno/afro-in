@@ -98,6 +98,7 @@ const remainingNote = showRemaining
 const priceLabel = (price: number) => (price === 0 ? t("tix.price.free") : formatPrice(price));
 
 const T_KEYS = [
+  "tix.form.qtyShort",
   "tix.form.quantity",
   "tix.form.qty.less",
   "tix.form.qty.more",
@@ -200,18 +201,11 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
                   </ul>
                   </>
                 ) : (
-                  <p class="evento-single">
-                    <span class="evento-price-row">
-                      <span class="fz-display fz-tier-price">
-                        {priceLabel(event.price)}
-                      </span>
-                      {event.price > 0 && <span class="evento-per">{t("tix.detail.perTicket")}</span>}
-                    </span>
-                  </p>
+                  null
                 )
               }
 
-              <div class="evento-buy">
+              <div class:list={["evento-buy", { "evento-buy--single": !staged }]}>
                 {staged && (
                   <h3 class="fz-display">
                     {event.price === 0 ? t("tix.detail.reserve") : t("tix.detail.buy")}
@@ -232,6 +226,7 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
                     price={event.price}
                     remaining={event.remaining}
                     remainingNote={remainingNote}
+                    qtyPrice={!staged && event.price > 0 ? priceLabel(event.price) : undefined}
                     successPath={successPath}
                     t={strings}
                   />
@@ -353,16 +348,6 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
   .evento-tickets {
     margin-top: 32px;
     background: var(--tx-surface);
-  }
-  .evento-price-row {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 4px 10px;
-  }
-  .evento-per {
-    font-size: 15px;
-    color: var(--tx-muted);
   }
   .fz-tickets.evento-tickets-inner h2 {
     color: var(--tx-fg);
@@ -501,12 +486,6 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
       right: auto;
     }
   }
-  .evento-single {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin: 0;
-  }
   .evento-page .fz-tier-price {
     color: var(--tx-accent);
   }
@@ -514,6 +493,11 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid var(--tx-line);
+  }
+  .evento-buy.evento-buy--single {
+    margin-top: 8px;
+    padding-top: 0;
+    border-top: 0;
   }
   .fz-tickets .evento-buy h3 {
     margin: 0 0 4px;
@@ -560,13 +544,31 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
   }
   /* "Comprar entradas" already says it: the quantity question stays for screen
      readers only (Julio). */
-  .evento-page .tix-qty .tix-qty-label label {
+  .evento-page .tix-qty .tix-qty-label .tix-qty-q {
     position: absolute;
     width: 1px;
     height: 1px;
     overflow: hidden;
     clip: rect(0 0 0 0);
     white-space: nowrap;
+  }
+  .evento-page .tix-qty-price strong {
+    font-family: "Anton", sans-serif;
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1;
+    color: var(--tx-accent);
+  }
+  .evento-page .tix-qty-price span {
+    font-size: 15px;
+    color: var(--tx-muted);
+  }
+  .evento-page .tix-qty-caption {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--tx-muted);
   }
   .evento-page .tix-qty-left {
     font-size: 13px;

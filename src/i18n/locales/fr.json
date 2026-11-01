@@ -342,6 +342,7 @@
   "tix.form.err.taken": "Les billets viennent de s'épuiser ou il en reste moins que demandé. Rechargez la page et réessayez.",
   "tix.form.err.pending": "Vous avez déjà un paiement en cours pour cet événement. Terminez-le ou attendez 30 minutes.",
   "tix.form.quantity": "Nombre de billets",
+  "tix.form.qtyShort": "Quantité",
   "tix.form.left.stage": "Plus que {n} à ce prix",
   "tix.form.left.stage.one": "Plus qu'un à ce prix",
   "tix.form.left.any": "Plus que {n}",

@@ -342,6 +342,7 @@
   "tix.form.err.taken": "Las entradas se acaban de agotar o quedan menos de las que pediste. Recarga la página e inténtalo de nuevo.",
   "tix.form.err.pending": "Ya tienes un pago en curso para este evento. Termínalo o espera 30 minutos.",
   "tix.form.quantity": "¿Cuántas entradas?",
+  "tix.form.qtyShort": "Cantidad",
   "tix.form.left.stage": "Quedan {n} a este precio",
   "tix.form.left.stage.one": "Queda 1 a este precio",
   "tix.form.left.any": "Quedan {n}",

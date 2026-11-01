@@ -342,6 +342,7 @@
   "tix.form.err.taken": "The tickets just sold out or fewer are left than you asked for. Reload the page and try again.",
   "tix.form.err.pending": "You already have a payment in progress for this event. Finish it or wait 30 minutes.",
   "tix.form.quantity": "Number of tickets",
+  "tix.form.qtyShort": "Quantity",
   "tix.form.left.stage": "{n} left at this price",
   "tix.form.left.stage.one": "1 left at this price",
   "tix.form.left.any": "{n} left",
