@@ -96,7 +96,7 @@ days:
         kind: "Coupé décalé 1 vs 1"
 tickets:
   tiers:
-    - period: "1 al 15 de noviembre"
+    - period: "Hasta el 15 de noviembre o hasta agotar las 50 boletas"
       from: "2026-11-01"
       until: "2026-11-15"
       price: 20000

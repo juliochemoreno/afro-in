@@ -296,10 +296,7 @@ export default function TicketCheckoutForm({
           {price === 0 ? (
             t["tix.form.total.free"]
           ) : (
-            <>
-              {formatPrice(total)}
-              <span className="tix-cur">COP</span>
-            </>
+            formatPrice(total)
           )}
         </strong>
       </div>

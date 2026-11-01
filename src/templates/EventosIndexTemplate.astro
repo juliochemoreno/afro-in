@@ -122,7 +122,6 @@ const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
                     <span class="ev-price">
                       <span class="fz-display">
                         {c.price}
-                        {!c.free && <span class="ev-cur">COP</span>}
                       </span>
                       <span class="ev-arrow" aria-hidden="true">→</span>
                     </span>
@@ -292,11 +291,6 @@ const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
   .ev-price .fz-display {
     font-size: 26px;
     line-height: 1;
-  }
-  .ev-cur {
-    margin-left: 4px;
-    font-size: 0.45em;
-    letter-spacing: 0.06em;
   }
   .ev-arrow {
     font-size: 20px;
