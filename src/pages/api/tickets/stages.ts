@@ -32,8 +32,11 @@ export const GET: APIRoute = async ({ locals, request }) => {
 
   try {
     const event = await getEventBySlug(db, slug);
-    if (!event) return json({ error: "not_found" }, 404, "no-store");
-    const res = json(publicSale(event.sale), 200, `public, max-age=${CACHE_SECONDS}`);
+    // No stages (single-price event) or event over: the page keeps its date-based tiers.
+    if (!event?.sale) return json({ error: "not_found" }, 404, `public, max-age=${CACHE_SECONDS}`);
+    // The event quota can run out before a stage quota does.
+    const sale = event.soldOut ? { state: "ended" as const, current: null } : publicSale(event.sale);
+    const res = json(sale, 200, `public, max-age=${CACHE_SECONDS}`);
     try {
       await cache?.put(key, res.clone());
     } catch {}
