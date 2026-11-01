@@ -11,6 +11,7 @@ interface Props {
   /** When set (permanent [token] page in pending state), confirm this id
    *  instead of reading it from the URL / sessionStorage. */
   initialOrderId?: string;
+  lang?: string;
 }
 
 type Phase = "loading" | "success" | "pending" | "failed";
@@ -40,6 +41,7 @@ export default function TicketReceipt({
   eventsPath,
   ticketsPath,
   initialOrderId,
+  lang,
 }: Props) {
   const [phase, setPhase] = React.useState<Phase>("loading");
   const [order, setOrder] = React.useState<any>(null);
@@ -130,6 +132,8 @@ export default function TicketReceipt({
           eventName={order.event_name}
           eventSubtitle={eventSubtitle(event)}
           eventImage={eventImage}
+          eventDate={event?.event_date ?? null}
+          lang={lang}
           orderNumber={order.id}
           tickets={tickets}
           permalink={permalink}

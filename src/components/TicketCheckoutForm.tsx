@@ -226,16 +226,16 @@ export default function TicketCheckoutForm({
             type="button"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
             disabled={qty <= 1}
-            aria-label="-"
+            aria-label={t["tix.form.qty.less"]}
           >
             −
           </button>
-          <span>{qty}</span>
+          <span aria-live="polite">{qty}</span>
           <button
             type="button"
             onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
             disabled={qty >= maxQty}
-            aria-label="+"
+            aria-label={t["tix.form.qty.more"]}
           >
             +
           </button>
@@ -292,7 +292,16 @@ export default function TicketCheckoutForm({
 
       <div className="tix-total">
         <span>{t["tix.form.total"]}</span>
-        <strong>{price === 0 ? "Entrada Libre (Gratis)" : formatPrice(total)}</strong>
+        <strong>
+          {price === 0 ? (
+            t["tix.form.total.free"]
+          ) : (
+            <>
+              {formatPrice(total)}
+              <span className="tix-cur">COP</span>
+            </>
+          )}
+        </strong>
       </div>
 
       {error && <p className="ck-error">{error}</p>}
@@ -306,7 +315,7 @@ export default function TicketCheckoutForm({
         {loading
           ? t["tix.form.processing"]
           : price === 0
-            ? "Reservar entradas gratis"
+            ? t["tix.form.reserve"]
             : t["tix.form.pay"]}
       </button>
       <p className="tix-secure">{t["tix.form.securenote"]}</p>
