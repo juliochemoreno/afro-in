@@ -2,6 +2,7 @@
 import afroinLogo from "../assets/img/logos/afroin.png";
 import CartWidget from "./CartWidget.astro";
 import LanguagePicker from "./LanguagePicker.astro";
+import { buildMainMenu, isPalenquePath } from "../lib/mainMenu";
 import {
   getLangFromUrl,
   useTranslations,
@@ -10,81 +11,44 @@ import {
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
-const langPrefix = lang === "es" ? "" : `/${lang}`;
-
-interface NavLink {
-  href: string;
-  label: string;
-  children?: NavLink[];
-}
 
 interface Props {
+  // Deprecated: the menu is the same on the whole site (D21). Ignored; the
+  // props are removed from the templates once D20 lands.
   currentPage?: string;
-  navLinks?: NavLink[];
-  ctaLink?: { href: string; label: string };
-  // "festival": dark header for the edition programming pages (D9).
-  variant?: "default" | "festival";
+  navLinks?: unknown;
+  ctaLink?: unknown;
+  // "festival": dark header for the edition pages. "minimal": logo and
+  // language only (payment and join pages).
+  variant?: "default" | "festival" | "minimal";
 }
 
-// Default navigation for home page
-const defaultNavLinks: NavLink[] = [
-  { href: getTranslatedPath("/#sobre", lang), label: t("nav.about") },
-  { href: getTranslatedPath("/#galeria", lang), label: t("nav.gallery") },
-  { href: getTranslatedPath("/eventos", lang), label: t("nav.events") },
-  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
-  {
-    href: getTranslatedPath("/programacion", lang),
-    label: t("nav.tour"),
-    children: [
-      {
-        href: getTranslatedPath("/programacion", lang),
-        label: t("nav.program"),
-      },
-      {
-        href: getTranslatedPath("/programacion/2027/santa-marta", lang),
-        label: "Santa Marta",
-      },
-      {
-        href: getTranslatedPath("/programacion/2027/palenque", lang),
-        label: "Palenque",
-      },
-      { href: getTranslatedPath("/artistas", lang), label: t("nav.artists") },
-    ],
-  },
-  { href: getTranslatedPath("/#aliados", lang), label: t("nav.allies") },
-  { href: getTranslatedPath("/#contacto", lang), label: t("nav.contact") },
-];
+const { variant = "default" } = Astro.props;
+const minimal = variant === "minimal";
+const { items: navLinks, passUrl, joinUrl } = buildMainMenu(
+  t,
+  getTranslatedPath,
+  lang,
+);
 
-const defaultCta = {
-  href: getTranslatedPath("/#unirse", lang),
-  label: t("nav.join"),
-};
+// Palenque has no pass: its pages keep the join CTA.
+const palenque = isPalenquePath(Astro.url.pathname);
 
-const {
-  currentPage = "home",
-  navLinks = defaultNavLinks,
-  ctaLink = defaultCta,
-  variant = "default",
-} = Astro.props;
-
-// Get current URL path for active state
 const currentPath = Astro.url.pathname;
 
-// Helper to check if link is active
+// A section link is active on its page and on its sub-pages.
 function isActive(href: string): boolean {
-  // Normalize paths by removing trailing slashes
+  if (href.includes("#")) return false;
   const normalizedHref = href.replace(/\/$/, "") || "/";
   const normalizedPath = currentPath.replace(/\/$/, "") || "/";
-
-  // Skip anchor links - they don't need active state on home
-  if (href.includes("/#")) return false;
-
-  // Home page exact match only for "/" link
-  if (href === "/" || href === `/${lang}`)
-    return normalizedPath === "/" || normalizedPath === `/${lang}`;
-
-  // Exact match for specific pages
-  return normalizedPath === normalizedHref;
+  if (normalizedPath === normalizedHref) return true;
+  // The festival item also covers the artists page.
+  if (normalizedHref === getTranslatedPath("/programacion", lang)) {
+    const artists = getTranslatedPath("/artistas", lang);
+    if (normalizedPath === artists || normalizedPath.startsWith(artists + "/"))
+      return true;
+  }
+  return normalizedPath.startsWith(normalizedHref + "/");
 }
 ---
 
@@ -92,6 +56,7 @@ function isActive(href: string): boolean {
   class:list={[
     "header fixed top-0 left-0 right-0 z-1000 backdrop-blur-md transition-all duration-300",
     { "header--festival": variant === "festival" },
+    { "header--minimal": minimal },
   ]}
 >
   <nav class="nav container flex items-center justify-between h-20">
@@ -111,6 +76,7 @@ function isActive(href: string): boolean {
       />
     </a>
 
+    {!minimal && (
     <ul
       class="nav-links flex items-center gap-8 list-none md:flex-1 md:justify-end"
     >
@@ -180,25 +146,34 @@ function isActive(href: string): boolean {
         ))
       }
     </ul>
+    )}
     <div class="nav-actions flex items-center gap-2 sm:gap-4 md:ml-8 shrink-0">
       <LanguagePicker />
-      <div class="cart-nav-item">
-        <CartWidget />
-      </div>
+      {!minimal && (
+        <>
+        <div class="cart-nav-item">
+          <CartWidget />
+        </div>
+        <a
+          href={palenque ? joinUrl : passUrl}
+          class="btn btn-primary nav-cta py-1.5 px-3 sm:py-2 sm:px-6 flex items-center justify-center text-xs sm:text-base font-bold"
+          data-pass-href={passUrl}
+          data-join-href={joinUrl}
+          data-pass-label={t("nav.buyPass")}
+          data-join-label={t("nav.join")}
+          data-fixed={palenque ? "join" : undefined}
+          >{palenque ? t("nav.join") : t("nav.buyPass")}</a
+        >
+        </>
+      )}
 
-      <a
-        href={ctaLink.href}
-        class="btn btn-primary nav-cta py-1.5 px-3 sm:py-2 sm:px-6 flex items-center justify-center text-xs sm:text-base font-bold"
-        >{ctaLink.label}</a
-      >
-
-      <button
+      {!minimal && (<button
         class="menu-toggle w-8 h-8 sm:w-10 sm:h-10 relative md:hidden flex items-center justify-center"
         aria-label="Abrir menú"
         aria-expanded="false"
       >
         <span class="hamburger"></span>
-      </button>
+      </button>)}
     </div>
   </nav>
 </header>
@@ -256,6 +231,19 @@ function isActive(href: string): boolean {
     .header--festival .dropdown-menu {
       background: transparent;
     }
+  }
+
+  /* Cart icon only shows when the cart has items (the drawer stays mounted). */
+  .cart-nav-item :global(.cart-icon-button) {
+    display: none;
+  }
+
+  .cart-nav-item.has-items :global(.cart-icon-button) {
+    display: flex;
+  }
+
+  .header--minimal .nav {
+    justify-content: space-between;
   }
 
   .nav {
@@ -558,7 +546,35 @@ function isActive(href: string): boolean {
 </style>
 
 <script>
+  import { getCart, onCartChange } from "../lib/cart";
+  import { isPassSeason } from "../lib/mainMenu";
+
+  let unsubscribeCart: (() => void) | undefined;
+
+  document.addEventListener("astro:before-swap", () => {
+    unsubscribeCart?.();
+    unsubscribeCart = undefined;
+  });
+
   document.addEventListener("astro:page-load", () => {
+    // Cart icon: visible only with items.
+    const cartItem = document.querySelector(".cart-nav-item");
+    const syncCart = (count: number) =>
+      cartItem?.classList.toggle("has-items", count > 0);
+    syncCart(getCart().totalItems);
+    unsubscribeCart?.();
+    unsubscribeCart = onCartChange((cart) => syncCart(cart.totalItems));
+
+    // CTA: "buy pass" in season (not on Palenque pages), "join" otherwise.
+    const cta = document.querySelector<HTMLAnchorElement>(".nav-cta");
+    if (cta && cta.dataset.fixed !== "join") {
+      const season = isPassSeason(new Date());
+      cta.href = (season ? cta.dataset.passHref : cta.dataset.joinHref) ?? cta.href;
+      cta.textContent =
+        (season ? cta.dataset.passLabel : cta.dataset.joinLabel) ??
+        cta.textContent;
+    }
+
     const menuToggle = document.querySelector(".menu-toggle");
     const navLinks = document.querySelector(".nav-links");
     const header = document.querySelector(".header");

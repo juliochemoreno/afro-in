@@ -13,11 +13,6 @@ interface Props {
 const { lang = "es" } = Astro.props;
 const t = useTranslations(lang as any);
 
-const navLinks = [
-  { href: getTranslatedPath("/", lang), label: t("nav.home") },
-  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
-];
-
 // Plain strings object for the React island.
 const CK_KEYS = [
   "checkout.contact.title",
@@ -76,7 +71,7 @@ const storePath = getTranslatedPath("/tienda", lang);
 ---
 
 <Layout title={`${t("checkout.title")} | AFRO IN`}>
-  <Header navLinks={navLinks} />
+  <Header variant="minimal" />
 
   <main class="checkout-page">
     <div class="container">

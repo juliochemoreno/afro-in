@@ -19,15 +19,10 @@ const { lang = "es" } = Astro.props;
 
 // Simple navigation for the thanks page
 const t = useTranslations(lang as any);
-const navLinks = [
-  { href: getTranslatedPath("/", lang), label: t("nav.home") },
-  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
-  { href: getTranslatedPath("/programacion", lang), label: t("nav.tour") },
-];
 ---
 
 <Layout title="¡Gracias por tu apoyo! | AFRO IN">
-  <Header navLinks={navLinks} />
+  <Header variant="minimal" />
 
   <main class="thanks-container">
     <!-- Hero Section -->

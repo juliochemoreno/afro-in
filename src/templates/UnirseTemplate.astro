@@ -15,13 +15,10 @@ const { lang = "es" } = Astro.props;
 
 // Simplified navigation for this dedicated page (focus on donation)
 const t = useTranslations(lang as any);
-const minimalNav = [
-  { href: getTranslatedPath("/", lang), label: t("nav.home") },
-];
 ---
 
 <Layout title="Únete al Millón de Corazones | AFRO IN">
-  <Header navLinks={minimalNav} />
+  <Header variant="minimal" />
   <main class="join-page">
     <Hero />
     <About />
