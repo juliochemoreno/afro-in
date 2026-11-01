@@ -15,6 +15,8 @@ interface Props {
   countries: CountryEntry[];
   price: number;
   remaining: number;
+  /** Short "Quedan 3 a este precio" note shown beside the quantity (few left only). */
+  remainingNote?: string;
   /** Localized success page path, e.g. /entradas. */
   successPath: string;
   t: Record<string, string>;
@@ -64,6 +66,7 @@ const ERROR_KEYS: Record<string, string> = {
 };
 
 export default function TicketCheckoutForm({
+  remainingNote,
   lang,
   eventSlug,
   eventName,
@@ -221,7 +224,10 @@ export default function TicketCheckoutForm({
   return (
     <div className="tix-form">
       <div className="tix-qty">
-        <label>{t["tix.form.quantity"]}</label>
+        <span className="tix-qty-label">
+          <label>{t["tix.form.quantity"]}</label>
+          {remainingNote && <span className="tix-qty-left">{remainingNote}</span>}
+        </span>
         <div className="tix-stepper">
           <button
             type="button"

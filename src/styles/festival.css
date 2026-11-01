@@ -183,8 +183,8 @@
 
 /* Edition tickets: a price ladder (every stage, the one in force says "Ahora"
    instead of its price), then the pass card with that price and the button. */
-.fz-tickets .fz-tiers,
-.fz-headliner-extra .fz-tickets .fz-tiers {
+.fz-tickets-layout .fz-tiers,
+.fz-headliner-extra .fz-tickets-layout .fz-tiers {
   position: relative;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
@@ -192,7 +192,7 @@
 }
 
 /* The ladder's rail; the gold part reaches the stage in force. */
-.fz-tickets .fz-tiers::before {
+.fz-tickets-layout .fz-tiers::before {
   content: "";
   position: absolute;
   top: 0;
@@ -202,14 +202,14 @@
   background: #3a352b;
 }
 
-.fz-tickets .fz-tiers li {
+.fz-tickets-layout .fz-tiers li {
   position: relative;
   gap: 2px;
   padding: 0 12px 0 0;
   border-top: 0;
 }
 
-.fz-tickets .fz-tiers li::before {
+.fz-tickets-layout .fz-tiers li::before {
   content: "";
   position: absolute;
   top: -22px;
@@ -218,12 +218,12 @@
   height: 5px;
 }
 
-.fz-tickets .fz-tiers li[data-stage="past"]::before,
-.fz-tickets .fz-tiers li[data-stage="current"]::before {
+.fz-tickets-layout .fz-tiers li[data-stage="past"]::before,
+.fz-tickets-layout .fz-tiers li[data-stage="current"]::before {
   background: var(--fz-gold);
 }
 
-.fz-tickets .fz-tiers li[data-stage="current"]::before {
+.fz-tickets-layout .fz-tiers li[data-stage="current"]::before {
   right: 60%;
 }
 
@@ -235,7 +235,7 @@
   color: var(--fz-cream);
 }
 
-.fz-tickets .fz-tier-price {
+.fz-tickets-layout .fz-tier-price {
   font-size: 30px;
   color: #cfc3aa;
 }
@@ -246,7 +246,7 @@
   color: var(--fz-gold);
 }
 
-.fz-tickets li[data-stage="current"] .fz-tier-price {
+.fz-tickets-layout li[data-stage="current"] .fz-tier-price {
   display: none;
 }
 
@@ -256,20 +256,20 @@
   color: var(--fz-muted, #a59a86);
 }
 
-.fz-tickets li[data-stage="upcoming"] {
+.fz-tickets-layout li[data-stage="upcoming"] {
   opacity: 0.6;
 }
 
-.fz-tickets li[data-stage="past"] .fz-tier-price {
+.fz-tickets-layout li[data-stage="past"] .fz-tier-price {
   text-decoration: line-through;
 }
 
-.fz-tickets li .fz-tier-flag {
+.fz-tickets-layout li .fz-tier-flag {
   margin-top: 6px;
 }
 
 /* A cream pointer from the stage in force down to its pass card. */
-.fz-tickets li[data-stage="current"]::after {
+.fz-tickets-layout li[data-stage="current"]::after {
   content: "";
   position: absolute;
   left: 18px;
@@ -631,13 +631,13 @@ html.has-stickybuy .whatsapp-float {
 }
 
 @media (max-width: 720px) {
-  .fz-tickets .fz-tiers,
-  .fz-headliner-extra .fz-tickets .fz-tiers {
+  .fz-tickets-layout .fz-tiers,
+  .fz-headliner-extra .fz-tickets-layout .fz-tiers {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
   }
 
-  .fz-tickets .fz-tier-price {
+  .fz-tickets-layout .fz-tier-price {
     font-size: 22px;
   }
 

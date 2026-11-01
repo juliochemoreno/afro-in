@@ -67,6 +67,15 @@ const fmtDay = (iso: string) =>
     month: "short",
     timeZone: "UTC",
   });
+// "30 nov" (no "de"): the short form for the stage ladder (Julio).
+const fmtDayShort = (iso: string) => fmtDay(iso).replace(/\s+de\s+/g, " ").replace(/\.$/, "");
+// The stage on sale says until when its price lasts; the next ones, from when.
+const stageWhen = (s: { status: string; starts_on: string; ends_on: string | null }) =>
+  s.status === "current"
+    ? s.ends_on
+      ? t("tix.stages.until").replace("{date}", fmtDayShort(s.ends_on))
+      : t("tix.stages.untilEvent")
+    : t("tix.stages.since").replace("{date}", fmtDayShort(s.starts_on));
 const fmtDayLong = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString(tag, {
     day: "numeric",
@@ -74,16 +83,18 @@ const fmtDayLong = (iso: string) =>
     year: "numeric",
     timeZone: "UTC",
   });
-const stageDates = (s: { starts_on: string; ends_on: string | null }) =>
-  s.ends_on
-    ? `${fmtDay(s.starts_on)} – ${fmtDay(s.ends_on)}`
-    : t("tix.stages.from").replace("{date}", fmtDay(s.starts_on));
 const STAGE_LABEL: Record<StageStatus, string> = {
   current: t("tix.stages.now"),
   soldout: t("tix.stages.soldout"),
   past: t("tix.stages.ended"),
   upcoming: t("tix.stages.upcoming"),
 };
+// "Quedan 3 a este precio": shown beside the quantity in the form when few are left (Julio).
+const remainingNote = showRemaining
+  ? event.remaining === 1
+    ? t(staged ? "tix.form.left.stage.one" : "tix.form.left.any.one")
+    : t(staged ? "tix.form.left.stage" : "tix.form.left.any").replace("{n}", String(event.remaining))
+  : undefined;
 const priceLabel = (price: number) => (price === 0 ? t("tix.price.free") : formatPrice(price));
 
 const T_KEYS = [
@@ -172,25 +183,22 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
               </h2>
               {
                 staged ? (
+                  <>
                   <ul class="fz-tiers evento-tiers">
                     {event.stages.map((s) => (
                       <li data-stage={s.status}>
-                        <span class:list={["fz-tier-flag", { "fz-tier-current": s.status === "current" }]}>
-                          {STAGE_LABEL[s.status]}
+                        <span class="evento-tier-name">
+                          {stageName(s, lang)}
+                          {s.status === "current" && <span class="sr-only"> ({t("tix.stages.now")})</span>}
                         </span>
-                        <span class="evento-tier-name">{stageName(s, lang)}</span>
-                        <span class="fz-display fz-tier-price">
-                          {priceLabel(s.price)}
+                        <span class="fz-display fz-tier-price">{priceLabel(s.price)}</span>
+                        <span class="evento-tier-dates">
+                          {s.status === "soldout" || s.status === "past" ? STAGE_LABEL[s.status] : stageWhen(s)}
                         </span>
-                        <span class="fz-muted evento-tier-dates">{stageDates(s)}</span>
-                        {s.status === "current" && showRemaining && (
-                          <span class="evento-tier-left">
-                            {t("tix.detail.remaining.stage").replace("{n}", String(event.remaining))}
-                          </span>
-                        )}
                       </li>
                     ))}
                   </ul>
+                  </>
                 ) : (
                   <p class="evento-single">
                     <span class="evento-price-row">
@@ -199,11 +207,6 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
                       </span>
                       {event.price > 0 && <span class="evento-per">{t("tix.detail.perTicket")}</span>}
                     </span>
-                    {showRemaining && (
-                      <span class="evento-tier-left">
-                        {t("tix.detail.remaining").replace("{n}", String(event.remaining))}
-                      </span>
-                    )}
                   </p>
                 )
               }
@@ -228,6 +231,7 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
                     countries={countries}
                     price={event.price}
                     remaining={event.remaining}
+                    remainingNote={remainingNote}
                     successPath={successPath}
                     t={strings}
                   />
@@ -363,48 +367,139 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
   .fz-tickets.evento-tickets-inner h2 {
     color: var(--tx-fg);
   }
+  /* Stages as a ladder, like the 2027 ticket block (Julio): a rail on top,
+     gold up to the stage on sale; that stage says "Ahora" and stands out. */
   .fz-tiers.evento-tiers {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
+    position: relative;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    grid-auto-flow: column;
+    gap: 16px 12px;
+    padding-top: 20px;
+  }
+  .fz-tiers.evento-tiers::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: var(--tx-line);
   }
   .evento-tiers li {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: 4px 16px;
-    padding: 14px 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 0;
+    border: 0;
   }
-  .evento-tiers .fz-tier-flag {
-    grid-column: 1 / -1;
-    justify-self: start;
+  .evento-tiers li::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    left: 0;
+    right: -12px;
+    height: 5px;
+  }
+  .evento-tiers li[data-stage="current"]::before,
+  .evento-tiers li[data-stage="past"]::before,
+  .evento-tiers li[data-stage="soldout"]::before {
+    background: var(--tx-accent);
+  }
+  .evento-tiers li[data-stage="current"]::before {
+    right: 50%;
   }
   .evento-tier-name {
-    font-weight: 600;
-    font-size: 17px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tx-fg);
   }
-  .evento-tiers .fz-tier-price {
-    grid-row: span 2;
-    text-align: right;
+  /* The stage on sale is the gold one; the others stay in the text color (Julio). */
+  .evento-tiers li .fz-tier-price {
+    font-size: 20px;
+    line-height: 1.05;
     white-space: nowrap;
+    color: var(--tx-fg);
   }
   .evento-tier-dates {
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--tx-muted);
   }
-  .evento-tier-left {
-    grid-column: 1 / -1;
-    font-size: 14px;
-    font-weight: 600;
+  .evento-tiers li[data-stage="current"] .evento-tier-name {
     color: var(--tx-accent);
   }
-  .evento-tiers li[data-stage="soldout"] > :not(.fz-tier-flag) {
-    opacity: 0.45;
+  .evento-tiers li[data-stage="current"] .fz-tier-price {
+    font-size: 26px;
+    color: var(--tx-accent);
+  }
+  /* The other stages are slightly faded (Julio). */
+  .evento-tiers li:not([data-stage="current"]) {
+    opacity: 0.7;
+  }
+  .evento-tier-flag {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 1px 8px;
+    border: 1px solid var(--tx-line);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tx-muted);
+  }
+  .evento-tiers .evento-tier-name,
+  .evento-tiers .evento-tier-dates {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .evento-tier-left {
+    margin: 14px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tx-accent);
   }
   .evento-tiers li[data-stage="past"] .fz-tier-price,
   .evento-tiers li[data-stage="soldout"] .fz-tier-price {
     text-decoration: line-through;
+    color: var(--tx-muted);
   }
-  .evento-tiers li[data-stage="upcoming"] .fz-tier-price {
-    color: var(--tx-fg);
+  /* Phones: the ladder stands up, rail on the left (like the 2027 block). */
+  @media (max-width: 560px) {
+    .fz-tiers.evento-tiers {
+      grid-template-columns: minmax(0, 1fr);
+      grid-auto-flow: row;
+      gap: 0;
+      padding: 0 0 0 20px;
+    }
+    .fz-tiers.evento-tiers::before {
+      top: 0;
+      bottom: 0;
+      right: auto;
+      width: 5px;
+      height: auto;
+    }
+    .evento-tiers li {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--tx-line);
+    }
+    .evento-tiers li:last-child {
+      border-bottom: 0;
+    }
+    .evento-tiers li::before {
+      top: 0;
+      bottom: 0;
+      left: -20px;
+      right: auto;
+      width: 5px;
+      height: auto;
+    }
+    .evento-tiers li[data-stage="current"]::before {
+      right: auto;
+    }
   }
   .evento-single {
     display: flex;
@@ -457,6 +552,26 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
     display: flex;
     flex-direction: column;
     gap: 6px;
+  }
+  .evento-page .tix-qty-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  /* "Comprar entradas" already says it: the quantity question stays for screen
+     readers only (Julio). */
+  .evento-page .tix-qty .tix-qty-label label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .evento-page .tix-qty-left {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tx-accent);
   }
   .evento-page .tix-form .ck-field > label,
   .evento-page .tix-qty label {
