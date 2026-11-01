@@ -53,6 +53,8 @@ interface Props {
   eventSubtitle?: string | null;
   /** Event date (YYYY-MM-DDTHH:MM, Bogotá) for the calendar block. */
   eventDate?: string | null;
+  /** Last day (YYYY-MM-DD) of a multi-day event: the block shows the range. */
+  eventEndDate?: string | null;
   lang?: string;
   /** "Entrada" / "Ticket" / "Billet". */
   kindLabel: string;
@@ -67,11 +69,13 @@ export default function TicketQR({
   eventName,
   eventSubtitle,
   eventDate,
+  eventEndDate,
   lang = "es",
   kindLabel,
   indexLabel,
 }: Props) {
-  const cal = eventDate ? calParts(eventDate, lang) : null;
+  const cal = eventDate ? calParts(eventDate, lang, eventEndDate) : null;
+  const isRange = !!cal?.day.includes("–");
   const [dataUrl, setDataUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -105,7 +109,7 @@ export default function TicketQR({
         <span className="tix-stub-name">{eventName}</span>
         <div className="tix-stub-meta">
           {cal && cal.day && (
-            <span className="tix-stub-cal" aria-hidden="true">
+            <span className={`tix-stub-cal${isRange ? " is-range" : ""}`} aria-hidden="true">
               <span className="tix-stub-cal-wd">{cal.weekday}</span>
               <span className="tix-stub-cal-num">{cal.day}</span>
             </span>

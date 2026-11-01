@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { calParts, cardStatus, eventTime, shortDate } from "../src/lib/eventDisplay.ts";
+import {
+  calParts,
+  cardStatus,
+  eventTime,
+  kickerDate,
+  shortDate,
+  shortDateRange,
+} from "../src/lib/eventDisplay.ts";
 
 const stage = {
   id: 2,
@@ -68,4 +75,45 @@ test("cardStatus: current stage", () => {
 
 test("cardStatus: single-price event", () => {
   assert.deepEqual(cardStatus({ soldOut: false, sale: null, stages: [] }), { kind: "none" });
+});
+
+// --- Multi-day events (D23) ---
+
+test("calParts shows a multi-day event as ranges", () => {
+  assert.deepEqual(calParts("2027-01-15T21:00", "es", "2027-01-17"), { weekday: "vie–dom", day: "15–17", month: "ene" });
+  assert.deepEqual(calParts("2027-01-15T21:00", "en", "2027-01-17"), { weekday: "Fri–Sun", day: "15–17", month: "Jan" });
+  assert.deepEqual(calParts("2027-01-15T21:00", "fr", "2027-01-17"), { weekday: "ven–dim", day: "15–17", month: "janv" });
+  assert.deepEqual(calParts("2026-12-30T21:00", "es", "2027-01-01"), { weekday: "mié–vie", day: "30–1", month: "dic–ene" });
+});
+
+test("calParts ignores a missing, invalid or non-later last day", () => {
+  const one = calParts("2027-01-15T21:00", "es");
+  for (const end of [null, undefined, "", "2027-01-15", "2027-01-14", "17/01/2027", "2027-02-30"])
+    assert.deepEqual(calParts("2027-01-15T21:00", "es", end), one, String(end));
+});
+
+test("kickerDate: one day, and ranges within a month, across months and years", () => {
+  assert.equal(kickerDate("2026-12-20T20:00", "es"), "Dom 20 Dic 2026");
+  assert.equal(kickerDate("2027-01-15T21:00", "es", "2027-01-17"), "Vie 15 – Dom 17 Ene 2027");
+  assert.equal(kickerDate("2027-01-15T21:00", "en", "2027-01-17"), "Fri 15 – Sun 17 Jan 2027");
+  assert.equal(kickerDate("2027-01-15T21:00", "fr", "2027-01-17"), "Ven 15 – Dim 17 Janv 2027");
+  assert.equal(kickerDate("2027-01-29T21:00", "es", "2027-02-01"), "Vie 29 Ene – Lun 1 Feb 2027");
+  assert.equal(kickerDate("2026-12-30T21:00", "es", "2027-01-01"), "Mié 30 Dic 2026 – Vie 1 Ene 2027");
+  assert.equal(kickerDate("2027-01-15T21:00", "es", "2027-01-15"), "Vie 15 Ene 2027");
+});
+
+test("shortDateRange in each language", () => {
+  assert.equal(shortDateRange("2027-01-15T21:00", "es", "2027-01-17"), "15–17 ene 2027");
+  assert.equal(shortDateRange("2027-01-15T21:00", "en", "2027-01-17"), "Jan 15–17, 2027");
+  assert.equal(shortDateRange("2027-01-15T21:00", "fr", "2027-01-17"), "15–17 janv 2027");
+  assert.equal(shortDateRange("2027-01-29T21:00", "es", "2027-02-01"), "29 ene – 1 feb 2027");
+  assert.equal(shortDateRange("2027-01-29T21:00", "en", "2027-02-01"), "Jan 29 – Feb 1, 2027");
+  assert.equal(shortDateRange("2026-12-30T21:00", "es", "2027-01-01"), "30 dic 2026 – 1 ene 2027");
+  assert.equal(shortDateRange("2026-12-30T21:00", "en", "2027-01-01"), "Dec 30, 2026 – Jan 1, 2027");
+});
+
+test("shortDateRange without a valid last day is shortDate", () => {
+  for (const lang of ["es", "en", "fr"])
+    for (const end of [null, "", "2027-01-15", "2027-01-10"])
+      assert.equal(shortDateRange("2027-01-15T21:00", lang, end), shortDate("2027-01-15T21:00", lang));
 });

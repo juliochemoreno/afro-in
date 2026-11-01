@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import TicketList, { type TicketView } from "@/components/TicketList";
-import { shortDate } from "@/lib/eventDisplay";
+import { shortDateRange } from "@/lib/eventDisplay";
 
 interface Props {
   t: Record<string, string>;
@@ -20,7 +20,7 @@ type Phase = "loading" | "success" | "pending" | "failed";
 function eventSubtitle(event: any, lang: string): string | null {
   if (!event) return null;
   const parts: string[] = [];
-  const day = event.event_date ? shortDate(event.event_date, lang) : null;
+  const day = event.event_date ? shortDateRange(event.event_date, lang, event.end_date) : null;
   if (day) parts.push(day);
   const place = [event.venue, event.city].filter(Boolean).join(", ");
   if (place) parts.push(place);
@@ -124,6 +124,7 @@ export default function TicketReceipt({
           eventSubtitle={eventSubtitle(event, lang ?? "es")}
           eventImage={eventImage}
           eventDate={event?.event_date ?? null}
+          eventEndDate={event?.end_date ?? null}
           lang={lang}
           orderNumber={order.id}
           tickets={tickets}

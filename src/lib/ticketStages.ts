@@ -4,7 +4,7 @@
 //
 // Rules (Julio, 2026-10-31):
 // - Stage dates are whole Bogotá days (starts_on / ends_on, inclusive); a stage
-//   without ends_on runs until the event.
+//   without ends_on runs until the event's last day.
 // - Each stage sells only its own quota; a stage ended by date loses its
 //   leftovers.
 // - A stage whose quota is full (sold + held) opens the next stage at once,
@@ -55,6 +55,22 @@ export function nowBogotaWallClock(now: number = Date.now()): string {
 // Today's date in Bogotá (YYYY-MM-DD).
 export function bogotaToday(now: Date = new Date()): string {
   return nowBogotaWallClock(now.getTime()).slice(0, 10);
+}
+
+// When an event is over, as a wall-clock string compared with
+// nowBogotaWallClock(): the end of its last day (end_date, multi-day events) or
+// its start (event_date). 23:59:59 itself already counts as over (1 s early).
+// getVisibleEvents (lib/tickets.ts) repeats this rule in SQL.
+export function eventEndsAt(e: { event_date: string; end_date?: string | null }): string {
+  return e.end_date ? `${e.end_date}T23:59:59` : e.event_date;
+}
+
+/** Past events are hidden and no longer on sale. */
+export function isEventOver(
+  e: { event_date: string; end_date?: string | null },
+  now: string = nowBogotaWallClock()
+): boolean {
+  return eventEndsAt(e) <= now;
 }
 
 function byStart<T extends { starts_on: string; id?: number }>(a: T, b: T): number {
@@ -150,16 +166,33 @@ const str = (v: unknown, max: number): string | null => {
 };
 
 /**
+ * Validate an event's optional last day (multi-day events). Empty means a
+ * one-day event. Returns a Spanish error message (shown in the admin).
+ */
+export function validateEndDate(
+  eventDate: string,
+  endDate: unknown
+): { endDate: string | null } | { error: string } {
+  const end = str(endDate, 10);
+  if (end == null) return { endDate: null };
+  if (!isDate(end)) return { error: "El último día debe ser AAAA-MM-DD" };
+  if (end <= String(eventDate || "").slice(0, 10))
+    return { error: "El último día debe ser después de la fecha de inicio" };
+  return { endDate: end };
+}
+
+/**
  * Validate the stages an admin submits for an event. Returns them cleaned and
  * sorted by start date, or a Spanish error message (shown in the admin).
  */
 export function validateStages(
   input: unknown,
-  opts: { eventDate: string; minAmount: number }
+  opts: { eventDate: string; endDate?: string | null; minAmount: number }
 ): { stages: CleanStage[] } | { error: string } {
   if (!Array.isArray(input)) return { error: "Las etapas deben ser una lista" };
   if (input.length > MAX_STAGES) return { error: `Máximo ${MAX_STAGES} etapas` };
-  const eventDay = String(opts.eventDate || "").slice(0, 10);
+  // Stages may run until the event's last day (multi-day events).
+  const lastDay = opts.endDate || String(opts.eventDate || "").slice(0, 10);
 
   const clean: CleanStage[] = [];
   for (let i = 0; i < input.length; i++) {
@@ -194,9 +227,9 @@ export function validateStages(
       return { error: `${label}: la fecha de fin debe ser AAAA-MM-DD` };
     if (endsRaw != null && endsRaw < starts_on)
       return { error: `${label}: termina antes de empezar` };
-    if (eventDay && starts_on > eventDay)
+    if (lastDay && starts_on > lastDay)
       return { error: `${label}: empieza después del evento` };
-    if (eventDay && endsRaw != null && endsRaw > eventDay)
+    if (lastDay && endsRaw != null && endsRaw > lastDay)
       return { error: `${label}: termina después del evento` };
 
     clean.push({

@@ -15,6 +15,7 @@ interface Props {
   eventSubtitle?: string | null;
   eventImage?: string | null;
   eventDate?: string | null;
+  eventEndDate?: string | null;
   lang?: string;
   orderNumber: number | string;
   tickets: TicketView[];
@@ -28,6 +29,7 @@ export default function TicketList({
   eventSubtitle,
   eventImage,
   eventDate,
+  eventEndDate,
   lang,
   orderNumber,
   tickets,
@@ -74,6 +76,7 @@ export default function TicketList({
       eventName={eventName}
       eventSubtitle={eventSubtitle}
       eventDate={eventDate}
+      eventEndDate={eventEndDate}
       lang={lang}
       kindLabel={t["tix.ticket.kind"]}
       indexLabel={isSlider ? `${i + 1} / ${tickets.length}` : undefined}

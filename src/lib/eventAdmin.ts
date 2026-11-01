@@ -2,7 +2,7 @@
 // Mirrors the shape of lib/productAdmin.ts but for the events table.
 
 import { BOLD_MIN_AMOUNT } from "@/lib/orders";
-import { validateStages, type CleanStage } from "@/lib/ticketStages";
+import { validateEndDate, validateStages, type CleanStage } from "@/lib/ticketStages";
 
 export const EVENT_COLUMNS = [
   "slug",
@@ -17,6 +17,7 @@ export const EVENT_COLUMNS = [
   "department",
   "country",
   "event_date",
+  "end_date",
   "price",
   "capacity",
   "image_r2_key",
@@ -41,6 +42,8 @@ export function validateEventInput(body: any): string | null {
   // which is only exact for this format.
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(date))
     return "La fecha debe tener el formato AAAA-MM-DDTHH:MM";
+  const end = validateEndDate(date, body.end_date);
+  if ("error" in end) return end.error;
   const price = Math.trunc(Number(body.price));
   if (!Number.isFinite(price) || price < 0)
     return "El precio debe ser un número mayor o igual a 0";
@@ -64,6 +67,7 @@ export function parseStages(
   if (!body || typeof body !== "object" || body.stages == null) return { stages: null };
   const res = validateStages(body.stages, {
     eventDate: String(body.event_date ?? ""),
+    endDate: str(body.end_date, 10),
     minAmount: BOLD_MIN_AMOUNT,
   });
   if ("error" in res) return res;
@@ -147,6 +151,7 @@ export function eventValues(body: any): unknown[] {
     str(body.department, 120),
     str(body.country, 120) || "Colombia",
     str(body.event_date, 40),
+    str(body.end_date, 10),
     Math.trunc(Number(body.price)),
     Math.trunc(Number(body.capacity)),
     str(body.image_r2_key, 300),

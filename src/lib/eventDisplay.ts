@@ -18,21 +18,68 @@ function wallClock(eventDate: string): Date | null {
 // "ene." → "ene", narrow no-break spaces → plain spaces.
 const tidy = (s: string) => s.replace(/\.$/, "").replace(/[  ]/g, " ");
 
-/** Weekday, day and month for the gold calendar block. */
+// One part of a wall-clock date ("vie", "ene", "2027") in the page language.
+function part(d: Date, lang: string, o: Intl.DateTimeFormatOptions): string {
+  return tidy(d.toLocaleDateString(localeTag(lang), { ...o, timeZone: "UTC" }));
+}
+
+// A multi-day event's last day, only when it is a valid day after the start.
+function lastDay(start: Date, endDate?: string | null): Date | null {
+  if (!endDate || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) return null;
+  const end = wallClock(endDate);
+  if (!end || end.toISOString().slice(0, 10) !== endDate) return null;
+  return end.getTime() > Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())
+    ? end
+    : null;
+}
+
+const sameMonth = (a: Date, b: Date) =>
+  a.getUTCFullYear() === b.getUTCFullYear() && a.getUTCMonth() === b.getUTCMonth();
+
+/**
+ * Weekday, day and month for the gold calendar block. A multi-day event
+ * (endDate = its last day) gets ranges: "vie–dom" / "15–17" / "ene".
+ */
 export function calParts(
   eventDate: string,
-  lang: string
+  lang: string,
+  endDate?: string | null
 ): { weekday: string; day: string; month: string } {
   const d = wallClock(eventDate);
   if (!d) return { weekday: "", day: "", month: "" };
-  const tag = localeTag(lang);
-  const fmt = (o: Intl.DateTimeFormatOptions) =>
-    tidy(d.toLocaleDateString(tag, { ...o, timeZone: "UTC" }));
+  const one = (x: Date) => ({
+    weekday: part(x, lang, { weekday: "short" }),
+    day: String(x.getUTCDate()),
+    month: part(x, lang, { month: "short" }),
+  });
+  const start = one(d);
+  const last = lastDay(d, endDate);
+  if (!last) return start;
+  const end = one(last);
   return {
-    weekday: fmt({ weekday: "short" }),
-    day: String(d.getUTCDate()),
-    month: fmt({ month: "short" }),
+    weekday: `${start.weekday}–${end.weekday}`,
+    day: `${start.day}–${end.day}`,
+    month: sameMonth(d, last) ? start.month : `${start.month}–${end.month}`,
   };
+}
+
+/**
+ * The date over the event page title: "Dom 20 Dic 2026", or for a multi-day
+ * event "Vie 15 – Dom 17 Ene 2027" (each date in full across months or years).
+ */
+export function kickerDate(eventDate: string, lang: string, endDate?: string | null): string {
+  const d = wallClock(eventDate);
+  if (!d) return "";
+  const cap = (w: string) => w.replace(/^./, (c) => c.toUpperCase());
+  const wdDay = (x: Date) => `${cap(part(x, lang, { weekday: "short" }))} ${x.getUTCDate()}`;
+  const month = (x: Date) => cap(part(x, lang, { month: "short" }));
+  const year = (x: Date) => String(x.getUTCFullYear());
+  const last = lastDay(d, endDate);
+  if (!last) return `${wdDay(d)} ${month(d)} ${year(d)}`;
+  if (sameMonth(d, last)) return `${wdDay(d)} – ${wdDay(last)} ${month(d)} ${year(d)}`;
+  if (d.getUTCFullYear() === last.getUTCFullYear())
+    return `${wdDay(d)} ${month(d)} – ${wdDay(last)} ${month(last)} ${year(d)}`;
+  return `${wdDay(d)} ${month(d)} ${year(d)} – ${wdDay(last)} ${month(last)} ${year(last)}`;
 }
 
 /** The event's start time, or null when the date has no time. */
@@ -65,4 +112,35 @@ export function cardStatus(e: { soldOut: boolean; sale: Sale | null; stages: unk
   if (e.sale?.state === "upcoming") return { kind: "opens", opensOn: e.sale.opensOn };
   if (e.sale?.state === "current" && e.stages.length > 0) return { kind: "stage", stage: e.sale.stage };
   return { kind: "none" };
+}
+
+/**
+ * shortDate for an event that may last several days: "15–17 ene 2027" /
+ * "Jan 15–17, 2027" / "15–17 janv 2027"; across months "29 ene – 1 feb 2027",
+ * across years "30 dic 2026 – 1 ene 2027".
+ * Without a valid last day it is shortDate.
+ */
+export function shortDateRange(
+  eventDate: string,
+  lang: string,
+  endDate?: string | null
+): string | null {
+  const d = wallClock(eventDate);
+  if (!d) return null;
+  const last = lastDay(d, endDate);
+  if (!last) return shortDate(eventDate, lang);
+  const en = lang === "en";
+  const mon = (x: Date) => part(x, lang, { month: "short" });
+  const dm = (x: Date) => (en ? `${mon(x)} ${x.getUTCDate()}` : `${x.getUTCDate()} ${mon(x)}`);
+  const year = d.getUTCFullYear();
+  const endYear = last.getUTCFullYear();
+  if (year !== endYear)
+    return en
+      ? `${dm(d)}, ${year} – ${dm(last)}, ${endYear}`
+      : `${dm(d)} ${year} – ${dm(last)} ${endYear}`;
+  if (sameMonth(d, last)) {
+    const days = `${d.getUTCDate()}–${last.getUTCDate()}`;
+    return en ? `${mon(d)} ${days}, ${year}` : `${days} ${mon(d)} ${year}`;
+  }
+  return en ? `${dm(d)} – ${dm(last)}, ${year}` : `${dm(d)} – ${dm(last)} ${year}`;
 }

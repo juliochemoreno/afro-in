@@ -9,7 +9,7 @@ import FestivalFont from "@/components/FestivalFont.astro";
 import TicketReceipt from "@/components/TicketReceipt";
 import TicketList from "@/components/TicketList";
 import type { TicketOrderView } from "@/lib/tickets";
-import { shortDate } from "@/lib/eventDisplay";
+import { shortDateRange } from "@/lib/eventDisplay";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 // Static asset (no astro:assets optimizing: SSR page, rule 4).
 import heroPhoto from "@/assets/img/2017/2017-afroin-img-1.jpg";
@@ -68,7 +68,7 @@ const tokenCompleted =
 function buildSubtitle(ev: any): string | null {
   if (!ev) return null;
   const parts: string[] = [];
-  const day = ev.event_date ? shortDate(ev.event_date, lang) : null;
+  const day = ev.event_date ? shortDateRange(ev.event_date, lang, ev.end_date) : null;
   if (day) parts.push(day);
   const place = [ev.venue, ev.city].filter(Boolean).join(", ");
   if (place) parts.push(place);
@@ -108,6 +108,7 @@ const tokenImage = tokenOrder?.event?.image_r2_key
                 eventSubtitle={tokenSubtitle}
                 eventImage={tokenImage}
                 eventDate={tokenOrder.event?.event_date ?? null}
+                eventEndDate={tokenOrder.event?.end_date ?? null}
                 lang={lang}
                 orderNumber={tokenOrder.order!.id}
                 tickets={tokenOrder.tickets}
@@ -465,6 +466,18 @@ const tokenImage = tokenOrder?.event?.image_r2_key
     font-family: "Anton", sans-serif;
     font-size: 22px;
     line-height: 1;
+  }
+  /* Multi-day event: "vie–dom" / "15–17" need a wider block. */
+  .tix-stub-cal.is-range {
+    width: auto;
+    min-width: 46px;
+    padding-inline: 6px;
+  }
+  .tix-stub-cal.is-range .tix-stub-cal-wd {
+    letter-spacing: 0.04em;
+  }
+  .tix-stub-cal.is-range .tix-stub-cal-num {
+    font-size: 18px;
   }
   .tix-stub-sub {
     font-size: 13px;
