@@ -26,11 +26,11 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
     <Heading class="fz-display">{heading ?? t("edition.ticketsTitle")}</Heading>
     <ul class="fz-tiers" data-tiers>
       {tickets.tiers.map((tier) => (
-        <li data-from={tier.from} data-until={tier.until}>
+        <li data-from={tier.from} data-until={tier.until} data-price={tier.price}>
           <span class="fz-tier-flag fz-tier-current" hidden>{t("edition.stageCurrent")}</span>
           <span class="fz-tier-flag fz-tier-done" hidden>{t("edition.stageDone")}</span>
           <span>{tier.period}</span>
-          <span class="fz-display fz-tier-price">{formatCop(tier.price, lang)} <span class="fz-tier-cur">COP</span></span>
+          <span class="fz-display fz-tier-price">{formatCop(tier.price, lang)}</span>
           {tier.note && <span class="fz-muted">{tier.note}</span>}
           {buyUrl ? (
             <a class="fz-button fz-button-solid fz-tier-buy" href={buyUrl} hidden>{t("edition.presaleCta")}</a>
@@ -45,17 +45,57 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
 </section>
 
 <script>
-  import { bogotaToday, tierStage } from "@/lib/programacion";
+  import { bogotaToday, tierStage, tierStagesFromSale } from "@/lib/programacion";
+
+  const SALE_TIMEOUT_MS = 3000;
+
+  function applyStage(item: HTMLLIElement, stage: string) {
+    item.dataset.stage = stage;
+    item.querySelector<HTMLElement>(".fz-tier-current")!.hidden = stage !== "current";
+    item.querySelector<HTMLElement>(".fz-tier-done")!.hidden = stage !== "past";
+    item.querySelector<HTMLElement>(".fz-tier-buy")!.hidden = stage !== "current";
+  }
+
+  // The real stage of the pass, or null when the request fails or is slow.
+  async function fetchSale() {
+    try {
+      const res = await fetch("/api/tickets/stages", { signal: AbortSignal.timeout(SALE_TIMEOUT_MS) });
+      if (!res.ok) return null;
+      const sale = await res.json();
+      return sale && typeof sale.state === "string" ? sale : null;
+    } catch {
+      return null;
+    }
+  }
 
   // Runs on every page load, including client-side navigations (the layout uses ClientRouter).
-  function showStages() {
+  // The date decides first, so the page never waits; the pass's real stages (a stage that sold
+  // out opens the next one early) refine it when they arrive.
+  async function showStages() {
     const today = bogotaToday();
-    document.querySelectorAll<HTMLLIElement>("[data-tiers] > li").forEach((item) => {
-      const stage = tierStage(today, item.dataset.from, item.dataset.until);
-      item.dataset.stage = stage;
-      item.querySelector<HTMLElement>(".fz-tier-current")!.hidden = stage !== "current";
-      item.querySelector<HTMLElement>(".fz-tier-done")!.hidden = stage !== "past";
-      item.querySelector<HTMLElement>(".fz-tier-buy")!.hidden = stage !== "current";
+    const lists = [...document.querySelectorAll<HTMLUListElement>("[data-tiers]")];
+    lists.forEach((list) =>
+      list.querySelectorAll<HTMLLIElement>(":scope > li").forEach((item) => {
+        applyStage(item, tierStage(today, item.dataset.from, item.dataset.until));
+      })
+    );
+    if (!lists.length) return;
+
+    const sale = await fetchSale();
+    if (!sale) return;
+    lists.forEach((list) => {
+      if (!list.isConnected) return;
+      const items = [...list.querySelectorAll<HTMLLIElement>(":scope > li")];
+      const stages = tierStagesFromSale(
+        items.map((item) => ({
+          from: item.dataset.from,
+          until: item.dataset.until,
+          price: Number(item.dataset.price),
+        })),
+        sale,
+        today
+      );
+      items.forEach((item, i) => applyStage(item, stages[i]));
     });
   }
 

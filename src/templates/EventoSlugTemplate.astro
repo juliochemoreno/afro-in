@@ -185,7 +185,6 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
                         <span class="evento-tier-name">{stageName(s, lang)}</span>
                         <span class="fz-display fz-tier-price">
                           {priceLabel(s.price)}
-                          {s.price > 0 && <span class="fz-tier-cur"> COP</span>}
                         </span>
                         <span class="fz-muted evento-tier-dates">{stageDates(s)}</span>
                         {s.status === "current" && showRemaining && (
@@ -200,7 +199,6 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
                   <p class="evento-single">
                     <span class="fz-display fz-tier-price">
                       {priceLabel(event.price)}
-                      {event.price > 0 && <span class="fz-tier-cur"> COP</span>}
                     </span>
                     {showRemaining && (
                       <span class="evento-tier-left">
@@ -561,12 +559,6 @@ const strings = Object.fromEntries(T_KEYS.map((k) => [k, t(k as any)]));
     line-height: 1;
     color: var(--tx-accent);
     text-align: right;
-  }
-  .evento-page .tix-total .tix-cur {
-    margin-left: 4px;
-    font-family: var(--font-heading, "Outfit"), sans-serif;
-    font-size: 12px;
-    letter-spacing: 0.06em;
   }
   .evento-page .tix-form .ck-error {
     margin: 16px 0 0;

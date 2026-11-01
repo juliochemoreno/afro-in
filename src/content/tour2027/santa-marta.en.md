@@ -96,7 +96,7 @@ days:
         kind: "Coupé décalé 1 vs 1"
 tickets:
   tiers:
-    - period: "November 1 – 15"
+    - period: "Until November 15 or while the 50 tickets last"
       from: "2026-11-01"
       until: "2026-11-15"
       price: 20000

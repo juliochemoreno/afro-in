@@ -13,7 +13,7 @@ export function resolveSignup(
   if (activity.signup !== "afroBatalla" || !url) return {};
   return {
     signupUrl: getTranslatedPath(url, lang),
-    signupLabel: t("edition.batallaSignup").replace("{price}", `${formatCop(SALES.afroBatalla.price, lang)} COP`),
+    signupLabel: t("edition.batallaSignup").replace("{price}", `${formatCop(SALES.afroBatalla.price, lang)}`),
     note: undefined,
   };
 }

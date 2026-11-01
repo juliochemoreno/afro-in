@@ -22,6 +22,7 @@ import {
   SALES,
   bogotaToday,
   tierStage,
+  tierStagesFromSale,
 } from "../src/lib/programacion.ts";
 
 test("entry language and slug come from the file path", () => {
@@ -104,9 +105,9 @@ test("lists join with the language's conjunction", () => {
 });
 
 test("COP prices have no decimals and use the language's grouping", () => {
-  assert.match(formatCop(20000, "es"), /^\$\s?20\.000$/);
-  assert.match(formatCop(45000, "en"), /45,000/);
-  assert.match(formatCop(35000, "fr"), /35\s000/);
+  assert.equal(formatCop(20000, "es"), "$20.000\u00a0COP");
+  assert.equal(formatCop(45000, "en"), "$45,000\u00a0COP");
+  assert.match(formatCop(35000, "fr"), /^\$35\s000\u00a0COP$/);
 });
 
 test("a stop is coming soon when no day has activities", () => {
@@ -216,4 +217,35 @@ test("the active day is the topmost one with content still below the sticky bar"
 test("stop place: the department when the city is the stop's name, else the whole location", () => {
   assert.equal(stopPlace("Santa Marta, Magdalena", "Santa Marta"), "Magdalena");
   assert.equal(stopPlace("San Basilio de Palenque, Bolívar", "Palenque de Benkos"), "San Basilio de Palenque, Bolívar");
+});
+
+test("tiers follow the real stage of the pass, with the date as fallback", () => {
+  const tiers = [
+    { from: "2026-11-01", until: "2026-11-15", price: 20000 },
+    { from: "2026-11-16", until: "2026-12-16", price: 35000 },
+    { from: "2026-12-17", price: 45000 },
+  ];
+  const today = "2026-11-05";
+  // Stage 1 sold out early: tier 1 is over and tier 2 is the one on sale.
+  assert.deepEqual(
+    tierStagesFromSale(tiers, { state: "current", current: { price: 35000 } }, today),
+    ["past", "current", "upcoming"]
+  );
+  assert.deepEqual(
+    tierStagesFromSale(tiers, { state: "current", current: { price: 20000 } }, today),
+    ["current", "upcoming", "upcoming"]
+  );
+  // A price that matches no tier, an unreadable answer or no answer: by date.
+  const byDate = ["current", "upcoming", "upcoming"];
+  assert.deepEqual(tierStagesFromSale(tiers, { state: "current", current: { price: 99 } }, today), byDate);
+  assert.deepEqual(tierStagesFromSale(tiers, { state: "weird", current: null }, today), byDate);
+  assert.deepEqual(tierStagesFromSale(tiers, null, today), byDate);
+  assert.deepEqual(tierStagesFromSale(tiers, undefined, today), byDate);
+  // Nothing on sale right now, or the pass is over.
+  assert.deepEqual(tierStagesFromSale(tiers, { state: "upcoming", current: null }, today), [
+    "upcoming",
+    "upcoming",
+    "upcoming",
+  ]);
+  assert.deepEqual(tierStagesFromSale(tiers, { state: "ended", current: null }, today), ["past", "past", "past"]);
 });
