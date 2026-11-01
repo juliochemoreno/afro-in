@@ -36,31 +36,33 @@ function lastDay(start: Date, endDate?: string | null): Date | null {
 const sameMonth = (a: Date, b: Date) =>
   a.getUTCFullYear() === b.getUTCFullYear() && a.getUTCMonth() === b.getUTCMonth();
 
-/**
- * Weekday, day and month for the gold calendar block. A multi-day event
- * (endDate = its last day) gets ranges: "vie–dom" / "15–17" / "ene".
- */
+/** Weekday, day and month for the gold calendar block (the start day). */
 export function calParts(
   eventDate: string,
-  lang: string,
-  endDate?: string | null
+  lang: string
 ): { weekday: string; day: string; month: string } {
   const d = wallClock(eventDate);
   if (!d) return { weekday: "", day: "", month: "" };
-  const one = (x: Date) => ({
-    weekday: part(x, lang, { weekday: "short" }),
-    day: String(x.getUTCDate()),
-    month: part(x, lang, { month: "short" }),
-  });
-  const start = one(d);
-  const last = lastDay(d, endDate);
-  if (!last) return start;
-  const end = one(last);
   return {
-    weekday: `${start.weekday}–${end.weekday}`,
-    day: `${start.day}–${end.day}`,
-    month: sameMonth(d, last) ? start.month : `${start.month}–${end.month}`,
+    weekday: part(d, lang, { weekday: "short" }),
+    day: String(d.getUTCDate()),
+    month: part(d, lang, { month: "short" }),
   };
+}
+
+/**
+ * A multi-day event's last day for the event cards, next to the start day's
+ * gold block: "Hasta dom 17" / "Until Sun 17" / "Jusqu'au dim 17", with the
+ * month when it changes ("Hasta lun 1 feb"). Null for a one-day event.
+ */
+export function untilDate(eventDate: string, lang: string, endDate?: string | null): string | null {
+  const d = wallClock(eventDate);
+  if (!d) return null;
+  const last = lastDay(d, endDate);
+  if (!last) return null;
+  let day = `${part(last, lang, { weekday: "short" })} ${last.getUTCDate()}`;
+  if (!sameMonth(d, last)) day += ` ${part(last, lang, { month: "short" })}`;
+  return lang === "en" ? `Until ${day}` : lang === "fr" ? `Jusqu'au ${day}` : `Hasta ${day}`;
 }
 
 /**
@@ -143,4 +145,22 @@ export function shortDateRange(
     return en ? `${mon(d)} ${days}, ${year}` : `${days} ${mon(d)} ${year}`;
   }
   return en ? `${dm(d)} – ${dm(last)}, ${year}` : `${dm(d)} – ${dm(last)} ${year}`;
+}
+
+/**
+ * How many days a multi-day event lasts, both ends included (15–17 ene = 3),
+ * with its label: { n: 3, label: "días" }. Null for a one-day event.
+ */
+export function eventDays(
+  eventDate: string,
+  lang: string,
+  endDate?: string | null
+): { n: number; label: string } | null {
+  const d = wallClock(eventDate);
+  if (!d) return null;
+  const last = lastDay(d, endDate);
+  if (!last) return null;
+  const start = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const n = Math.round((last.getTime() - start) / 86_400_000) + 1;
+  return { n, label: lang === "en" ? "days" : lang === "fr" ? "jours" : "días" };
 }

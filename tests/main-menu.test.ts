@@ -2,11 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildMainMenu, isPalenquePath, isPassSeason } from "../src/lib/mainMenu.ts";
 
-test("isPassSeason covers 2026-11-01 to 2027-01-15 in Colombia time", () => {
+test("isPassSeason covers 2026-11-01 to 2027-01-17 in Colombia time", () => {
   assert.equal(isPassSeason(new Date("2026-10-31T23:59:00-05:00")), false);
   assert.equal(isPassSeason(new Date("2026-11-01T00:00:00-05:00")), true);
-  assert.equal(isPassSeason(new Date("2027-01-15T23:59:00-05:00")), true);
-  assert.equal(isPassSeason(new Date("2027-01-16T00:00:00-05:00")), false);
+  assert.equal(isPassSeason(new Date("2027-01-16T12:00:00-05:00")), true);
+  assert.equal(isPassSeason(new Date("2027-01-17T23:59:00-05:00")), true);
+  assert.equal(isPassSeason(new Date("2027-01-18T00:00:00-05:00")), false);
 });
 
 test("isPalenquePath matches es/en/fr palenque pages only", () => {

@@ -15,7 +15,7 @@ import { formatPrice } from "@/lib/cart";
 import { countries } from "@/data/countries";
 import type { PublicEvent } from "@/lib/tickets";
 import { stageName, type StageStatus } from "@/lib/ticketStages";
-import { calParts, eventTime, localeTag } from "@/lib/eventDisplay";
+import { eventTime, kickerDate, localeTag } from "@/lib/eventDisplay";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 
 interface Props {
@@ -27,12 +27,10 @@ const { event, lang = "es" } = Astro.props;
 const t = useTranslations(lang as any);
 
 const tag = localeTag(lang);
-const year = event.event_date.slice(0, 4);
 const time = eventTime(event.event_date, lang);
-const cal = calParts(event.event_date, lang);
-// Short date over the title: "Dom 20 Dic 2026" (Julio: weekday and month abbreviated).
-const cap = (w: string) => w.replace(/^./, (c) => c.toUpperCase());
-const dateShort = [cap(cal.weekday), cal.day, cap(cal.month), year].filter(Boolean).join(" ");
+// Short date over the title: "Dom 20 Dic 2026" (Julio: weekday and month
+// abbreviated); a multi-day event shows "Vie 15 – Dom 17 Ene 2027".
+const dateShort = kickerDate(event.event_date, lang, event.end_date);
 
 
 const name =

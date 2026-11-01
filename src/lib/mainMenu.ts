@@ -4,15 +4,15 @@ export interface MenuLink {
   children?: MenuLink[];
 }
 
-// Festival pass season: pass on sale (2026-11-01) until the pass event day,
-// when the site hides it (2027-01-15). Colombia dates, inclusive.
+// Festival pass season: pass on sale (2026-11-01) until the pass event's last
+// day (2027-01-17, D23), when the site hides it. Colombia dates, inclusive.
 // The header's "buy pass" CTA is off for now (Julio, 2026-11-01): the header
 // shows "join" everywhere. Set to true to bring it back for the season below.
 export const PASS_CTA_ENABLED = false;
 // The header's "join" CTA is off for now too (Julio, 2026-11-01): no header button.
 export const JOIN_CTA_ENABLED = false;
 export const PASS_SEASON_START = "2026-11-01";
-export const PASS_SEASON_END = "2027-01-15";
+export const PASS_SEASON_END = "2027-01-17";
 export const PASS_SLUG = "pase-afroin-2027-santa-marta";
 
 export function colombiaDate(now: Date): string {

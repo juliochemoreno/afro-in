@@ -3,10 +3,12 @@ import assert from "node:assert/strict";
 import {
   calParts,
   cardStatus,
+  eventDays,
   eventTime,
   kickerDate,
   shortDate,
   shortDateRange,
+  untilDate,
 } from "../src/lib/eventDisplay.ts";
 
 const stage = {
@@ -79,17 +81,13 @@ test("cardStatus: single-price event", () => {
 
 // --- Multi-day events (D23) ---
 
-test("calParts shows a multi-day event as ranges", () => {
-  assert.deepEqual(calParts("2027-01-15T21:00", "es", "2027-01-17"), { weekday: "vie–dom", day: "15–17", month: "ene" });
-  assert.deepEqual(calParts("2027-01-15T21:00", "en", "2027-01-17"), { weekday: "Fri–Sun", day: "15–17", month: "Jan" });
-  assert.deepEqual(calParts("2027-01-15T21:00", "fr", "2027-01-17"), { weekday: "ven–dim", day: "15–17", month: "janv" });
-  assert.deepEqual(calParts("2026-12-30T21:00", "es", "2027-01-01"), { weekday: "mié–vie", day: "30–1", month: "dic–ene" });
-});
-
-test("calParts ignores a missing, invalid or non-later last day", () => {
-  const one = calParts("2027-01-15T21:00", "es");
+test("untilDate gives the last day for the event cards", () => {
+  assert.equal(untilDate("2027-01-15T21:00", "es", "2027-01-17"), "Hasta dom 17");
+  assert.equal(untilDate("2027-01-15T21:00", "en", "2027-01-17"), "Until Sun 17");
+  assert.equal(untilDate("2027-01-15T21:00", "fr", "2027-01-17"), "Jusqu'au dim 17");
+  assert.equal(untilDate("2027-01-29T21:00", "es", "2027-02-01"), "Hasta lun 1 feb");
   for (const end of [null, undefined, "", "2027-01-15", "2027-01-14", "17/01/2027", "2027-02-30"])
-    assert.deepEqual(calParts("2027-01-15T21:00", "es", end), one, String(end));
+    assert.equal(untilDate("2027-01-15T21:00", "es", end), null, String(end));
 });
 
 test("kickerDate: one day, and ranges within a month, across months and years", () => {
@@ -116,4 +114,13 @@ test("shortDateRange without a valid last day is shortDate", () => {
   for (const lang of ["es", "en", "fr"])
     for (const end of [null, "", "2027-01-15", "2027-01-10"])
       assert.equal(shortDateRange("2027-01-15T21:00", lang, end), shortDate("2027-01-15T21:00", lang));
+});
+
+test("eventDays counts both ends and is null for one-day events", () => {
+  assert.deepEqual(eventDays("2027-01-15T21:00", "es", "2027-01-17"), { n: 3, label: "días" });
+  assert.deepEqual(eventDays("2026-10-31T21:00", "en", "2026-11-02"), { n: 3, label: "days" });
+  assert.deepEqual(eventDays("2026-12-30T21:00", "fr", "2027-01-01"), { n: 3, label: "jours" });
+  assert.deepEqual(eventDays("2027-01-15T21:00", "es", "2027-01-16"), { n: 2, label: "días" });
+  for (const end of [null, "", "2027-01-15", "2027-01-14"])
+    assert.equal(eventDays("2027-01-15T21:00", "es", end), null);
 });
