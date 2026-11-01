@@ -1,3 +1,5 @@
+> **Status:** done. Released to production 2026-10-31 ([PR #14](https://github.com/juliochemoreno/afro-in/pull/14) into dev, [PR #15](https://github.com/juliochemoreno/afro-in/pull/15) dev → main, 58e72d2). Execution report: `.agents/execution-reports/d18-events-tickets-redesign.md`.
+
 # Plan: D18 — Events list, event page and tickets pages in the 2027 style
 
 ## Overview
@@ -141,21 +143,21 @@ Restyle the public ticketing pages — the events list (`/eventos`), the event p
 Then fresh-context `/hopla:code-review`, fixes in their own commit, PR.
 
 ## Validation Checklist
-- [ ] **Level 1 — Lint & Format:** none configured in this repo (orchestrator: no lint).
-- [ ] **Level 2 — Type Check / build:** `npm run check` (astro build + tsc + wrangler dry-run), on its own.
-- [ ] **Level 2.5 — Code Review:** `/hopla:code-review` in a fresh context on the branch diff, before the PR.
-- [ ] **Level 3 — Unit Tests:** `npm test`, on its own.
-- [ ] **Level 4 — Integration:** `astro dev` with a local D1 (migrations + `seeds/local.sql` + the 3 `[DEV]` events and stages from `seeds/preview.sql`, `--local --env local`) and a temporary `.dev.vars` with fake keys (deleted afterwards): curl 200 + key markers for `/eventos`, `/en/events`, `/fr/evenements`, the 3 event slugs × 3 languages, `/entradas`, `/en/tickets`, `/fr/billets`; screenshots desktop 1280 and mobile 375 of list, event page (with an error state) and a token tickets page.
-- [ ] **Level 5 — Human Review (before merge, on the branch Preview):** (1) Julio makes a TEST purchase in Bold test mode on `dev-evento-por-etapas` (he types the card data) — if skipped, the restyled form ships without a real Bold handoff check; (2) the resulting QR is scanned with `/admin/checkin` (iPhone) — if skipped, scannability of the new stub ships unverified; (3) Julio looks at the 3 pages on his phone and desktop — design sign-off; (4) print preview of the tickets page.
+- [x] **Level 1 — Lint & Format:** none configured in this repo (orchestrator: no lint). — **waived:** the project has no linter.
+- [x] **Level 2 — Type Check / build:** `npm run check` (astro build + tsc + wrangler dry-run), on its own. — ✓ passed after the design pass, after the review fixes and on the dev tree before the release (0a1bb8a).
+- [x] **Level 2.5 — Code Review:** `/hopla:code-review` in a fresh context on the branch diff, before the PR. — ✓ `.agents/code-reviews/d18-events-tickets-redesign.md` (fresh context; 6 low, all fixed in 422eda4).
+- [x] **Level 3 — Unit Tests:** `npm test`, on its own. — ✓ 57/57 (8 new in `tests/event-display.test.ts`).
+- [x] **Level 4 — Integration:** `astro dev` with a local D1 (migrations + `seeds/local.sql` + the 3 `[DEV]` events and stages from `seeds/preview.sql`, `--local --env local`) and a temporary `.dev.vars` with fake keys (deleted afterwards): curl 200 + key markers for `/eventos`, `/en/events`, `/fr/evenements`, the 3 event slugs × 3 languages, `/entradas`, `/en/tickets`, `/fr/billets`; screenshots desktop 1280 and mobile 375 of list, event page (with an error state) and a token tickets page. — ✓ curl 200 on the list, 4 event states and tickets pages × es/en/fr against `astro dev` with a local D1 (one `<h1>` each); browser checks desktop dark + light. No `.dev.vars` was needed (no payment locally). **Waived:** my 375px screenshots (the browser pane's mobile emulation failed); Julio reviewed mobile in his own browser.
+- [x] **Level 5 — Human Review (before merge, on the branch Preview):** (1) Julio makes a TEST purchase in Bold test mode on `dev-evento-por-etapas` (he types the card data) — if skipped, the restyled form ships without a real Bold handoff check; (2) the resulting QR is scanned with `/admin/checkin` (iPhone) — if skipped, scannability of the new stub ships unverified; (3) Julio looks at the 3 pages on his phone and desktop — design sign-off; (4) print preview of the tickets page. — ✓ Julio on the branch Preview, 2026-10-31: Bold TEST purchase, tickets page and print, QR scan at `/admin/checkin` ("Hecho, todo bien"); design sign-off after the 10 design adjustments ("Se ve bien, sigue").
 
 ## Acceptance Criteria
-- [ ] The 3 page families render in the dark 2027 style in es/en/fr, desktop and mobile, matching options B / A / A.
-- [ ] No Spanish text in the en/fr versions of these pages (hardcoded strings moved to i18n).
-- [ ] Checkout behavior unchanged: validation + focus, `price_changed`, free events, sold out, not-open, Bold opens with prefilled data.
-- [ ] A ticket bought on the Preview scans OK at `/admin/checkin`.
-- [ ] The tickets page prints all tickets legibly on white.
-- [ ] The store checkout and donation form look exactly as before.
-- [ ] `npm run check` and `npm test` pass.
+- [x] The 3 page families render in the dark 2027 style in es/en/fr, desktop and mobile, matching options B / A / A. — ✓ Julio's review (desktop + mobile); also live in production since 58e72d2.
+- [x] No Spanish text in the en/fr versions of these pages (hardcoded strings moved to i18n). — ✓ curl: no "Reservar" in en/fr; the reviewer confirmed all 14 new keys in es/en/fr.
+- [x] Checkout behavior unchanged: validation + focus, `price_changed`, free events, sold out, not-open, Bold opens with prefilled data. — ✓ empty submit: 3 errors + focus on `#tix-name` (browser); free/sold-out/not-open states render; Bold opened with prefill in Julio's purchase. The reviewer confirmed that the checkout body, `price_changed` and holds are unchanged. **Waived:** a live `price_changed` 409 (logic untouched, D13 tested it).
+- [x] A ticket bought on the Preview scans OK at `/admin/checkin`. — ✓ Julio, 2026-10-31.
+- [x] The tickets page prints all tickets legibly on white. — ✓ Julio's print test; the review fix keeps the "used" stamp in print.
+- [x] The store checkout and donation form look exactly as before. — ✓ all dark overrides are scoped under `.evento-page` and `checkout-fields.css` is untouched (reviewer confirmed). **Waived:** a before/after screenshot.
+- [x] `npm run check` and `npm test` pass. — ✓ see Levels 2 and 3.
 
 ## Confidence Score: 8/10
 - **Strengths:** design decided by Julio with mockups; patterns and tokens exist (D16); scope is CSS/markup with one pure helper.
