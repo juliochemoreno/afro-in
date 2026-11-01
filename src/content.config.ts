@@ -86,6 +86,8 @@ const artists2027 = defineCollection({
       order: z.number(),
       // The edition's star artist, shown in its own block.
       featured: z.boolean().default(false),
+      // Spotify artist id (open.spotify.com/artist/<id>): shows the lazy player in the artist's block.
+      spotifyArtistId: z.string().regex(/^[A-Za-z0-9]{22}$/).optional(),
     }),
 });
 

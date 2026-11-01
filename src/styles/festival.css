@@ -960,6 +960,72 @@ html.has-stickybuy .whatsapp-float {
   margin-top: 32px;
 }
 
+/* Lazy Spotify player: the placeholder keeps the iframe's 152px so nothing jumps when it loads. */
+.fz-spotify {
+  margin-top: 24px;
+  height: 152px;
+}
+
+/* Desktop: the player rides on the photo panel (sticky with it); phones and tablets keep it under the dates. */
+.fz-spotify--photo {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .fz-spotify--photo {
+    display: block;
+    position: absolute;
+    left: var(--fz-bleed);
+    right: 24px;
+    bottom: 24px;
+    margin: 0;
+  }
+
+  .fz-spotify--text {
+    display: none;
+  }
+
+  .fz-headliner--reverse .fz-spotify--photo {
+    left: 24px;
+    right: var(--fz-bleed);
+  }
+}
+
+.fz-spotify-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--fz-line);
+  border-radius: 12px;
+  background: rgba(244, 234, 213, 0.05);
+  color: var(--fz-cream);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.fz-spotify-btn:hover {
+  background: rgba(244, 234, 213, 0.1);
+}
+
+.fz-spotify-btn:focus-visible {
+  outline: 2px solid var(--fz-gold);
+  outline-offset: 3px;
+}
+
+.fz-spotify-icon {
+  flex: none;
+  color: var(--fz-gold);
+}
+
+.fz-spotify-frame {
+  display: block;
+  border: 0;
+  border-radius: 12px;
+}
+
 /* In the narrower right column the price stages stack. */
 .fz-headliner-extra .fz-tiers {
   grid-template-columns: minmax(0, 1fr);

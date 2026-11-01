@@ -6,10 +6,11 @@ import { useTranslations } from "@/i18n/utils";
 import Pin from "@/components/Pin.astro";
 import Flag from "@/components/Flag.astro";
 import DayCalendar from "@/components/DayCalendar.astro";
+import SpotifyPlayer from "@/components/SpotifyPlayer.astro";
 import { dayLabel, type Lang } from "@/lib/programacion";
 
 interface Props {
-  artist: { name: string; countryCode?: string; country?: Record<Lang, string>; photo: ImageMetadata; photoMobile?: ImageMetadata; photoPosition?: string };
+  artist: { name: string; countryCode?: string; country?: Record<Lang, string>; photo: ImageMetadata; photoMobile?: ImageMetadata; photoPosition?: string; spotifyArtistId?: string };
   // `date` (ISO) shows the gold calendar block; `when` stays as the readable date for screen readers.
   appearances: { date?: string; when: string; where: string; title: string; href: string }[];
   lang: Lang;
@@ -49,6 +50,7 @@ const mobile = await getImage({ src: artist.photoMobile ?? artist.photo, widths:
           decoding="async"
         />
       </picture>
+      {artist.spotifyArtistId && <SpotifyPlayer artistId={artist.spotifyArtistId} name={artist.name} lang={lang} placement="photo" />}
     </div>
     <div class="fz-headliner-side">
     <div class="fz-headliner-body">
@@ -79,6 +81,7 @@ const mobile = await getImage({ src: artist.photoMobile ?? artist.photo, widths:
           ))}
         </ul>
       )}
+      {artist.spotifyArtistId && <SpotifyPlayer artistId={artist.spotifyArtistId} name={artist.name} lang={lang} placement="text" />}
     </div>
     {Astro.slots.has("default") && (
       <div class="fz-headliner-extra">
