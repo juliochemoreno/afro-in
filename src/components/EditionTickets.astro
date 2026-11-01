@@ -71,6 +71,15 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
       </div>
     </div>
   </div>
+  {buyUrl && (
+    <div class="fz-stickybuy" data-sticky-buy hidden>
+      <span class="fz-stickybuy-info">
+        <span class="fz-display fz-stickybuy-price" data-sticky-price></span>
+        <span class="fz-stickybuy-stage">{pass && `${pass.place} · `}<span data-sticky-stage></span></span>
+      </span>
+      <a class="fz-button fz-button-solid fz-stickybuy-buy" href={buyUrl}>{t("edition.ticketCta")}</a>
+    </div>
+  )}
 </section>
 
 <script>
@@ -90,9 +99,18 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
     if (!card) return;
     const current = list.querySelector<HTMLLIElement>(':scope > li[data-stage="current"]');
     card.hidden = !current;
-    if (!current) return;
+    if (!current) {
+      list.closest("section")?.querySelector("[data-sticky-buy]")?.setAttribute("data-off", "");
+      return;
+    }
+    list.closest("section")?.querySelector("[data-sticky-buy]")?.removeAttribute("data-off");
     card.querySelector("[data-pass-price]")!.textContent = current.querySelector(".fz-tier-price")!.textContent;
     card.querySelector("[data-pass-note]")!.textContent = current.querySelector(".fz-tier-note")?.textContent ?? "";
+    const bar = list.closest("section")?.querySelector<HTMLElement>("[data-sticky-buy]");
+    if (bar) {
+      bar.querySelector("[data-sticky-price]")!.textContent = current.querySelector(".fz-tier-price")!.textContent;
+      bar.querySelector("[data-sticky-stage]")!.textContent = current.querySelector(".fz-tier-label")!.textContent;
+    }
   }
 
   // The real stage of the pass, or null when the request fails or is slow.
@@ -145,5 +163,39 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
     });
   }
 
-  document.addEventListener("astro:page-load", showStages);
+  // Once the ticket block has scrolled up out of view, a bar at the
+  // bottom keeps "Quiero ser parte" at hand; it hides again over the block or the footer.
+  let stickyObserver: IntersectionObserver | undefined;
+  function watchStickyBuy() {
+    stickyObserver?.disconnect();
+    const bar = document.querySelector<HTMLElement>("[data-sticky-buy]");
+    const block = bar?.closest("section");
+    if (!bar || !block) return;
+    const footer = document.querySelector("footer");
+    let pastBlock = false;
+    let footerOn = false;
+    const update = () => {
+      const show = pastBlock && !footerOn && !bar.hasAttribute("data-off");
+      bar.hidden = !show;
+      document.documentElement.classList.toggle("has-stickybuy", show);
+    };
+    stickyObserver = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.target === block) pastBlock = !e.isIntersecting && e.boundingClientRect.top < 0;
+        else footerOn = e.isIntersecting;
+      }
+      update();
+    });
+    stickyObserver.observe(block);
+    if (footer) stickyObserver.observe(footer);
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    showStages();
+    watchStickyBuy();
+  });
+  document.addEventListener("astro:before-swap", () => {
+    stickyObserver?.disconnect();
+    document.documentElement.classList.remove("has-stickybuy");
+  });
 </script>

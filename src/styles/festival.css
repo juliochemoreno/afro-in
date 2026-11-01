@@ -377,6 +377,112 @@
   white-space: nowrap;
 }
 
+/* Bottom bar once the ticket block is out of view (stop page and 2027 index): a small
+   cream ticket (the same as the block's), so it stands out on the dark page. */
+.fz-stickybuy {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--fz-cream);
+  color: #161616;
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.5);
+  animation: fz-stickybuy-in 0.35s ease-out;
+}
+
+.fz-stickybuy[hidden] {
+  display: none;
+}
+
+@keyframes fz-stickybuy-in {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.fz-stickybuy-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fz-stickybuy-price {
+  font-size: 28px;
+  line-height: 1;
+  color: #161616;
+  white-space: nowrap;
+}
+
+.fz-stickybuy-stage {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a3a2c;
+  white-space: nowrap;
+}
+
+.fz-stickybuy-buy {
+  flex: none;
+  white-space: nowrap;
+  padding: 14px 20px;
+}
+
+/* Desktop: a cream ticket on the bottom right, with a perforation before the button. */
+@media (min-width: 900px) {
+  .fz-stickybuy {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    gap: 0;
+    padding: 0;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+  }
+
+  .fz-stickybuy-info {
+    padding: 14px 22px;
+  }
+
+  .fz-stickybuy-price {
+    font-size: 32px;
+  }
+
+  .fz-stickybuy-buy {
+    position: relative;
+    margin: 12px;
+  }
+
+  .fz-stickybuy-buy::before {
+    content: "";
+    position: absolute;
+    left: -13px;
+    top: -12px;
+    bottom: -12px;
+    border-left: 2px dashed #b9ab8e;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fz-stickybuy {
+    animation: none;
+  }
+}
+
+/* The WhatsApp button moves up so the bar never covers it. */
+html.has-stickybuy .whatsapp-float {
+  bottom: calc(2rem + 84px);
+}
+
 /* Narrow blocks (phones, the column beside Robe): the ticket lies down, a
    date stub on the left, the price and the button on the right (Julio). */
 @container (max-width: 719px) {
