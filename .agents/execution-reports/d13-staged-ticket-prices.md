@@ -4,6 +4,7 @@
 
 - **Plan:** `d13-staged-ticket-prices` (`.agents/plans/d13-staged-ticket-prices.md`). Phases 1–3 are done and merged into `dev`. **Phase 4 is still pending** (Task 9, `SALES.tickets.url`): it waits for Julio to name the event that uses the stages.
 - **Branch / PR:** `claude/d13-staged-tickets-0aa889` → `dev`, juliochemoreno/afro-in#13. Commits: `57ab9e0`, `faaa5e0`, `6a9d9dd`, `cc4f713`.
+- **Production release (2026-10-31):** phases 1–3 shipped to production with D18 in release PR juliochemoreno/afro-in#15 (`dev` → `main`, merge commit `58e72d2`), deployed by Workers Builds with Julio's OK. Migration `0011_create_event_price_stages.sql` was applied to the production D1 first, with Julio's OK, and verified: the `event_price_stages` table, the `ticket_orders.stage_id` column and the 3 indexes exist, and existing orders were untouched. The orchestrator's smoke check passed (home, events list and event page in es/en/fr, tickets page, store, admin login).
 - **Files added:**
   - `migrations/0011_create_event_price_stages.sql`
   - `src/lib/ticketStages.ts`
@@ -106,8 +107,7 @@
 
 - **Task 9 (phase 4):** point `SALES.tickets.url` at the staged event. Reason: Julio has not named the event yet; D16 is already merged, so that no longer blocks it.
 - **Per-IP rate limit on `/api/tickets/checkout`:** Reason: it is a Cloudflare dashboard rule, which only Julio can set.
-- **Production migration `0011`:** Reason: it is Julio's to run, before the `dev` → `main` release:
-  `npx wrangler d1 execute afroin --remote --file migrations/0011_create_event_price_stages.sql`
+- **Production migration `0011`:** not run from this session, because it was Julio's to run. Done 2026-10-31 with Julio's OK, before release PR juliochemoreno/afro-in#15 (see Meta Information).
 
 ## Technical Patterns Discovered
 
