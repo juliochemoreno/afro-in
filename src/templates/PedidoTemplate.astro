@@ -11,11 +11,6 @@ interface Props {
 const { lang = "es" } = Astro.props;
 const t = useTranslations(lang as any);
 
-const navLinks = [
-  { href: getTranslatedPath("/", lang), label: t("nav.home") },
-  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
-];
-
 const OK_KEYS = [
   "order.loading",
   "order.success.title",
@@ -33,7 +28,7 @@ const storePath = getTranslatedPath("/tienda", lang);
 ---
 
 <Layout title={`${t("order.success.title")} | AFRO IN`}>
-  <Header navLinks={navLinks} />
+  <Header variant="minimal" />
 
   <main class="pedido-page">
     <div class="container">
