@@ -9,7 +9,7 @@ import FestivalFont from "@/components/FestivalFont.astro";
 import TicketReceipt from "@/components/TicketReceipt";
 import TicketList from "@/components/TicketList";
 import type { TicketOrderView } from "@/lib/tickets";
-import { shortDate } from "@/lib/eventDisplay";
+import { shortDateRange } from "@/lib/eventDisplay";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 // Static asset (no astro:assets optimizing: SSR page, rule 4).
 import heroPhoto from "@/assets/img/2017/2017-afroin-img-1.jpg";
@@ -68,7 +68,7 @@ const tokenCompleted =
 function buildSubtitle(ev: any): string | null {
   if (!ev) return null;
   const parts: string[] = [];
-  const day = ev.event_date ? shortDate(ev.event_date, lang) : null;
+  const day = ev.event_date ? shortDateRange(ev.event_date, lang, ev.end_date) : null;
   if (day) parts.push(day);
   const place = [ev.venue, ev.city].filter(Boolean).join(", ");
   if (place) parts.push(place);
@@ -108,15 +108,15 @@ const tokenImage = tokenOrder?.event?.image_r2_key
                 eventSubtitle={tokenSubtitle}
                 eventImage={tokenImage}
                 eventDate={tokenOrder.event?.event_date ?? null}
+                eventEndDate={tokenOrder.event?.end_date ?? null}
                 lang={lang}
                 orderNumber={tokenOrder.order!.id}
                 tickets={tokenOrder.tickets}
                 permalink={permalink ?? null}
+                continueHref={eventsPath}
+                continueLabel={t("tix.receipt.continue")}
                 t={strings}
               />
-              <a href={eventsPath} class="btn btn-primary tix-continue">
-                {t("tix.receipt.continue")}
-              </a>
             </div>
           ) : (
             <TicketReceipt
@@ -621,6 +621,81 @@ const tokenImage = tokenOrder?.event?.image_r2_key
     display: inline-block;
     margin-top: 28px;
   }
+  .tix-list-side .tix-continue {
+    align-self: center;
+  }
+
+  /* Phones: one column, the order line first. */
+  .tix-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .tix-list-side {
+    display: contents;
+  }
+  .tix-list-head {
+    order: -1;
+  }
+
+  /* Desktop: tickets on the left, order details and actions on the right. */
+  @media (min-width: 960px) {
+    /* Only the tickets view widens; pending/failed receipts keep 640px. */
+    .tix-wrap:has(.tix-list) {
+      max-width: 940px;
+    }
+    .tix-list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 56px;
+      align-items: start;
+    }
+    .tix-list-side {
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 110px;
+      padding: 24px;
+      border: 1px solid var(--tx-line);
+    }
+    .tix-list-head {
+      order: 0;
+      flex-direction: column;
+      gap: 10px;
+      max-width: none;
+      margin: 0 0 20px;
+      padding: 0 0 16px;
+      border-top: 0;
+      justify-content: flex-start;
+    }
+    .tix-list-row {
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tix-list-row strong {
+      font-size: 17px;
+    }
+    .tix-list-side .tix-print {
+      width: 100%;
+      margin: 0 0 24px;
+    }
+    .tix-list-side .tix-savelink {
+      max-width: none;
+    }
+    .tix-list-side .tix-savelink-row {
+      flex-direction: column;
+    }
+    .tix-page .tix-list-side .tix-savelink-row .btn {
+      width: 100%;
+    }
+    .tix-list-side .tix-continue {
+      align-self: stretch;
+      text-align: center;
+    }
+    .tix-single,
+    .tix-slider {
+      margin-bottom: 0;
+    }
+  }
   .tix-page :focus-visible {
     outline: 2px solid var(--tx-accent);
     outline-offset: 3px;
@@ -648,8 +723,12 @@ const tokenImage = tokenOrder?.event?.image_r2_key
     .tix-savelink,
     .tix-continue,
     .tix-slider-arrow,
-    .tix-dots {
+    .tix-dots,
+    .tix-list-side {
       display: none !important;
+    }
+    .tix-list {
+      display: block !important;
     }
     .tix-wrap {
       max-width: none;

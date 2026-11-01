@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { calParts } from "@/lib/eventDisplay";
+import { calParts, eventDays } from "@/lib/eventDisplay";
 
 // Load a tiny QR generator from CDN at runtime (same pattern as the Bold SDK) so
 // we don't add an npm dependency. The ticket code is encoded entirely in the
@@ -53,6 +53,8 @@ interface Props {
   eventSubtitle?: string | null;
   /** Event date (YYYY-MM-DDTHH:MM, Bogotá) for the calendar block. */
   eventDate?: string | null;
+  /** Last day (YYYY-MM-DD) of a multi-day event: the block shows its length. */
+  eventEndDate?: string | null;
   lang?: string;
   /** "Entrada" / "Ticket" / "Billet". */
   kindLabel: string;
@@ -67,11 +69,14 @@ export default function TicketQR({
   eventName,
   eventSubtitle,
   eventDate,
+  eventEndDate,
   lang = "es",
   kindLabel,
   indexLabel,
 }: Props) {
   const cal = eventDate ? calParts(eventDate, lang) : null;
+  // Multi-day event: "3 días" (Julio); the subtitle already gives the dates.
+  const days = eventDate ? eventDays(eventDate, lang, eventEndDate) : null;
   const [dataUrl, setDataUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -106,8 +111,17 @@ export default function TicketQR({
         <div className="tix-stub-meta">
           {cal && cal.day && (
             <span className="tix-stub-cal" aria-hidden="true">
-              <span className="tix-stub-cal-wd">{cal.weekday}</span>
-              <span className="tix-stub-cal-num">{cal.day}</span>
+              {days ? (
+                <>
+                  <span className="tix-stub-cal-num">{days.n}</span>
+                  <span className="tix-stub-cal-wd">{days.label}</span>
+                </>
+              ) : (
+                <>
+                  <span className="tix-stub-cal-wd">{cal.weekday}</span>
+                  <span className="tix-stub-cal-num">{cal.day}</span>
+                </>
+              )}
             </span>
           )}
           {eventSubtitle && <span className="tix-stub-sub">{eventSubtitle}</span>}

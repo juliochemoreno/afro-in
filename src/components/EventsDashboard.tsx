@@ -13,6 +13,7 @@ import {
 
 import type { ColDef } from "ag-grid-community";
 import AdminGrid from "@/components/admin/AdminGrid";
+import { isEventOver } from "@/lib/ticketStages";
 
 const COP = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -27,6 +28,7 @@ interface EventRow {
   venue?: string | null;
   city?: string | null;
   event_date: string;
+  end_date?: string | null;
   price: number;
   capacity: number;
   visible: number;
@@ -74,6 +76,14 @@ function formatDate(ts: string): string {
   });
 }
 
+// A whole day (YYYY-MM-DD, e.g. a multi-day event's last day), at noon so the
+// browser's time zone never moves it.
+function formatDay(day: string): string {
+  const d = new Date(`${day}T12:00:00`);
+  if (isNaN(d.getTime())) return day;
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 function NameCell(p: any) {
   const d = p.data as EventRow;
   return (
@@ -88,11 +98,12 @@ function NameCell(p: any) {
 
 function DateCell(p: any) {
   const d = p.data as EventRow;
-  const past = new Date(d.event_date) < new Date();
+  const past = isEventOver(d);
   return (
     <div className="flex h-full flex-col justify-center leading-tight">
       <span className={past ? "text-muted-foreground" : "text-foreground"}>
         {formatDate(d.event_date)}
+        {d.end_date && ` – ${formatDay(d.end_date)}`}
       </span>
       {past && <span className="text-muted-foreground text-xs">Pasado</span>}
     </div>

@@ -2,11 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   bogotaToday,
+  eventEndsAt,
+  isEventOver,
   nowBogotaWallClock,
   publicSale,
   resolveSale,
   stageName,
   stageStatuses,
+  validateEndDate,
   validateStages,
   type StageWithSales,
 } from "../src/lib/ticketStages.ts";
@@ -212,4 +215,52 @@ test("the public sale exposes only the stage in force, never counts", () => {
     current: null,
   });
   assert.deepEqual(publicSale(null), { state: "ended", current: null });
+});
+
+// --- Multi-day events (D23) ---
+
+const PASS_ONE_DAY = { event_date: "2027-01-15T21:00" };
+const PASS = { event_date: "2027-01-15T21:00", end_date: "2027-01-17" };
+
+test("an event ends at its start, or at the end of its last day", () => {
+  assert.equal(eventEndsAt(PASS_ONE_DAY), "2027-01-15T21:00");
+  assert.equal(eventEndsAt({ ...PASS_ONE_DAY, end_date: null }), "2027-01-15T21:00");
+  assert.equal(eventEndsAt(PASS), "2027-01-17T23:59:59");
+});
+
+test("a one-day event is over once it starts", () => {
+  assert.equal(isEventOver(PASS_ONE_DAY, "2027-01-15T20:59:59"), false);
+  assert.equal(isEventOver(PASS_ONE_DAY, "2027-01-15T21:00:00"), true);
+});
+
+test("a multi-day event stays on until its last day ends", () => {
+  assert.equal(isEventOver(PASS, "2027-01-15T21:00:00"), false);
+  assert.equal(isEventOver(PASS, "2027-01-16T12:00:00"), false);
+  assert.equal(isEventOver(PASS, "2027-01-17T23:59:58"), false);
+  assert.equal(isEventOver(PASS, "2027-01-17T23:59:59"), true);
+  assert.equal(isEventOver(PASS, "2027-01-18T00:00:00"), true);
+});
+
+test("the last day is optional and must come after the start day", () => {
+  assert.deepEqual(validateEndDate("2027-01-15T21:00", ""), { endDate: null });
+  assert.deepEqual(validateEndDate("2027-01-15T21:00", null), { endDate: null });
+  assert.deepEqual(validateEndDate("2027-01-15T21:00", undefined), { endDate: null });
+  assert.deepEqual(validateEndDate("2027-01-15T21:00", "2027-01-16"), { endDate: "2027-01-16" });
+  assert.deepEqual(validateEndDate("2027-01-15T21:00", " 2027-01-17 "), { endDate: "2027-01-17" });
+  for (const bad of ["17/01/2027", "2027-02-30", "2027-01-15", "2027-01-14"])
+    assert.ok("error" in validateEndDate("2027-01-15T21:00", bad), bad);
+});
+
+test("with a last day, stages may run until it", () => {
+  const multi = { ...OPTS, endDate: "2027-01-17" };
+  const ends = valid();
+  ends[2].ends_on = "2027-01-17";
+  assert.ok("stages" in validateStages(ends, multi));
+  assert.ok("error" in validateStages(ends, OPTS)); // one-day: after the event day
+  const door = [...valid().slice(0, 2), { ...valid()[2], ends_on: "2027-01-14" },
+    { name_es: "Taquilla", price: 50000, capacity: 20, starts_on: "2027-01-16", ends_on: "" }];
+  assert.ok("stages" in validateStages(door, multi));
+  const late = valid();
+  late[2].ends_on = "2027-01-18";
+  assert.ok("error" in validateStages(late, multi));
 });

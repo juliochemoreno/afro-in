@@ -9,7 +9,7 @@ import Pin from "@/components/Pin.astro";
 import { getVisibleEvents } from "@/lib/tickets";
 import { formatPrice } from "@/lib/cart";
 import { stageName } from "@/lib/ticketStages";
-import { calParts, cardStatus, eventTime, localeTag } from "@/lib/eventDisplay";
+import { calParts, cardStatus, eventTime, localeTag, shortDateRange, untilDate } from "@/lib/eventDisplay";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 import { getCollection } from "astro:content";
 import { bogotaToday } from "@/lib/ticketStages";
@@ -51,7 +51,12 @@ const cards = events.map((e) => {
     name: (lang === "en" ? e.name_en : lang === "fr" ? e.name_fr : e.name_es) || e.name_es,
     image: e.image_r2_key ? `/media/${e.image_r2_key}` : null,
     cal: calParts(e.event_date, lang),
-    time: eventTime(e.event_date, lang),
+    // Multi-day events (Julio): the block shows the start day and the time
+    // line says until when, "Hasta dom 17 · 9:00 p. m.".
+    range: e.end_date ? shortDateRange(e.event_date, lang, e.end_date) : null,
+    time: [untilDate(e.event_date, lang, e.end_date), eventTime(e.event_date, lang)]
+      .filter(Boolean)
+      .join(" · "),
     place: [e.venue, e.city].filter(Boolean).join(" · "),
     flag,
     soldOut: status.kind === "soldout",
@@ -151,7 +156,7 @@ const showFestival = !!festivalEnd && bogotaToday() <= festivalEnd;
                   <span class="ev-info">
                     <span class="ev-head">
                       {/* The gold block shows the day; the full date stays for screen readers. */}
-                      <span class="sr-only">{c.cal.weekday} {c.cal.day} {c.cal.month}</span>
+                      <span class="sr-only">{c.range ?? `${c.cal.weekday} ${c.cal.day} ${c.cal.month}`}</span>
                       {c.time && <span class="ev-when">{c.time}</span>}
                       <span class="fz-display ev-name">{c.name}</span>
                       {c.place && (
