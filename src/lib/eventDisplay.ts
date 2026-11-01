@@ -44,6 +44,15 @@ export function eventTime(eventDate: string, lang: string): string | null {
   );
 }
 
+/** "15 ene 2027": the event's day, short, in the page language. */
+export function shortDate(eventDate: string, lang: string): string | null {
+  const d = wallClock(eventDate);
+  if (!d) return null;
+  return d
+    .toLocaleDateString(localeTag(lang), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
+    .replace(/[\u202f\u00a0]/g, " ");
+}
+
 export type CardStatus =
   | { kind: "soldout" }
   | { kind: "opens"; opensOn: string }

@@ -9,7 +9,7 @@ import FestivalFont from "@/components/FestivalFont.astro";
 import TicketReceipt from "@/components/TicketReceipt";
 import TicketList from "@/components/TicketList";
 import type { TicketOrderView } from "@/lib/tickets";
-import { localeTag } from "@/lib/eventDisplay";
+import { shortDate } from "@/lib/eventDisplay";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 // Static asset (no astro:assets optimizing: SSR page, rule 4).
 import heroPhoto from "@/assets/img/2017/2017-afroin-img-1.jpg";
@@ -68,17 +68,8 @@ const tokenCompleted =
 function buildSubtitle(ev: any): string | null {
   if (!ev) return null;
   const parts: string[] = [];
-  if (ev.event_date) {
-    const d = new Date(ev.event_date);
-    if (!isNaN(d.getTime()))
-      parts.push(
-        d.toLocaleDateString(localeTag(lang), {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })
-      );
-  }
+  const day = ev.event_date ? shortDate(ev.event_date, lang) : null;
+  if (day) parts.push(day);
   const place = [ev.venue, ev.city].filter(Boolean).join(", ");
   if (place) parts.push(place);
   return parts.join(" · ") || null;
@@ -97,7 +88,7 @@ const tokenImage = tokenOrder?.event?.image_r2_key
       <img src={heroPhoto.src} alt="" class="fz-photo-hero-img" decoding="async" />
       <div class="fz-wrap fz-photo-hero-content">
         <p class="fz-display fz-gold tx-hero-kicker">AFRO IN</p>
-        <p class="fz-display tx-hero-title">{t("tix.receipt.yourtickets")}</p>
+        <h1 class="fz-display tx-hero-title">{t("tix.receipt.yourtickets")}</h1>
       </div>
     </section>
     <div class="tix-wrap">
@@ -109,7 +100,7 @@ const tokenImage = tokenOrder?.event?.image_r2_key
                 <div class="receipt-badge ok" aria-hidden="true">
                   ✓
                 </div>
-                <h1>{t("tix.receipt.success.title")}</h1>
+                <h2>{t("tix.receipt.success.title")}</h2>
               </div>
               <TicketList
                 client:load
@@ -193,8 +184,8 @@ const tokenImage = tokenOrder?.event?.image_r2_key
     margin-left: auto;
     margin-right: auto;
   }
-  .tix-page .receipt h1,
-  .tix-success-head h1 {
+  .tix-page .receipt h2,
+  .tix-success-head h2 {
     margin: 0 0 10px;
     font-family: "Anton", var(--font-heading, "Outfit"), sans-serif;
     font-weight: 400;
@@ -703,6 +694,16 @@ const tokenImage = tokenOrder?.event?.image_r2_key
     .tix-stub-perf::before,
     .tix-stub-perf::after {
       display: none;
+    }
+    /* Background fills don't print: the "used" stamp gets ink of its own. */
+    .tix-stub.used {
+      filter: none;
+      opacity: 1;
+    }
+    .tix-stub-used {
+      background: #fff;
+      color: #000;
+      border: 2px solid #000;
     }
   }
 </style>

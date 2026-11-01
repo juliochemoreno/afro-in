@@ -15,7 +15,7 @@
   --tx-scrim: #161616; /* photos fade into the page */
   --tx-field: rgba(243, 233, 210, 0.04);
   --tx-field-line: rgba(243, 233, 210, 0.28);
-  --tx-placeholder: rgba(243, 233, 210, 0.42);
+  --tx-placeholder: rgba(243, 233, 210, 0.58);
   --tx-error: #ff8a8a;
   --tx-error-bg: rgba(227, 28, 37, 0.1);
   --tx-flag-bg: rgba(22, 22, 22, 0.78);
@@ -38,7 +38,7 @@
     --tx-scrim: #f6efe0;
     --tx-field: #fffdf8;
     --tx-field-line: rgba(27, 23, 20, 0.3);
-    --tx-placeholder: rgba(27, 23, 20, 0.45);
+    --tx-placeholder: rgba(27, 23, 20, 0.62);
     --tx-error: #b3121a;
     --tx-error-bg: #fff0ef;
     --tx-flag-bg: rgba(246, 239, 224, 0.9);
@@ -56,7 +56,7 @@
   }
 }
 
-.fz.tx-page a:hover {
+.fz.tx-page a:not(.btn):not(.fz-button):hover {
   color: var(--tx-fg);
 }
 .fz.tx-page .fz-gold {

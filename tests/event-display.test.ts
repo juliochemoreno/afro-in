@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { calParts, cardStatus, eventTime } from "../src/lib/eventDisplay.ts";
+import { calParts, cardStatus, eventTime, shortDate } from "../src/lib/eventDisplay.ts";
 
 const stage = {
   id: 2,
@@ -33,6 +33,12 @@ test("eventTime formats the wall-clock time", () => {
   assert.equal(eventTime("2027-01-15T20:00", "en"), "8:00 PM");
   assert.equal(eventTime("2027-01-15T20:00", "fr"), "20:00");
   assert.equal(eventTime("2027-01-15", "es"), null);
+});
+
+test("shortDate follows the page language, not the runtime", () => {
+  assert.equal(shortDate("2027-01-15T00:30", "en"), "Jan 15, 2027");
+  assert.equal(shortDate("2027-01-15T23:30", "fr"), "15 janv. 2027");
+  assert.equal(shortDate("bad", "es"), null);
 });
 
 test("cardStatus: sold out wins", () => {
