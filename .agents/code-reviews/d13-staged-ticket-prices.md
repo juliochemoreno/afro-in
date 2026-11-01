@@ -2,7 +2,7 @@
 
 - **Branch:** `claude/d13-staged-tickets-0aa889`, reviewed at `6a9d9dd` (phases 1–3) against `origin/dev`.
 - **Reviewer:** fresh-context subagent (strongest model), read-only. The review covered both the code and the design of the money path.
-- **Plan:** `.agents/plans/d13-staged-ticket-prices.md`
+- **Plan:** `.agents/plans/done/d13-staged-ticket-prices.md`
 
 ## Result
 
