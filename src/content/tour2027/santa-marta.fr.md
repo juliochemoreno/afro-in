@@ -96,7 +96,7 @@ days:
         kind: "Coupé-décalé 1 contre 1"
 tickets:
   tiers:
-    - period: "Du 1er au 15 novembre"
+    - period: "Jusqu'au 15 novembre ou jusqu'à épuisement des 50 billets"
       from: "2026-11-01"
       until: "2026-11-15"
       price: 20000

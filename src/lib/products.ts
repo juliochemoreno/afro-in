@@ -3,6 +3,8 @@
 // (categories, product_sizes/colors/tags); the legacy denormalized columns are
 // used only as a fallback. Images are served from R2 at /media/<r2_key>.
 
+import { formatCopAmount } from "./money.ts";
+
 export interface ProductImage {
   url: string;
   alt?: string;
@@ -55,14 +57,7 @@ export function mediaUrl(r2Key: string): string {
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-    .format(price)
-    .replace(/\s/g, "");
+  return formatCopAmount(price, "es-CO");
 }
 
 function csvToArray(value: unknown): string[] {

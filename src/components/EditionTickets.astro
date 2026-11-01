@@ -30,7 +30,7 @@ const buyUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : 
           <span class="fz-tier-flag fz-tier-current" hidden>{t("edition.stageCurrent")}</span>
           <span class="fz-tier-flag fz-tier-done" hidden>{t("edition.stageDone")}</span>
           <span>{tier.period}</span>
-          <span class="fz-display fz-tier-price">{formatCop(tier.price, lang)} <span class="fz-tier-cur">COP</span></span>
+          <span class="fz-display fz-tier-price">{formatCop(tier.price, lang)}</span>
           {tier.note && <span class="fz-muted">{tier.note}</span>}
           {buyUrl ? (
             <a class="fz-button fz-button-solid fz-tier-buy" href={buyUrl} hidden>{t("edition.presaleCta")}</a>

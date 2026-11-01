@@ -2,6 +2,8 @@
 // Dates are ISO "YYYY-MM-DD" strings read as UTC so the day never shifts
 // with the build machine's time zone (Bogotá is UTC-5).
 
+import { formatCopAmount } from "./money.ts";
+
 export type Lang = "es" | "en" | "fr";
 
 const LOCALES: Record<Lang, string> = { es: "es-CO", en: "en-US", fr: "fr-FR" };
@@ -137,11 +139,7 @@ export function bogotaToday(now: Date = new Date()): string {
 }
 
 export function formatCop(amount: number, lang: Lang): string {
-  return new Intl.NumberFormat(LOCALES[lang], {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return formatCopAmount(amount, LOCALES[lang]);
 }
 
 // Anchor of a day on its stop page; the full date keeps ids unique even when

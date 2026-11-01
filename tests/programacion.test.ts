@@ -104,9 +104,9 @@ test("lists join with the language's conjunction", () => {
 });
 
 test("COP prices have no decimals and use the language's grouping", () => {
-  assert.match(formatCop(20000, "es"), /^\$\s?20\.000$/);
-  assert.match(formatCop(45000, "en"), /45,000/);
-  assert.match(formatCop(35000, "fr"), /35\s000/);
+  assert.equal(formatCop(20000, "es"), "$20.000\u00a0COP");
+  assert.equal(formatCop(45000, "en"), "$45,000\u00a0COP");
+  assert.match(formatCop(35000, "fr"), /^\$35\s000\u00a0COP$/);
 });
 
 test("a stop is coming soon when no day has activities", () => {

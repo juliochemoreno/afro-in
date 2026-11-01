@@ -1,6 +1,8 @@
 // Cart Store - Vanilla JavaScript cart management
 // Uses localStorage for persistence and custom events for reactivity
 
+import { formatCopAmount } from './money.ts';
+
 export interface CartItem {
   id: string;
   slug?: string; // canonical product slug — used server-side to re-price at checkout
@@ -132,11 +134,7 @@ export function clearCart(): void {
 
 // Format price for display
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(price);
+  return formatCopAmount(price, 'es-CO');
 }
 
 // Subscribe to cart changes
