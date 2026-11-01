@@ -129,11 +129,10 @@ export default function TicketReceipt({
           orderNumber={order.id}
           tickets={tickets}
           permalink={permalink}
+          continueHref={eventsPath}
+          continueLabel={t["tix.receipt.continue"]}
           t={t}
         />
-        <a href={eventsPath} className="btn btn-primary tix-continue">
-          {t["tix.receipt.continue"]}
-        </a>
       </div>
     );
   }
