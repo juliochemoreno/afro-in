@@ -96,7 +96,13 @@ export const PUT: APIRoute = async (ctx) => {
   // none. Only superadmins set it (like the role).
   let activeUntil: string | null = existing.active_until ?? null;
   if (role === "door") {
-    if (currentAdmin.role === "superadmin" && body.active_until !== undefined) {
+    const changed =
+      currentAdmin.role === "superadmin" &&
+      body.active_until !== undefined &&
+      body.active_until !== existing.active_until;
+    if (changed) {
+      // A new date must be today or later; an unchanged (even past) date
+      // keeps an expired account editable (rename, password, deactivate).
       activeUntil = validActiveUntil(body.active_until);
       if (!activeUntil) return json({ error: "Fecha 'Activo hasta' inválida" }, 400);
     } else if (existing.role !== "door" || !activeUntil) {

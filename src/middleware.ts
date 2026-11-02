@@ -21,7 +21,14 @@ const noindexOutsideProduction = defineMiddleware(async (context, next) => {
 
 const handleRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
-  const pathname = url.pathname;
+  // Astro routes on the decoded path, so every check below must use it too:
+  // otherwise /%61dmin/... renders an admin page without the session check.
+  let pathname: string;
+  try {
+    pathname = decodeURI(url.pathname);
+  } catch {
+    return new Response("Bad Request", { status: 400 });
+  }
 
   // Door host (checkin.afroin.org): only the door and its login. Other admin
   // pages go to the door, other APIs do not exist there. Static files are

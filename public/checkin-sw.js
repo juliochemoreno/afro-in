@@ -6,8 +6,20 @@ const CACHE = "door-v1";
 const OFFLINE = "/checkin-offline.html";
 const PRECACHE = [OFFLINE, "/icons/checkin-192.png", "/icons/checkin-512.png"];
 
+// Stored as a fresh 200 response: if the host redirected (e.g. .html to a
+// clean URL), a "redirected" response cannot answer a navigation.
+async function precache() {
+  const cache = await caches.open(CACHE);
+  for (const url of PRECACHE) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`precache ${url}: ${res.status}`);
+    const body = await res.blob();
+    await cache.put(url, new Response(body, { status: 200, headers: res.headers }));
+  }
+}
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
+  event.waitUntil(precache());
   self.skipWaiting();
 });
 

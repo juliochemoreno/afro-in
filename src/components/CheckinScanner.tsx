@@ -78,6 +78,9 @@ export default function CheckinScanner({ exitHref }: { exitHref: string | null }
   const streamRef = React.useRef<MediaStream | null>(null);
   const detectorRef = React.useRef<BarcodeDetectorLike | null>(null);
   const rafRef = React.useRef<number | null>(null);
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const runningRef = React.useRef(false);
+  const startingRef = React.useRef(false);
   const audioRef = React.useRef<AudioContext | null>(null);
   const lastCodeRef = React.useRef<{ code: string; at: number }>({
     code: "",
@@ -88,6 +91,7 @@ export default function CheckinScanner({ exitHref }: { exitHref: string | null }
   const mutedRef = React.useRef(false);
 
   const [scanning, setScanning] = React.useState(false);
+  const [starting, setStarting] = React.useState(false);
   const [cameraError, setCameraError] = React.useState<string | null>(null);
   const [verdict, setVerdict] = React.useState<Verdict | null>(null);
   const [manualOpen, setManualOpen] = React.useState(false);
@@ -220,47 +224,72 @@ export default function CheckinScanner({ exitHref }: { exitHref: string | null }
         /* ignore a single failed frame */
       }
     }
+    if (!runningRef.current) return;
     rafRef.current = requestAnimationFrame(() => {
       // throttle to ~5 fps
-      setTimeout(tick, 200);
+      timerRef.current = setTimeout(tick, 200);
     });
   }, [submitCode]);
 
   const stop = React.useCallback(() => {
+    runningRef.current = false;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     setScanning(false);
   }, []);
 
   const start = React.useCallback(async () => {
+    // One start at a time: loading the detector can take seconds on iPhone.
+    if (startingRef.current || runningRef.current) return;
+    startingRef.current = true;
+    setStarting(true);
     unlockAudio();
     setCameraError(null);
-    const detector = await getDetector();
-    if (!detector) {
-      setCameraError("Este navegador no puede escanear QR. Usa el código manual.");
-      setManualOpen(true);
-      return;
-    }
-    detectorRef.current = detector;
     try {
+      const detector = await getDetector();
+      if (!detector) {
+        setCameraError("Este navegador no puede escanear QR. Usa el código manual.");
+        setManualOpen(true);
+        return;
+      }
+      detectorRef.current = detector;
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
         audio: false,
       });
       streamRef.current = stream;
+      // The phone may end the camera (screen locked, app in background):
+      // show the start button again instead of a frozen frame.
+      stream.getVideoTracks().forEach((t) => (t.onended = () => stop()));
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
+      runningRef.current = true;
       setScanning(true);
-      setTimeout(tick, 200);
+      timerRef.current = setTimeout(tick, 200);
     } catch {
+      stop();
       setCameraError("No se pudo abrir la cámara. Revisa el permiso o usa el código manual.");
       setManualOpen(true);
+    } finally {
+      startingRef.current = false;
+      setStarting(false);
     }
-  }, [tick]);
+  }, [tick, stop]);
+
+  // Leaving the app stops the camera; coming back shows "Iniciar cámara".
+  React.useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden") stop();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [stop]);
 
   React.useEffect(() => {
     return () => stop();
@@ -338,9 +367,10 @@ export default function CheckinScanner({ exitHref }: { exitHref: string | null }
             <button
               type="button"
               onClick={start}
-              className="door-display flex items-center gap-3 bg-[#f3e9d2] px-8 py-5 text-2xl text-[#161616] uppercase active:opacity-80"
+              disabled={starting}
+              className="door-display flex items-center gap-3 bg-[#f3e9d2] px-8 py-5 text-2xl text-[#161616] uppercase active:opacity-80 disabled:opacity-60"
             >
-              <Camera className="size-7" /> Iniciar cámara
+              <Camera className="size-7" /> {starting ? "Abriendo…" : "Iniciar cámara"}
             </button>
             {cameraError && <p className="max-w-xs text-sm text-[#f3e9d2]/80">{cameraError}</p>}
           </div>
@@ -352,9 +382,12 @@ export default function CheckinScanner({ exitHref }: { exitHref: string | null }
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (!manual.trim()) return;
+            const code = manual.trim();
+            // A double tap must not send the same code twice ("Ya entró").
+            if (!code || busyRef.current || verdictRef.current) return;
             unlockAudio();
-            submitCode(manual);
+            lastCodeRef.current = { code, at: Date.now() };
+            submitCode(code);
             setManual("");
           }}
           className="flex shrink-0 gap-2 border-t border-[#f3e9d2]/15 p-3"

@@ -292,7 +292,7 @@ Confirm or correct each before execution:
 **After the release reaches `main`:**
 1. Cloudflare → Workers & Pages → `afro-in` → **Domains** → **+ Add Domain** → `checkin.afroin.org`, **Enable for: Production** → Add domain.
 2. Cloudflare → `afroin.org` zone → **Rules → Redirect Rules → Create rule** "Door root": *When* `Hostname equals checkin.afroin.org` **and** `URI Path equals /` → *Then* Static, URL `https://checkin.afroin.org/admin/checkin`, status **302**, preserve query string off → Deploy.
-3. Verify (the orchestrator can run these): `curl -sI https://checkin.afroin.org/` → 302 to `/admin/checkin`; `curl -sI https://checkin.afroin.org/admin/pedidos` → 302 `/admin/checkin`; `curl -s https://checkin.afroin.org/api/contador` equals `curl -s https://afroin.org/api/contador` (production data, not the staging Preview wildcard). If it shows staging data, the wildcard won: stop and tell the orchestrator.
+3. Verify (the orchestrator can run these): `curl -sI https://checkin.afroin.org/` → 302 to `/admin/checkin`; `curl -sI https://checkin.afroin.org/admin/pedidos` → 302 `/admin/checkin`; `curl -s https://checkin.afroin.org/api/contador` → 404 (door host); `curl -s https://checkin.afroin.org/admin/login | grep -o '/_astro/[^"]*' | sort -u` equals the same for `https://afroin.org/admin/login` (same production build; a 404/522 or other asset names means the Preview wildcard won: stop and tell the orchestrator). Execution note: the first draft compared `/api/contador`, which the door host answers with 404.
 4. Never create a Preview named `checkin`.
 
 ## Acceptance Criteria

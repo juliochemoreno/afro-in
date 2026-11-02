@@ -10,7 +10,9 @@ test("parseRole keeps the known roles and never invents superadmin", () => {
   assert.equal(parseRole("superadmin"), "superadmin");
   assert.equal(parseRole("door"), "door");
   assert.equal(parseRole("admin"), "admin");
-  assert.equal(parseRole("Door"), "admin");
+  assert.equal(parseRole("Door "), "door");
+  assert.equal(parseRole("SuperAdmin"), "superadmin");
+  assert.equal(parseRole("editor"), "admin");
   assert.equal(parseRole(null), "admin");
   assert.equal(parseRole(undefined), "admin");
 });
@@ -28,6 +30,10 @@ test("a door account works until 06:00 Bogotá after its last day", () => {
   assert.equal(accountActive(door, bogota(2027, 1, 18, 5, 59)), true);
   assert.equal(accountActive(door, bogota(2027, 1, 18, 6, 0)), false);
   assert.equal(accountActive(door, bogota(2027, 2, 1, 12)), false);
+});
+
+test("a hand-edited door role still expires", () => {
+  assert.equal(accountActive({ role: "Door ", active_until: "2027-01-17" }, bogota(2027, 2, 1, 12)), false);
 });
 
 test("a door account without a valid date is never active", () => {

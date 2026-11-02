@@ -8,9 +8,13 @@ export type AdminRole = "superadmin" | "admin" | "door";
 
 export const DOOR_ROLE = "door";
 
-/** Unknown or missing roles stay "admin", as before D26 (never superadmin). */
+/**
+ * Unknown or missing roles stay "admin", as before D26 (never superadmin).
+ * Case and spaces are ignored, so a hand-edited "Door " is still a door.
+ */
 export function parseRole(raw: unknown): AdminRole {
-  if (raw === "superadmin" || raw === "door") return raw;
+  const role = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+  if (role === "superadmin" || role === "door") return role;
   return "admin";
 }
 
@@ -30,7 +34,7 @@ export function accountActive(
   account: { role: string; active_until?: string | null },
   now: number = Date.now()
 ): boolean {
-  if (account.role !== DOOR_ROLE) return true;
+  if (parseRole(account.role) !== DOOR_ROLE) return true;
   const until = account.active_until ?? "";
   return isCalendarDate(until) && doorDay(now) <= until;
 }
