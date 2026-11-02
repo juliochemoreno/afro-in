@@ -11,3 +11,11 @@ https://www.afroin.org/*
 
 https://:name.:subdomain.workers.dev/*
   X-Robots-Tag: noindex
+
+# Door app (D26): the service worker must be re-checked on every load; the
+# manifest gets its proper type.
+/checkin-sw.js
+  Cache-Control: no-cache
+
+/checkin.webmanifest
+  Content-Type: application/manifest+json
