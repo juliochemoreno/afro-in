@@ -163,20 +163,20 @@ Dependents search: `grep -rn "checked_in" src` → 5 files (`TicketList.tsx`, `E
 - **Validate:** local scans via the scanner page (manual entry field).
 
 ## Validation Checklist
-- [ ] **Level 1 — Lint & Format:** no lint script; `npx prettier --check` on changed files if the repo's prettier config applies, otherwise skip and say so.
-- [ ] **Level 2 — Type Check:** `npm run check` (astro build + tsc + wrangler dry-run).
-- [ ] **Level 2.5 — Code Review:** `code-review` skill on the diff; then one fresh-context review agent (strongest model) on the diff, saved as the review artifact in the shared notes folder.
-- [ ] **Level 3 — Unit Tests:** `npm test`.
-- [ ] **Level 4 — Integration (local, agent):** `npx wrangler d1 migrations apply DB --local --env local`; seed a multi-day test event + completed order with tickets in local D1 (event dates set relative to today); `astro dev --port 4326`; drive `/api/admin/checkin` through the scanner page: day X ok → second scan "Ya entró hoy" → shift `event_date`/`end_date` back one day in local D1 and rescan → "día X+1" → move dates to the future → "Fuera de fechas"; unpaid order → "Pago no confirmado"; bad code → "No encontrada". Single-day regression (Task 8).
-- [ ] **Level 5 — Human Review (Julio, before merge, local server on port 4326):** Julio opens the admin scanner on the laptop (`http://localhost:4326`, camera works on localhost) and scans the real QR shown on his phone (buyer page of the local test order, test email to juliochemoreno@gmail.com if needed). He checks: the wording/colors of the four multi-day answers, the admin order detail "Día 1 · …" lines, and that the buyer page has no "Usada" stamp after day 1. Phone-as-scanner over the LAN is not possible on plain http (camera needs a secure context); if Julio wants it, say so and agree an alternative. Skipped → the door wording and admin detail ship unseen by Julio.
+- [x] **Level 1 — Lint & Format:** WAIVED: the repo has no lint script and no prettier check was run (see the report).
+- [x] **Level 2 — Type Check:** ✓ `npm run check` passed; `tsc --noEmit` clean again after syncing with origin/dev.
+- [x] **Level 2.5 — Code Review:** ✓ fresh-context review in `.agents/code-reviews/d25-daily-checkin.md` (0 critical/high, 2 fixed); copy in the shared notes folder.
+- [x] **Level 3 — Unit Tests:** ✓ `npm test` 104/104 (7 new).
+- [x] **Level 4 — Integration (local, agent):** ✓ by direct calls on the local D1 with simulated times instead of the HTTP route (no admin login in the worktree): every listed case, including the single-day regression, passed; HTTP and scanner UI covered by Level 5.
+- [x] **Level 5 — Human Review** ✓ Julio, 2026-11-01, local server on 4326: "ya hice la prueba todo ok".
 
 ## Acceptance Criteria
-- [ ] Pase 2027 ticket: one entry per door day 15, 16, 17 Jan; a second scan the same door day answers "Ya entró hoy" with the first time; scans on 14 Jan or after 18 Jan 06:00 answer "Fuera de fechas"; 01:30 on 16 Jan counts as day 1.
-- [ ] Two concurrent scans of the same code on the same door day produce exactly one `ticket_checkins` row and one "Válida".
-- [ ] Single-day events behave exactly as before.
-- [ ] Admin "Ingresos" counts unchanged in meaning; order detail lists days for multi-day tickets.
-- [ ] Buyer page shows "Usada" for a multi-day ticket only after the last-day entry.
-- [ ] `npm run check` and `npm test` green.
+- [x] (✓ Level 4, simulated 14–18 Jan 2027) Pase 2027 ticket: one entry per door day 15, 16, 17 Jan; a second scan the same door day answers "Ya entró hoy" with the first time; scans on 14 Jan or after 18 Jan 06:00 answer "Fuera de fechas"; 01:30 on 16 Jan counts as day 1.
+- [x] (✓ Level 4: Promise.all double scan → ok + already, one row) Two concurrent scans of the same code on the same door day produce exactly one `ticket_checkins` row and one "Válida".
+- [x] (✓ Level 4 + Julio) Single-day events behave exactly as before.
+- [x] (✓ Level 4 admin detail + Julio) Admin "Ingresos" counts unchanged in meaning; order detail lists days for multi-day tickets.
+- [x] (✓ Level 4: stamp only after day 3) Buyer page shows "Usada" for a multi-day ticket only after the last-day entry.
+- [x] `npm run check` and `npm test` green. ✓
 
 ## Confidence Score: 8/10
 - **Strengths:** small surface (one function, one table, two views); atomic PK insert pattern; D23 already put `end_date` everywhere `SELECT e.*` is used.
@@ -193,3 +193,6 @@ Dependents search: `grep -rn "checked_in" src` → 5 files (`TicketList.tsx`, `E
 - Local dev: `--env local` for every local D1 command (D23 gotcha). Use port 4326; add a `.claude/launch.json` entry for it only in this worktree if needed.
 - Do not change `EventsDashboard.tsx`, the email, or `TicketList.tsx`.
 - UI copy is `[provisional]`; Julio will tune wording at Level 5. **Expected UX iterations: 2**
+
+## Outcome
+Merged into `dev` via [PR #28](https://github.com/juliochemoreno/afro-in/pull/28) (1541fe3, merge adfa97d). Report: `.agents/execution-reports/d25-daily-checkin.md`. Migration 0014 pending in production (Julio, before the release).
