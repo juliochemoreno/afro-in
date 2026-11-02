@@ -6,6 +6,7 @@
 import { generateOrderId } from "@/lib/bold";
 import { BOLD_MIN_AMOUNT, CheckoutError } from "@/lib/orders";
 import { normalizeStoredPhone } from "@/lib/checkoutFields";
+import { doorDay, doorDayIndex, isMultiDay } from "@/lib/doorDay";
 import {
   HOLD_MINUTES,
   bogotaToday,
@@ -774,12 +775,27 @@ async function loadTicketOrderView(
     .prepare(`SELECT * FROM events WHERE id = ?`)
     .bind(order.event_id)
     .first<EventRow | null>();
-  const tks = await db
-    .prepare(
-      `SELECT code, status, checked_in_at FROM tickets WHERE ticket_order_id = ? ORDER BY id`
-    )
-    .bind(order.id)
-    .all<{ code: string; status: string; checked_in_at: string | null }>();
+  // A multi-day pass (D25) shows as used only once it entered on the last day.
+  const tks =
+    event && isMultiDay(event)
+      ? await db
+          .prepare(
+            `SELECT code,
+                    CASE WHEN EXISTS (
+                      SELECT 1 FROM ticket_checkins c
+                      WHERE c.ticket_id = tickets.id AND c.door_day = ?
+                    ) THEN 'checked_in' ELSE 'valid' END AS status,
+                    checked_in_at
+             FROM tickets WHERE ticket_order_id = ? ORDER BY id`
+          )
+          .bind(event.end_date, order.id)
+          .all<{ code: string; status: string; checked_in_at: string | null }>()
+      : await db
+          .prepare(
+            `SELECT code, status, checked_in_at FROM tickets WHERE ticket_order_id = ? ORDER BY id`
+          )
+          .bind(order.id)
+          .all<{ code: string; status: string; checked_in_at: string | null }>();
   return {
     order,
     event: event || null,
@@ -825,43 +841,69 @@ export async function getTicketOrderByBoldId(
   return loadTicketOrderView(db, order);
 }
 
+// Multi-day events (D25) add day/days to "ok", today/day/days to "already" and
+// answer "out_of_range" outside the event's door days.
 export type CheckInResult =
-  | { result: "ok"; attendee: string; eventName: string }
-  | { result: "already"; attendee: string; eventName: string; checkedInAt: string }
+  | { result: "ok"; attendee: string; eventName: string; day?: number; days?: number }
+  | {
+      result: "already";
+      attendee: string;
+      eventName: string;
+      checkedInAt: string;
+      today?: boolean;
+      day?: number;
+      days?: number;
+    }
+  | {
+      result: "out_of_range";
+      attendee: string;
+      eventName: string;
+      startDate: string;
+      endDate: string;
+    }
   | { result: "not_found" }
   | { result: "not_paid" };
 
 /**
  * Check in a ticket by code. Atomic against double-scan: the UPDATE is guarded
- * by status='valid' and we inspect meta.changes.
+ * by status='valid' and we inspect meta.changes. A multi-day pass is checked
+ * in once per door day instead (checkInForDoorDay).
  */
 export async function checkInTicket(
   db: D1Database,
-  rawCode: string
+  rawCode: string,
+  now: number = Date.now()
 ): Promise<CheckInResult> {
   const code = normalizeCode(rawCode);
   if (!code) return { result: "not_found" };
 
   const row = await db
     .prepare(
-      `SELECT t.status AS ticket_status, t.checked_in_at AS checked_in_at,
+      `SELECT t.id AS ticket_id, t.status AS ticket_status,
+              t.checked_in_at AS checked_in_at,
               o.status AS order_status, o.buyer_name AS buyer_name,
-              o.event_name AS event_name
+              o.event_name AS event_name,
+              e.event_date AS event_date, e.end_date AS end_date
        FROM tickets t
        JOIN ticket_orders o ON o.id = t.ticket_order_id
+       LEFT JOIN events e ON e.id = t.event_id
        WHERE t.code = ?`
     )
     .bind(code)
     .first<{
+      ticket_id: number;
       ticket_status: string;
       checked_in_at: string | null;
       order_status: string;
       buyer_name: string;
       event_name: string;
+      event_date: string;
+      end_date: string | null;
     } | null>();
 
   if (!row) return { result: "not_found" };
   if (row.order_status !== "completed") return { result: "not_paid" };
+  if (isMultiDay(row)) return checkInForDoorDay(db, row, now);
   if (row.ticket_status === "checked_in") {
     return {
       result: "already",
@@ -890,6 +932,64 @@ export async function checkInTicket(
   }
 
   return { result: "ok", attendee: row.buyer_name, eventName: row.event_name };
+}
+
+/**
+ * Multi-day pass: one entry per door day. The INSERT on the (ticket_id,
+ * door_day) primary key is the atomic claim; the first entry also marks the
+ * ticket checked_in so the admin counts keep meaning "entered at least once".
+ */
+async function checkInForDoorDay(
+  db: D1Database,
+  row: {
+    ticket_id: number;
+    buyer_name: string;
+    event_name: string;
+    event_date: string;
+    end_date: string | null;
+  },
+  now: number
+): Promise<CheckInResult> {
+  const day = doorDay(now);
+  const index = doorDayIndex(row, day);
+  if (!index) {
+    return {
+      result: "out_of_range",
+      attendee: row.buyer_name,
+      eventName: row.event_name,
+      startDate: row.event_date.slice(0, 10),
+      endDate: row.end_date ?? "",
+    };
+  }
+
+  const [claim] = await db.batch([
+    db
+      .prepare(`INSERT OR IGNORE INTO ticket_checkins (ticket_id, door_day) VALUES (?, ?)`)
+      .bind(row.ticket_id, day),
+    db
+      .prepare(
+        `UPDATE tickets SET status = 'checked_in', checked_in_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND status = 'valid'`
+      )
+      .bind(row.ticket_id),
+  ]);
+
+  if (claim.meta.changes > 0) {
+    return { result: "ok", attendee: row.buyer_name, eventName: row.event_name, ...index };
+  }
+
+  const prev = await db
+    .prepare(`SELECT checked_in_at FROM ticket_checkins WHERE ticket_id = ? AND door_day = ?`)
+    .bind(row.ticket_id, day)
+    .first<{ checked_in_at: string } | null>();
+  return {
+    result: "already",
+    attendee: row.buyer_name,
+    eventName: row.event_name,
+    checkedInAt: prev?.checked_in_at || "",
+    today: true,
+    ...index,
+  };
 }
 
 // --- Admin reads ---
@@ -951,7 +1051,7 @@ export async function getTicketOrderDetailForAdmin(
   const order = await db
     .prepare(`SELECT * FROM ticket_orders WHERE id = ?`)
     .bind(id)
-    .first();
+    .first<any>();
   if (!order) return null;
   const tickets = await db
     .prepare(
@@ -959,5 +1059,34 @@ export async function getTicketOrderDetailForAdmin(
     )
     .bind(id)
     .all();
-  return { ...order, tickets: (tickets.results as any[]) || [] };
+  const list = (tickets.results as any[]) || [];
+
+  // Multi-day pass (D25): every entry per door day, numbered "día X de N".
+  const event = await db
+    .prepare(`SELECT event_date, end_date FROM events WHERE id = ?`)
+    .bind(order.event_id)
+    .first<{ event_date: string; end_date: string | null } | null>();
+  if (!event || !isMultiDay(event)) {
+    return { ...order, tickets: list.map((t) => ({ ...t, checkins: [] })) };
+  }
+  const entries = await db
+    .prepare(
+      `SELECT c.ticket_id, c.door_day, c.checked_in_at
+       FROM ticket_checkins c JOIN tickets t ON t.id = c.ticket_id
+       WHERE t.ticket_order_id = ? ORDER BY c.door_day`
+    )
+    .bind(id)
+    .all<{ ticket_id: number; door_day: string; checked_in_at: string }>();
+  const byTicket = new Map<number, { day: number; days: number; checked_in_at: string }[]>();
+  for (const c of entries.results || []) {
+    const index = doorDayIndex(event, c.door_day);
+    if (!index) continue;
+    const arr = byTicket.get(c.ticket_id) ?? [];
+    arr.push({ ...index, checked_in_at: c.checked_in_at });
+    byTicket.set(c.ticket_id, arr);
+  }
+  return {
+    ...order,
+    tickets: list.map((t) => ({ ...t, checkins: byTicket.get(Number(t.id)) ?? [] })),
+  };
 }

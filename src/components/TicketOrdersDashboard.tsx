@@ -47,6 +47,8 @@ interface TicketItem {
   code: string;
   status: string;
   checked_in_at?: string | null;
+  // Multi-day pass (D25): one entry per door day; empty for one-day events.
+  checkins?: { day: number; days: number; checked_in_at: string }[];
 }
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -72,12 +74,14 @@ function formatDate(ts?: string | null): string {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: "America/Bogota",
   });
   const time = d
     .toLocaleTimeString("es-CO", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
+      timeZone: "America/Bogota",
     })
     .toLowerCase();
   return `${date} · ${time}`;
@@ -674,7 +678,15 @@ export default function TicketOrdersDashboard() {
                           <span className="text-foreground font-mono tracking-wider">
                             {tk.code}
                           </span>
-                          {tk.status === "checked_in" ? (
+                          {tk.checkins?.length ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 flex flex-col items-end text-xs">
+                              {tk.checkins.map((c) => (
+                                <span key={c.day}>
+                                  Día {c.day} · {formatDate(c.checked_in_at)}
+                                </span>
+                              ))}
+                            </span>
+                          ) : tk.status === "checked_in" ? (
                             <span className="text-emerald-600 dark:text-emerald-400 text-xs">
                               Usada · {formatDate(tk.checked_in_at)}
                             </span>
