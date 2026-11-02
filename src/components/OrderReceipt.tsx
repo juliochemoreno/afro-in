@@ -119,7 +119,7 @@ export default function OrderReceipt({ t, storePath }: Props) {
         </div>
       )}
 
-      <a href={storePath} className="btn btn-primary">
+      <a href={storePath} className="fz-button fz-button-solid">
         {t["order.continue"]}
       </a>
     </div>

@@ -47,77 +47,66 @@ const mainImage = product.images[0]?.url ?? "";
 const translatedBadge = product.badge ? product.badge[safeLang] : null;
 ---
 
-<div class="product-card" data-category={localizedProduct.category}>
+<article
+  class="hm-card product-card"
+  data-category={localizedProduct.category}
+>
   {translatedBadge && <span class="product-badge">{translatedBadge}</span>}
-  <a href={productPath} class="product-link">
-    <div class="product-image">
-      {
-        mainImage ? (
-          <img
-            src={mainImage}
-            alt={localizedProduct.name}
-            class="product-img"
-            loading="lazy"
-          />
-        ) : (
-          <ImagePlaceholder />
-        )
-      }
-    </div>
-    <h3 class="product-name">{localizedProduct.name}</h3>
+  <a href={productPath} class="product-image" tabindex="-1" aria-hidden="true">
+    {
+      mainImage ? (
+        <img src={mainImage} alt="" class="product-img" loading="lazy" />
+      ) : (
+        <ImagePlaceholder />
+      )
+    }
   </a>
-  <div class="product-info">
-    <div class="product-prices">
-      <span class="price-cop">{formatPrice(product.price)}</span>
-      {
-        product.priceUSD ? (
-          <span class="price-usd">~${product.priceUSD} USD</span>
-        ) : null
-      }
-    </div>
-    <div class="product-actions">
-      {
-        product.sizes && product.sizes.length > 0 ? (
-          <a href={productPath} class="btn btn-primary product-btn">
-            {t("store.btn.viewOptions")}
-          </a>
-        ) : showQuickAdd ? (
-          <button
-            class="btn btn-primary product-btn quick-add"
-            data-id={product.slug}
-            data-slug={product.slug}
-            data-sku={product.sku}
-            data-name={localizedProduct.name}
-            data-price={product.price}
-            data-image={mainImage}
-          >
-            {t("store.btn.add")}
-          </button>
-        ) : (
-          <a href={productPath} class="btn btn-primary product-btn">
-            {t("store.btn.viewDetails")}
-          </a>
-        )
-      }
-    </div>
-  </div>
-</div>
+  <h3 class="fz-display product-name">
+    <a href={productPath}>{localizedProduct.name}</a>
+  </h3>
+  <p class="product-prices">
+    <span class="price-cop">{formatPrice(product.price)}</span>
+    {
+      product.priceUSD ? (
+        <span class="price-usd">~${product.priceUSD} USD</span>
+      ) : null
+    }
+  </p>
+  {
+    product.sizes && product.sizes.length > 0 ? (
+      <a href={productPath} class="fz-button fz-button-solid product-btn">
+        {t("store.btn.viewOptions")}
+      </a>
+    ) : showQuickAdd ? (
+      <button
+        type="button"
+        class="fz-button fz-button-solid product-btn quick-add"
+        data-id={product.slug}
+        data-slug={product.slug}
+        data-sku={product.sku}
+        data-name={localizedProduct.name}
+        data-price={product.price}
+        data-image={mainImage}
+      >
+        {t("store.btn.add")}
+      </button>
+    ) : (
+      <a href={productPath} class="fz-button fz-button-solid product-btn">
+        {t("store.btn.viewDetails")}
+      </a>
+    )
+  }
+</article>
 
 <style>
+  /* The festival product card, shared by the home (FeaturedProducts) and the store.
+     Dark square card, the photo on its own white panel, red square button. */
   .product-card {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
     text-align: center;
-    background: var(--color-white);
-    border-radius: var(--radius-lg);
-    padding: var(--space-md);
-    transition:
-      transform var(--transition-fast),
-      box-shadow var(--transition-fast);
-  }
-
-  .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
   }
 
   .product-card.hidden {
@@ -126,102 +115,99 @@ const translatedBadge = product.badge ? product.badge[safeLang] : null;
 
   .product-badge {
     position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
     z-index: 1;
-    background: var(--color-primary);
-    color: var(--color-white);
+    top: 20px;
+    right: 20px;
+    padding: 3px 10px;
+    background: var(--fz-red);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
   }
 
   .product-image {
+    display: grid;
+    place-items: center;
     aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: var(--space-sm);
+    overflow: hidden;
+    background: #fff;
   }
 
   .product-img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
+    transition: transform 0.4s ease;
   }
 
-  .product-info {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
+  .product-card:hover .product-img {
+    transform: scale(1.04);
   }
 
   .product-name {
-    font-size: 1rem;
-    color: var(--color-secondary);
-    min-height: 2.4em; /* Ensure consistent height for titles */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    margin: 14px 0 6px;
+    font-size: 22px;
+    line-height: 1.05;
+  }
+
+  .product-name a {
+    color: #fff;
+    text-decoration: none;
   }
 
   .product-prices {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 2px 8px;
+    margin: 0 0 14px;
   }
 
   .price-cop {
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary);
+    color: var(--fz-gold);
+    font-weight: 600;
   }
 
   .price-usd {
-    font-size: 0.85rem;
-    color: var(--color-text-light);
+    font-size: 13px;
+    color: #cfc8b6;
   }
 
   .product-btn {
-    margin-top: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    font-size: 0.9rem;
-    width: 100%;
-    display: block;
-  }
-
-  .product-link {
-    display: block;
+    justify-content: center;
+    margin-top: auto;
+    min-height: 44px;
+    padding: 0 12px;
+    font: inherit;
+    font-weight: 600;
     text-decoration: none;
-    color: inherit;
+    cursor: pointer;
   }
 
-  .product-actions {
-    margin-top: var(--space-sm);
-  }
-
-  @media (max-width: 600px) {
+  @media (max-width: 900px) {
     .product-card {
-      padding: var(--space-sm);
-    }
-
-    .price-cop {
-      font-size: 1rem;
-    }
-
-    .product-name {
-      font-size: 0.9rem;
+      padding: 8px;
     }
 
     .product-badge {
-      font-size: 0.65rem;
-      padding: 0.15rem 0.4rem;
-      top: 0.5rem;
-      right: 0.5rem;
+      top: 14px;
+      right: 14px;
+    }
+
+    .product-name {
+      font-size: 18px;
+    }
+
+    .product-btn {
+      font-size: 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .product-img {
+      transition: none;
     }
   }
 </style>

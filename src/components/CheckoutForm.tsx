@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Mail, MapPin, StickyNote, User } from "lucide-react";
 import PhoneField from "@/components/checkout/PhoneField";
 import LocationFields, {
   type LocationValue,
@@ -251,7 +252,7 @@ export default function CheckoutForm({
     return (
       <div className="checkout-empty">
         <p>{t["checkout.empty.title"]}</p>
-        <a href={storePath} className="btn btn-primary">
+        <a href={storePath} className="fz-button fz-button-solid">
           {t["checkout.empty.cta"]}
         </a>
       </div>
@@ -276,32 +277,38 @@ export default function CheckoutForm({
           <legend>{t["checkout.contact.title"]}</legend>
           <div className={fieldClass("name")}>
             <label htmlFor="ck-name">{t["checkout.name"]}</label>
-            <input
-              id="ck-name"
-              type="text"
-              autoComplete="name"
-              maxLength={100}
-              placeholder={t["checkout.name.ph"]}
-              value={form.name}
-              onChange={set("name")}
-              aria-invalid={!!errors.name || undefined}
-              aria-describedby={describedBy("name")}
-            />
+            <span className="hm-input-icon">
+              <User aria-hidden="true" size={18} />
+              <input
+                id="ck-name"
+                type="text"
+                autoComplete="name"
+                maxLength={100}
+                placeholder={t["checkout.name.ph"]}
+                value={form.name}
+                onChange={set("name")}
+                aria-invalid={!!errors.name || undefined}
+                aria-describedby={describedBy("name")}
+              />
+            </span>
             {errorText("name")}
           </div>
           <div className={fieldClass("email")}>
             <label htmlFor="ck-email">{t["checkout.email"]}</label>
-            <input
-              id="ck-email"
-              type="email"
-              autoComplete="email"
-              maxLength={120}
-              placeholder={t["checkout.email.ph"]}
-              value={form.email}
-              onChange={set("email")}
-              aria-invalid={!!errors.email || undefined}
-              aria-describedby={describedBy("email")}
-            />
+            <span className="hm-input-icon">
+              <Mail aria-hidden="true" size={18} />
+              <input
+                id="ck-email"
+                type="email"
+                autoComplete="email"
+                maxLength={120}
+                placeholder={t["checkout.email.ph"]}
+                value={form.email}
+                onChange={set("email")}
+                aria-invalid={!!errors.email || undefined}
+                aria-describedby={describedBy("email")}
+              />
+            </span>
             {errorText("email")}
           </div>
           <div className={fieldClass("phone")}>
@@ -363,29 +370,35 @@ export default function CheckoutForm({
           />
           <div className={fieldClass("address")}>
             <label htmlFor="ck-address">{t["checkout.address"]}</label>
-            <input
-              id="ck-address"
-              type="text"
-              autoComplete="street-address"
-              maxLength={200}
-              placeholder={t["checkout.address.ph"]}
-              value={form.address}
-              onChange={set("address")}
-              aria-invalid={!!errors.address || undefined}
-              aria-describedby={describedBy("address")}
-            />
+            <span className="hm-input-icon">
+              <MapPin aria-hidden="true" size={18} />
+              <input
+                id="ck-address"
+                type="text"
+                autoComplete="street-address"
+                maxLength={200}
+                placeholder={t["checkout.address.ph"]}
+                value={form.address}
+                onChange={set("address")}
+                aria-invalid={!!errors.address || undefined}
+                aria-describedby={describedBy("address")}
+              />
+            </span>
             {errorText("address")}
           </div>
           <div className="ck-field">
             <label htmlFor="ck-notes">{t["checkout.notes"]}</label>
-            <textarea
-              id="ck-notes"
-              rows={2}
-              maxLength={300}
-              placeholder={t["checkout.notes.ph"]}
-              value={form.notes}
-              onChange={set("notes")}
-            />
+            <span className="hm-input-icon hm-input-icon--top">
+              <StickyNote aria-hidden="true" size={18} />
+              <textarea
+                id="ck-notes"
+                rows={2}
+                maxLength={300}
+                placeholder={t["checkout.notes.ph"]}
+                value={form.notes}
+                onChange={set("notes")}
+              />
+            </span>
           </div>
         </fieldset>
       </div>
@@ -422,7 +435,7 @@ export default function CheckoutForm({
 
         <button
           type="button"
-          className="btn btn-primary ck-pay"
+          className="fz-button fz-button-solid ck-pay"
           onClick={submit}
           disabled={loading}
         >

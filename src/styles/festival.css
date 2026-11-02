@@ -83,7 +83,8 @@
   font-weight: 600;
 }
 
-.fz a.fz-button-solid {
+.fz a.fz-button-solid,
+.fz button.fz-button-solid {
   background: var(--fz-red);
   border-color: var(--fz-red);
   color: #fff;
@@ -1888,7 +1889,7 @@ html.has-stickybuy .whatsapp-float {
 
 /* Country and dial-code dropdowns: they are portaled to <body>, out of the page's scope, so the
    dark home styles them through :has() on its <main>. */
-:root:has(main.fz.home) [data-slot="popover-content"] {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="popover-content"] {
   background: #222;
   color: #fff;
   border: 1px solid #3a3a3a;
@@ -1896,54 +1897,68 @@ html.has-stickybuy .whatsapp-float {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
-:root:has(main.fz.home) [data-slot="command"] {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command"] {
   background: transparent;
   color: #fff;
 }
 
-:root:has(main.fz.home) [data-slot="command-input-wrapper"] {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-input-wrapper"] {
   border-color: #3a3a3a;
 }
 
-:root:has(main.fz.home) [data-slot="command-input-wrapper"] svg {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-input-wrapper"] svg {
   color: #cfc8b6;
 }
 
-:root:has(main.fz.home) [data-slot="command-input"] {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-input"] {
   color: #fff;
 }
 
-:root:has(main.fz.home) [data-slot="command-input"]::placeholder {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-input"]::placeholder {
   color: #8f8878;
 }
 
-:root:has(main.fz.home) [data-slot="command-item"] {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-item"] {
   border-radius: 0;
   color: #fff;
 }
 
-:root:has(main.fz.home) [data-slot="command-item"][data-selected="true"] {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-item"][data-selected="true"] {
   background: rgba(242, 193, 78, 0.14);
   color: #fff;
 }
 
-:root:has(main.fz.home) [data-slot="command-list"] {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-list"] {
   scrollbar-color: #555 #222;
   scrollbar-width: thin;
 }
 
-:root:has(main.fz.home) [data-slot="command-list"]::-webkit-scrollbar {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-list"]::-webkit-scrollbar {
   width: 8px;
 }
 
-:root:has(main.fz.home) [data-slot="command-list"]::-webkit-scrollbar-track {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-list"]::-webkit-scrollbar-track {
   background: #222;
 }
 
-:root:has(main.fz.home) [data-slot="command-list"]::-webkit-scrollbar-thumb {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-list"]::-webkit-scrollbar-thumb {
   background: #555;
 }
 
-:root:has(main.fz.home) [data-slot="command-empty"] {
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-empty"] {
   color: #cfc8b6;
+}
+
+/* Product grid shared by the home store section and /tienda: 4 columns, 2 on phones. */
+.fz-product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .fz-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
 }
