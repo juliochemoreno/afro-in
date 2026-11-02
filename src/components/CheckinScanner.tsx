@@ -3,9 +3,24 @@
 import * as React from "react";
 import { Camera, CameraOff, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 
+// Mirrors CheckInResult (lib/tickets.ts); day/days/today come from a
+// multi-day pass, checked in once per door day.
 type Verdict =
-  | { result: "ok"; attendee: string; eventName: string }
-  | { result: "already"; attendee: string; eventName: string; checkedInAt: string }
+  | { result: "ok"; attendee: string; eventName: string; day?: number; days?: number }
+  | {
+      result: "already";
+      attendee: string;
+      eventName: string;
+      checkedInAt: string;
+      today?: boolean;
+    }
+  | {
+      result: "out_of_range";
+      attendee: string;
+      eventName: string;
+      startDate: string;
+      endDate: string;
+    }
   | { result: "not_found" }
   | { result: "not_paid" }
   | { result: "error" };
@@ -255,14 +270,29 @@ function verdictCard(v: Verdict): {
         cls: "border-emerald-300 bg-emerald-500 text-white",
         icon: <CheckCircle2 className="size-8" />,
         title: v.attendee,
-        subtitle: v.eventName,
+        subtitle: v.days ? `Válida · día ${v.day} de ${v.days}` : v.eventName,
       };
     case "already":
+      if (v.today) {
+        return {
+          cls: "border-amber-300 bg-amber-500 text-white",
+          icon: <AlertTriangle className="size-8" />,
+          title: "Ya entró hoy",
+          subtitle: `${v.attendee} · a las ${formatTime(v.checkedInAt)}`,
+        };
+      }
       return {
         cls: "border-amber-300 bg-amber-500 text-white",
         icon: <AlertTriangle className="size-8" />,
         title: "Ya usada",
         subtitle: `${v.attendee} · ${formatTime(v.checkedInAt)}`,
+      };
+    case "out_of_range":
+      return {
+        cls: "border-red-300 bg-red-500 text-white",
+        icon: <XCircle className="size-8" />,
+        title: "Fuera de fechas",
+        subtitle: `${v.attendee} · ${formatDay(v.startDate)} a ${formatDay(v.endDate)}`,
       };
     case "not_paid":
       return {
@@ -294,5 +324,13 @@ function formatTime(ts: string): string {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: "America/Bogota",
   });
+}
+
+// "2027-01-15" -> "15 ene" (a calendar date, so read and shown in UTC).
+function formatDay(ymd: string): string {
+  const d = new Date(`${ymd}T00:00:00Z`);
+  if (isNaN(d.getTime())) return ymd;
+  return d.toLocaleDateString("es-CO", { day: "numeric", month: "short", timeZone: "UTC" });
 }
