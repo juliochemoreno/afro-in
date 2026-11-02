@@ -11,10 +11,12 @@ import {
   XCircle,
   Loader2,
   UserCheck,
+  ScanLine,
 } from "lucide-react";
 import type { ColDef } from "ag-grid-community";
 import AdminGrid from "@/components/admin/AdminGrid";
 import { MIN_ADMIN_PASSWORD_LENGTH } from "@/lib/adminPolicy";
+import { accountActive, type AdminRole } from "@/lib/adminRoles";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,8 +34,10 @@ interface AdminRecord {
   id: number;
   email: string;
   name: string;
-  role: "superadmin" | "admin";
+  role: AdminRole;
   is_active: number;
+  /** Last door day of a "Puerta" account (D26). */
+  active_until?: string | null;
   created_at: string;
   updated_at?: string;
 }
@@ -52,6 +56,7 @@ export default function AdminsDashboard() {
     password: "",
     role: "admin",
     is_active: true,
+    active_until: "",
   });
   const [saving, setSaving] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
@@ -90,6 +95,7 @@ export default function AdminsDashboard() {
       password: "",
       role: "admin",
       is_active: true,
+      active_until: "",
     });
     setFormError(null);
     setModalOpen(true);
@@ -103,6 +109,7 @@ export default function AdminsDashboard() {
       password: "",
       role: admin.role,
       is_active: admin.is_active === 1,
+      active_until: admin.active_until || "",
     });
     setFormError(null);
     setModalOpen(true);
@@ -138,6 +145,11 @@ export default function AdminsDashboard() {
       return;
     }
 
+    if (formData.role === "door" && !formData.active_until) {
+      setFormError("Elige hasta qué día sirve la cuenta de puerta");
+      return;
+    }
+
     setSaving(true);
     try {
       const url = editingAdmin
@@ -154,6 +166,7 @@ export default function AdminsDashboard() {
           role: formData.role,
           is_active: formData.is_active ? 1 : 0,
           password: formData.password || undefined,
+          active_until: formData.role === "door" ? formData.active_until : undefined,
         }),
       });
 
@@ -212,9 +225,26 @@ export default function AdminsDashboard() {
       {
         headerName: "Rol",
         field: "role",
-        width: 140,
+        width: 190,
         cellRenderer: (p: any) => {
           const isSuper = p.value === "superadmin";
+          if (p.value === "door") {
+            const d = p.data as AdminRecord;
+            const expired = !accountActive(d);
+            return (
+              <div className="flex h-full items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-semibold text-foreground">
+                  <ScanLine className="size-3" />
+                  Puerta
+                </span>
+                <span
+                  className={`text-xs ${expired ? "font-semibold text-destructive" : "text-muted-foreground"}`}
+                >
+                  {expired ? "Vencido" : `hasta ${formatYmd(d.active_until)}`}
+                </span>
+              </div>
+            );
+          }
           return (
             <div className="flex h-full items-center">
               <span
@@ -431,6 +461,7 @@ export default function AdminsDashboard() {
                   >
                     <option value="admin">Admin</option>
                     <option value="superadmin">Superadmin</option>
+                    <option value="door">Puerta (solo check-in)</option>
                   </select>
                 </div>
 
@@ -449,6 +480,24 @@ export default function AdminsDashboard() {
                   </select>
                 </div>
               </div>
+
+              {formData.role === "door" && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="admin-active-until">Activo hasta</Label>
+                  <Input
+                    id="admin-active-until"
+                    type="date"
+                    value={formData.active_until}
+                    onChange={(e) =>
+                      setFormData((f) => ({ ...f, active_until: e.target.value }))
+                    }
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Solo puede usar la puerta, hasta las 6:00 a. m. del día siguiente.
+                  </p>
+                </div>
+              )}
             </div>
 
             <DialogFooter>
@@ -517,4 +566,17 @@ export default function AdminsDashboard() {
       </Dialog>
     </div>
   );
+}
+
+// "2027-01-17" -> "17 ene 2027" (a calendar date, so read and shown in UTC).
+function formatYmd(ymd?: string | null): string {
+  if (!ymd) return "";
+  const d = new Date(`${ymd}T00:00:00Z`);
+  if (isNaN(d.getTime())) return ymd;
+  return d.toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }

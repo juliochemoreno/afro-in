@@ -1,0 +1,20 @@
+---
+export const prerender = false;
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import TicketOrdersDashboard from "@/components/TicketOrdersDashboard";
+
+// One event's ticket purchases, reached from the events list (Julio).
+// Access is protected via the session cookie (middleware guards /admin).
+const { id } = Astro.params;
+const db = (Astro.locals as any).runtime?.env?.DB;
+const event = db && id
+  ? await db.prepare("SELECT id, name_es FROM events WHERE id = ?").bind(Number(id)).first<{ id: number; name_es: string }>()
+  : null;
+if (!event) return Astro.redirect("/admin/eventos", 302);
+---
+
+<AdminLayout title={`Entradas · ${event.name_es} | AFRO IN Admin`}>
+  <main class="flex flex-col lg:h-full lg:overflow-hidden">
+    <TicketOrdersDashboard client:only="react" event={{ id: event.id, name: event.name_es }} />
+  </main>
+</AdminLayout>

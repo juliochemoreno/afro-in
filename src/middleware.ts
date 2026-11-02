@@ -1,5 +1,6 @@
 import { defineMiddleware, sequence } from "astro:middleware";
-import { ADMIN_COOKIE, isValidAdminSession } from "./lib/adminAuth";
+import { ADMIN_COOKIE, verifyAdminSession } from "./lib/adminAuth";
+import { DOOR_PATH, doorHostRoute, isDoorHost, isDoorPath } from "./lib/doorHost";
 
 const SUPPORTED_LANGS = ["es", "en", "fr"] as const;
 const DEFAULT_LANG = "es";
@@ -20,20 +21,47 @@ const noindexOutsideProduction = defineMiddleware(async (context, next) => {
 
 const handleRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
-  const pathname = url.pathname;
+  // Astro routes on the decoded path, so every check below must use it too:
+  // otherwise /%61dmin/... renders an admin page without the session check.
+  let pathname: string;
+  try {
+    pathname = decodeURI(url.pathname);
+  } catch {
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  // Door host (checkin.afroin.org): only the door and its login. Other admin
+  // pages go to the door, other APIs do not exist there. Static files are
+  // served before the Worker, so they never reach this.
+  if (isDoorHost(url.hostname)) {
+    const route = doorHostRoute(pathname);
+    if (route === "door") return context.redirect(DOOR_PATH, 302);
+    if (route === "not_found") {
+      return new Response(JSON.stringify({ error: "not_found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
 
   // 0. Protect /admin routes with a cookie-based session. The login page
   // itself is excluded so unauthenticated users can reach it.
   if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     const env = (context.locals as any).runtime?.env ?? {};
     const cookie = context.cookies.get(ADMIN_COOKIE)?.value;
-    const authed = await isValidAdminSession(env, cookie);
-    if (!authed) {
+    const admin = await verifyAdminSession(env, cookie);
+    if (!admin) {
       return context.redirect(
         `/admin/login?next=${encodeURIComponent(pathname)}`,
         302
       );
     }
+    // Door accounts (D26) see only the door; the APIs refuse them in
+    // requireAdmin.
+    if (admin.role === "door" && !isDoorPath(pathname)) {
+      return context.redirect(DOOR_PATH, 302);
+    }
+    context.locals.admin = admin;
   }
 
   // 1. Redirect www to non-www

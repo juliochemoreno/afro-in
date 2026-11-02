@@ -11,6 +11,7 @@ export const ADMIN_COOKIE = "admin_session";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 8;
 
 export { MIN_ADMIN_PASSWORD_LENGTH } from "@/lib/adminPolicy";
+import { accountActive, parseRole, type AdminRole } from "@/lib/adminRoles";
 
 // Id carried by sessions of the environment account (ADMIN_USER /
 // ADMIN_PASSWORD). D1 ids start at 1, so it never matches a D1 admin.
@@ -25,8 +26,10 @@ export interface AdminUser {
   id: number;
   email: string;
   name: string;
-  role: "superadmin" | "admin";
+  role: AdminRole;
   is_active: number;
+  /** Last door day of a "door" account (D26); null for the other roles. */
+  active_until: string | null;
 }
 
 const toHex = (bytes: ArrayBuffer | Uint8Array): string =>
@@ -223,6 +226,7 @@ export async function verifyAdminSession(
         name: "Administrador (Env)",
         role: "superadmin",
         is_active: 1,
+        active_until: null,
       };
     }
 
@@ -230,18 +234,23 @@ export async function verifyAdminSession(
     if (!db) return null;
     const row = await db
       .prepare(
-        "SELECT id, email, name, role, is_active, password_hash FROM admins WHERE id = ?"
+        "SELECT id, email, name, role, is_active, password_hash, active_until FROM admins WHERE id = ?"
       )
       .bind(id)
       .first();
     if (!row || Number(row.is_active) !== 1) return null;
     if (!(await sameCredential(String(row.password_hash)))) return null;
+    const role = parseRole(row.role);
+    const activeUntil = row.active_until ? String(row.active_until) : null;
+    // A door account ends after its last door day, open sessions included.
+    if (!accountActive({ role, active_until: activeUntil })) return null;
     return {
       id: Number(row.id),
       email: String(row.email),
       name: String(row.name),
-      role: row.role === "superadmin" ? "superadmin" : "admin",
+      role,
       is_active: 1,
+      active_until: role === "door" ? activeUntil : null,
     };
   } catch {
     // Bad base64/JSON, or D1 unavailable: fail closed.
@@ -258,14 +267,20 @@ export async function isValidAdminSession(
   return session !== null;
 }
 
-// Guard for /api/admin/* endpoints
-export async function requireAdmin(context: {
-  locals: any;
-  cookies: { get(name: string): { value: string } | undefined };
-}): Promise<AdminUser | null> {
+// Guard for /api/admin/* endpoints. Door accounts (D26) are refused unless
+// the endpoint opts in with allowDoor: only the check-in API does.
+export async function requireAdmin(
+  context: {
+    locals: any;
+    cookies: { get(name: string): { value: string } | undefined };
+  },
+  opts: { allowDoor?: boolean } = {}
+): Promise<AdminUser | null> {
   const env = (context.locals as any).runtime?.env ?? {};
   const cookie = context.cookies.get(ADMIN_COOKIE)?.value;
-  return verifyAdminSession(env, cookie);
+  const admin = await verifyAdminSession(env, cookie);
+  if (admin?.role === "door" && !opts.allowDoor) return null;
+  return admin;
 }
 
 export function adminUnauthorized(): Response {
