@@ -169,6 +169,15 @@ function ActionsCell(p: any) {
         <ExternalLink className="size-4" />
       </a>
       <a
+        href={`/admin/eventos/${d.id}/entradas`}
+        onClick={(e) => e.stopPropagation()}
+        aria-label="Ver entradas"
+        title="Entradas de este evento"
+        className="hover:bg-muted text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md"
+      >
+        <Ticket className="size-4" />
+      </a>
+      <a
         href={`/admin/eventos/${d.id}`}
         onClick={(e) => e.stopPropagation()}
         aria-label="Editar"
@@ -371,6 +380,9 @@ export default function EventsDashboard() {
         loading={loading}
         rowHeight={60}
         onRowClicked={(e: any) => {
+          // Clicks on the row's own links/buttons (entradas, ver, eliminar) are theirs:
+          // React's stopPropagation does not reach the grid's native row listener.
+          if ((e.event?.target as HTMLElement | undefined)?.closest("a, button")) return;
           if (e.data) window.location.href = `/admin/eventos/${e.data.id}`;
         }}
         overlayNoRowsTemplate="Aún no hay eventos."

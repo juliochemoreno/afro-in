@@ -1,10 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Eye, Ticket, Clock, CheckCircle2, Copy, Check, Gift, Download, Mail } from "lucide-react";
+import { Eye, CheckCircle2, Copy, Check, Gift, Download, Mail, Search, Ticket, Clock, ScanLine, Wallet, User, Phone } from "lucide-react";
 
 import type { ColDef } from "ag-grid-community";
 import AdminGrid from "@/components/admin/AdminGrid";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { orderRef } from "@/lib/orderRef";
 import {
   Dialog,
@@ -238,27 +243,6 @@ function ViewCell(p: any) {
   );
 }
 
-function Stat({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="bg-card border-border flex items-center gap-3 rounded-xl border p-4 shadow-sm">
-      <div className="bg-muted text-foreground flex size-10 items-center justify-center rounded-lg">
-        {icon}
-      </div>
-      <div className="flex flex-col">
-        <span className="text-muted-foreground text-xs">{label}</span>
-        <span className="text-foreground text-xl font-bold">{value}</span>
-      </div>
-    </div>
-  );
-}
 
 function CopyLink({ url }: { url: string }) {
   const [copied, setCopied] = React.useState(false);
@@ -289,8 +273,36 @@ interface EventOption {
   sold: number;
 }
 
-export default function TicketOrdersDashboard() {
+function Stat({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="bg-card border-border flex items-center gap-3 rounded-xl border p-4 shadow-sm">
+      <div className="bg-muted text-foreground flex size-10 items-center justify-center rounded-lg">
+        {icon}
+      </div>
+      <div className="flex flex-col">
+        <span className="text-muted-foreground text-xs">{label}</span>
+        <span className="text-foreground text-xl font-bold">{value}</span>
+      </div>
+    </div>
+  );
+}
+
+interface DashboardProps {
+  /** One event's tickets (the event's "Entradas" page); all events when absent. */
+  event?: { id: number; name: string };
+}
+
+export default function TicketOrdersDashboard({ event }: DashboardProps = {}) {
   const [orders, setOrders] = React.useState<TicketOrderRow[]>([]);
+  const [search, setSearch] = React.useState("");
   const [loading, setLoading] = React.useState(true);
   const [selected, setSelected] = React.useState<TicketOrderRow | null>(null);
   const [tickets, setTickets] = React.useState<TicketItem[] | null>(null);
@@ -327,7 +339,7 @@ export default function TicketOrdersDashboard() {
         if (data.events?.length > 0) {
           setCourtesyForm((f) => ({
             ...f,
-            eventId: f.eventId || String(data.events[0].id),
+            eventId: f.eventId || String(event?.id ?? data.events[0].id),
           }));
         }
       }
@@ -429,17 +441,6 @@ export default function TicketOrdersDashboard() {
     }
   }, []);
 
-  const stats = React.useMemo(() => {
-    const paid = orders.filter((o) => o.status === "completed");
-    const pending = orders.filter((o) => o.status === "pending");
-    const revenue = paid.reduce((s, o) => s + Number(o.amount || 0), 0);
-    return {
-      total: orders.length,
-      paid: paid.length,
-      pending: pending.length,
-      revenue,
-    };
-  }, [orders]);
 
   const columnDefs = React.useMemo<ColDef<TicketOrderRow>[]>(
     () => [
@@ -449,6 +450,7 @@ export default function TicketOrdersDashboard() {
         field: "event_name",
         flex: 1.5,
         minWidth: 160,
+        hide: !!event,
       },
       {
         headerName: "Comprador",
@@ -493,8 +495,38 @@ export default function TicketOrdersDashboard() {
         cellRenderer: ViewCell,
       },
     ],
-    []
+    [event]
   );
+
+  const visibleOrders = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const own = event ? orders.filter((o) => o.event_id === event.id) : orders;
+    if (!q) return own;
+    return own.filter((o) =>
+      [String(o.id), o.bold_order_id ? orderRef(o.bold_order_id) : "", o.event_name, o.buyer_name, o.buyer_email, o.buyer_phone]
+        .some((v) => String(v ?? "").toLowerCase().includes(q))
+    );
+  }, [orders, search]);
+
+  // One event's totals (only on the event's page: across all events they would grow forever).
+  const eventStats = React.useMemo(() => {
+    if (!event) return null;
+    const own = orders.filter((o) => o.event_id === event.id);
+    const completed = own.filter((o) => o.status === "completed");
+    const count = (list: TicketOrderRow[]) =>
+      list.reduce((s, o) => s + Number(o.ticket_count || o.quantity || 0), 0);
+    // Courtesies are complimentary tickets: counted apart from the ones sold.
+    const courtesy = completed.filter((o) => o.provider === "courtesy");
+    const sold = completed.filter((o) => o.provider !== "courtesy");
+    return {
+      tickets: count(sold),
+      courtesy: count(courtesy),
+      total: count(completed),
+      revenue: sold.reduce((s, o) => s + Number(o.amount || 0), 0),
+      checkedIn: completed.reduce((s, o) => s + Number(o.checked_in_count || 0), 0),
+      pending: own.filter((o) => o.status === "pending").length,
+    };
+  }, [orders, event]);
 
   const permalink =
     selected && typeof window !== "undefined"
@@ -504,37 +536,41 @@ export default function TicketOrdersDashboard() {
   return (
     <div className="text-foreground flex flex-col gap-4 p-6 lg:h-full lg:min-h-0">
       <header className="shrink-0">
-        <h1 className="text-3xl font-extrabold tracking-tight">Entradas</h1>
+        {event && (
+          <a href="/admin/eventos" className="text-muted-foreground hover:text-foreground text-sm">
+            ← Eventos
+          </a>
+        )}
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          {event ? `Entradas · ${event.name}` : "Entradas"}
+        </h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Compras de entradas pagadas con Bold
         </p>
       </header>
 
-      <div className="flex items-center justify-between shrink-0 mb-2">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 flex-1">
-          <Stat
-            icon={<Ticket className="size-5" />}
-            label="Compras"
-            value={String(stats.total)}
-          />
-          <Stat
-            icon={<CheckCircle2 className="size-5" />}
-            label="Pagadas"
-            value={String(stats.paid)}
-          />
-          <Stat
-            icon={<Clock className="size-5" />}
-            label="Pendientes"
-            value={String(stats.pending)}
-          />
-          <Stat
-            icon={<Ticket className="size-5" />}
-            label="Ingresos"
-            value={COP.format(stats.revenue)}
+      {eventStats && (
+        <div className="grid shrink-0 grid-cols-2 gap-3 lg:grid-cols-5">
+          <Stat icon={<Ticket className="size-5" />} label="Entradas vendidas" value={String(eventStats.tickets)} />
+          <Stat icon={<Gift className="size-5" />} label="Cortesías" value={String(eventStats.courtesy)} />
+          <Stat icon={<Wallet className="size-5" />} label="Ingresos" value={COP.format(eventStats.revenue)} />
+          <Stat icon={<ScanLine className="size-5" />} label="Ingresaron" value={`${eventStats.checkedIn} / ${eventStats.total}`} />
+          <Stat icon={<Clock className="size-5" />} label="Pagos pendientes" value={String(eventStats.pending)} />
+        </div>
+      )}
+
+      {/* Toolbar: search on the left, actions on the right (Julio). */}
+      <div className="flex shrink-0 flex-wrap items-center gap-3">
+        <div className="relative min-w-[220px] flex-1">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={event ? "Buscar por compra, nombre, correo o teléfono" : "Buscar por compra, evento, nombre, correo o teléfono"}
+            className="border-border bg-background pl-9 shadow-sm"
           />
         </div>
-        
-        <div className="ml-4 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={openCourtesyModal}
@@ -586,7 +622,7 @@ export default function TicketOrdersDashboard() {
       </div>
 
       <AdminGrid<TicketOrderRow>
-        rowData={orders}
+        rowData={visibleOrders}
         columnDefs={columnDefs}
         context={{ onView }}
         loading={loading}
@@ -720,10 +756,10 @@ export default function TicketOrdersDashboard() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Gift className="text-primary size-5" />
-              Emitir Entrada de Cortesía
+              Emitir cortesía
             </DialogTitle>
             <DialogDescription>
-              Genera entradas gratuitas directamente para invitados, miembros del equipo o prensa.
+              Entradas gratuitas para invitados, equipo o prensa. Les llega el correo con sus QR.
             </DialogDescription>
           </DialogHeader>
 
@@ -773,16 +809,15 @@ export default function TicketOrdersDashboard() {
               </div>
 
               <div className="flex justify-end pt-3">
-                <button
+                <Button
                   type="button"
                   onClick={() => {
                     setCourtesySuccess(null);
                     setCourtesyOpen(false);
                   }}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
                 >
                   Cerrar
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -793,136 +828,121 @@ export default function TicketOrdersDashboard() {
                 </div>
               )}
 
-              <div>
-                <label className="text-foreground mb-1 block text-xs font-semibold uppercase">
-                  Evento <span className="text-destructive">*</span>
-                </label>
-                <select
-                  value={courtesyForm.eventId}
-                  onChange={(e) =>
-                    setCourtesyForm((f) => ({ ...f, eventId: e.target.value }))
-                  }
-                  required
-                  className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                >
-                  {eventsList.length === 0 && (
-                    <option value="">Cargando eventos...</option>
-                  )}
-                  {eventsList.map((ev) => {
-                    const remaining = Math.max(0, ev.capacity - ev.sold);
-                    return (
-                      <option key={ev.id} value={ev.id}>
-                        {ev.name_es} ({remaining} cupos disp.)
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="text-foreground mb-1 block text-xs font-semibold uppercase">
-                    Nombre del beneficiario <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej. Carlos Valderrama"
-                    value={courtesyForm.name}
-                    onChange={(e) =>
-                      setCourtesyForm((f) => ({ ...f, name: e.target.value }))
-                    }
-                    className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                  />
+              {/* On an event's page the event is fixed; elsewhere pick it. */}
+              {event ? (
+                <p className="text-muted-foreground text-sm">
+                  Evento: <span className="text-foreground font-semibold">{event.name}</span>
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label>Evento</Label>
+                  <Select
+                    value={courtesyForm.eventId}
+                    onValueChange={(v) => setCourtesyForm((f) => ({ ...f, eventId: v }))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={eventsList.length ? "Elige el evento" : "Cargando eventos…"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {eventsList.map((ev) => (
+                        <SelectItem key={ev.id} value={String(ev.id)}>
+                          {ev.name_es} · {Math.max(0, ev.capacity - ev.sold)} cupos
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+              )}
 
-                <div>
-                  <label className="text-foreground mb-1 block text-xs font-semibold uppercase">
-                    Cantidad de entradas <span className="text-destructive">*</span>
-                  </label>
-                  <input
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_8rem]">
+                <div className="space-y-1.5">
+                  <Label htmlFor="courtesy-name">Nombre</Label>
+                  <div className="relative">
+                    <User className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+                    <Input
+                      id="courtesy-name"
+                      required
+                      placeholder="Ej. María Palacios"
+                      value={courtesyForm.name}
+                      onChange={(e) => setCourtesyForm((f) => ({ ...f, name: e.target.value }))}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="courtesy-qty">Entradas</Label>
+                  <Input
+                    id="courtesy-qty"
                     type="number"
-                    min="1"
-                    max="50"
+                    min={1}
+                    max={50}
                     required
                     value={courtesyForm.quantity}
                     onChange={(e) =>
-                      setCourtesyForm((f) => ({
-                        ...f,
-                        quantity: Math.max(1, parseInt(e.target.value) || 1),
-                      }))
+                      setCourtesyForm((f) => ({ ...f, quantity: Math.max(1, parseInt(e.target.value) || 1) }))
                     }
-                    className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="text-foreground mb-1 block text-xs font-semibold uppercase">
-                    Correo electrónico <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="invitado@correo.com"
-                    value={courtesyForm.email}
-                    onChange={(e) =>
-                      setCourtesyForm((f) => ({ ...f, email: e.target.value }))
-                    }
-                    className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                  />
+                <div className="space-y-1.5">
+                  <Label htmlFor="courtesy-email">Correo</Label>
+                  <div className="relative">
+                    <Mail className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+                    <Input
+                      id="courtesy-email"
+                      type="email"
+                      required
+                      placeholder="Ej. maria@correo.com"
+                      value={courtesyForm.email}
+                      onChange={(e) => setCourtesyForm((f) => ({ ...f, email: e.target.value }))}
+                      className="pl-9"
+                    />
+                  </div>
                 </div>
-
-                <div>
-                  <label className="text-foreground mb-1 block text-xs font-semibold uppercase">
-                    Teléfono (opcional)
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="300 123 4567"
-                    value={courtesyForm.phone}
-                    onChange={(e) =>
-                      setCourtesyForm((f) => ({ ...f, phone: e.target.value }))
-                    }
-                    className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                  />
+                <div className="space-y-1.5">
+                  <Label htmlFor="courtesy-phone">
+                    Teléfono <span className="text-muted-foreground font-normal">(opcional)</span>
+                  </Label>
+                  <div className="relative">
+                    <Phone className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+                    <Input
+                      id="courtesy-phone"
+                      type="tel"
+                      placeholder="300 123 4567"
+                      value={courtesyForm.phone}
+                      onChange={(e) => setCourtesyForm((f) => ({ ...f, phone: e.target.value }))}
+                      className="pl-9"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="text-foreground mb-1 block text-xs font-semibold uppercase">
-                  Idioma del correo
-                </label>
-                <select
+              <div className="space-y-1.5">
+                <Label>Idioma del correo</Label>
+                <Select
                   value={courtesyForm.lang}
-                  onChange={(e) =>
-                    setCourtesyForm((f) => ({ ...f, lang: e.target.value }))
-                  }
-                  className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 sm:w-1/2"
+                  onValueChange={(v) => setCourtesyForm((f) => ({ ...f, lang: v }))}
                 >
-                  <option value="es">Español</option>
-                  <option value="en">English</option>
-                  <option value="fr">Français</option>
-                </select>
+                  <SelectTrigger className="w-full sm:w-1/2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="fr">Français</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setCourtesyOpen(false)}
-                  disabled={courtesyLoading}
-                  className="border-border text-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-semibold transition-colors"
-                >
+                <Button type="button" variant="outline" onClick={() => setCourtesyOpen(false)} disabled={courtesyLoading}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={courtesyLoading}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
-                >
-                  {courtesyLoading ? "Emitiendo..." : "Generar Entradas"}
-                </button>
+                </Button>
+                <Button type="submit" disabled={courtesyLoading}>
+                  {courtesyLoading ? "Emitiendo…" : "Emitir cortesía"}
+                </Button>
               </div>
             </form>
           )}
