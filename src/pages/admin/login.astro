@@ -6,15 +6,17 @@ import Lock from "lucide-astro/Lock";
 import { DOOR_PATH, isDoorHost } from "@/lib/doorHost";
 
 // If already authenticated, bounce straight to the dashboard.
-import { ADMIN_COOKIE, isValidAdminSession } from "@/lib/adminAuth";
+import { ADMIN_COOKIE, verifyAdminSession } from "@/lib/adminAuth";
 // On the door host (checkin.afroin.org) the login leads to the door and
 // shows no public-site chrome.
 const door = isDoorHost(Astro.url.hostname);
 const home = door ? DOOR_PATH : "/admin/donadores";
 const env = (Astro.locals as any).runtime?.env ?? {};
 const cookie = Astro.cookies.get(ADMIN_COOKIE)?.value;
-if (await isValidAdminSession(env, cookie)) {
-  return Astro.redirect(home, 302);
+const admin = await verifyAdminSession(env, cookie);
+if (admin) {
+  // Door accounts (D26) only ever land on the door.
+  return Astro.redirect(admin.role === "door" ? DOOR_PATH : home, 302);
 }
 
 // Only same-site admin paths: `next` ends up in window.location after login.

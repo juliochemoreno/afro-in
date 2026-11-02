@@ -1,6 +1,6 @@
 import { defineMiddleware, sequence } from "astro:middleware";
-import { ADMIN_COOKIE, isValidAdminSession } from "./lib/adminAuth";
-import { DOOR_PATH, doorHostRoute, isDoorHost } from "./lib/doorHost";
+import { ADMIN_COOKIE, verifyAdminSession } from "./lib/adminAuth";
+import { DOOR_PATH, doorHostRoute, isDoorHost, isDoorPath } from "./lib/doorHost";
 
 const SUPPORTED_LANGS = ["es", "en", "fr"] as const;
 const DEFAULT_LANG = "es";
@@ -42,13 +42,19 @@ const handleRequest = defineMiddleware(async (context, next) => {
   if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     const env = (context.locals as any).runtime?.env ?? {};
     const cookie = context.cookies.get(ADMIN_COOKIE)?.value;
-    const authed = await isValidAdminSession(env, cookie);
-    if (!authed) {
+    const admin = await verifyAdminSession(env, cookie);
+    if (!admin) {
       return context.redirect(
         `/admin/login?next=${encodeURIComponent(pathname)}`,
         302
       );
     }
+    // Door accounts (D26) see only the door; the APIs refuse them in
+    // requireAdmin.
+    if (admin.role === "door" && !isDoorPath(pathname)) {
+      return context.redirect(DOOR_PATH, 302);
+    }
+    context.locals.admin = admin;
   }
 
   // 1. Redirect www to non-www

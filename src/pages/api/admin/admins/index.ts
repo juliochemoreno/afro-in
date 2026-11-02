@@ -5,6 +5,7 @@ import {
   hashPassword,
   MIN_ADMIN_PASSWORD_LENGTH,
 } from "@/lib/adminAuth";
+import { validActiveUntil } from "@/lib/adminRoles";
 
 export const prerender = false;
 
@@ -29,7 +30,7 @@ export const GET: APIRoute = async (ctx) => {
   try {
     const res = await db
       .prepare(
-        "SELECT id, email, name, role, is_active, created_at, updated_at FROM admins ORDER BY id ASC"
+        "SELECT id, email, name, role, is_active, active_until, created_at, updated_at FROM admins ORDER BY id ASC"
       )
       .all();
     return json({ admins: res.results || [] });
@@ -71,13 +72,23 @@ export const POST: APIRoute = async (ctx) => {
   const email = String(body.email || "").trim().toLowerCase().slice(0, 120);
   const name = String(body.name || "").trim().slice(0, 100);
   const password = typeof body.password === "string" ? body.password : "";
-  if (body.role !== undefined && body.role !== "admin" && body.role !== "superadmin") {
+  if (
+    body.role !== undefined &&
+    body.role !== "admin" &&
+    body.role !== "superadmin" &&
+    body.role !== "door"
+  ) {
     return json({ error: "Rol inválido" }, 400);
   }
   if (body.is_active !== undefined && ![0, 1, true, false].includes(body.is_active)) {
     return json({ error: "Estado inválido" }, 400);
   }
-  const role = body.role === "superadmin" ? "superadmin" : "admin";
+  const role = body.role === "superadmin" || body.role === "door" ? body.role : "admin";
+  // Door accounts (D26) need their last door day; the other roles have none.
+  const activeUntil = role === "door" ? validActiveUntil(body.active_until) : null;
+  if (role === "door" && !activeUntil) {
+    return json({ error: "Fecha 'Activo hasta' inválida" }, 400);
+  }
   const isActive = body.is_active === 0 || body.is_active === false ? 0 : 1;
 
   if (!email || !email.includes("@")) {
@@ -98,10 +109,10 @@ export const POST: APIRoute = async (ctx) => {
     const { hash, salt } = await hashPassword(password);
     const res = await db
       .prepare(
-        `INSERT INTO admins (email, name, password_hash, salt, role, is_active, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+        `INSERT INTO admins (email, name, password_hash, salt, role, is_active, active_until, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
       )
-      .bind(email, name, hash, salt, role, isActive)
+      .bind(email, name, hash, salt, role, isActive, activeUntil)
       .run();
 
     return json({ ok: true, id: Number(res.meta.last_row_id) }, 201);
