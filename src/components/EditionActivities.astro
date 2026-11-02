@@ -2,6 +2,8 @@
 // One day's activities (time, kind, title, artist with flag, note, sign-up),
 // or "to be announced" when there are none. Shared by the listing journey
 // and the stop pages.
+import { getImage } from "astro:assets";
+import type { ImageMetadata } from "astro";
 import Flag from "@/components/Flag.astro";
 import { useTranslations } from "@/i18n/utils";
 import type { Lang } from "@/lib/programacion";
@@ -15,6 +17,7 @@ export interface EditionActivity {
   note?: string;
   signupUrl?: string;
   signupLabel?: string;
+  poster?: ImageMetadata;
 }
 
 interface Props {
@@ -29,6 +32,17 @@ const t = useTranslations(lang);
 // A time column only when some time is known; unknown ones are said once.
 const anyTime = activities.some((activity) => activity.time);
 const missingTime = activities.some((activity) => !activity.time);
+// Posters: a small thumbnail beside the activity and the full poster in a dialog.
+const posters = await Promise.all(
+  activities.map(async (activity) =>
+    activity.poster
+      ? {
+          thumb: await getImage({ src: activity.poster, width: 240, format: "webp" }),
+          full: await getImage({ src: activity.poster, widths: [800, 1200, 1587], format: "webp" }),
+        }
+      : null
+  )
+);
 ---
 
 {activities.length === 0 ? (
@@ -40,8 +54,8 @@ const missingTime = activities.some((activity) => !activity.time);
   <div class="fz-program">
     {missingTime && <p class="fz-muted fz-program-tbc">{t("edition.timesTbc")}</p>}
     <ul class="fz-agenda">
-      {activities.map((activity) => (
-        <li class:list={["fz-agenda-item", { "fz-agenda-timed": anyTime }]}>
+      {activities.map((activity, i) => (
+        <li class:list={["fz-agenda-item", { "fz-agenda-timed": anyTime, "fz-agenda-has-poster": posters[i] }]}>
           {anyTime && <span class="fz-agenda-time">{activity.time ?? ""}</span>}
           <div>
             <Heading class="fz-agenda-title">
@@ -59,8 +73,40 @@ const missingTime = activities.some((activity) => !activity.time);
               </a>
             )}
           </div>
+          {posters[i] && (
+            <>
+              <button type="button" class="fz-agenda-poster" data-poster-open aria-label={`${t("edition.posterOpen")}: ${activity.title}`}>
+                <img src={posters[i].thumb.src} width={posters[i].thumb.attributes.width} height={posters[i].thumb.attributes.height} alt="" loading="lazy" decoding="async" />
+              </button>
+              <dialog class="fz-poster-dialog" aria-label={activity.title}>
+                <button type="button" class="fz-poster-close" data-poster-close aria-label={t("edition.posterClose")}>×</button>
+                <img
+                  src={posters[i].full.src}
+                  srcset={posters[i].full.srcSet.attribute}
+                  sizes="(max-width: 720px) 92vw, 560px"
+                  alt={activity.title}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </dialog>
+            </>
+          )}
         </li>
       ))}
     </ul>
   </div>
 )}
+
+<script>
+  // Opens the poster next to its button; a click on the backdrop or the × closes it.
+  document.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+    const open = target.closest<HTMLButtonElement>("[data-poster-open]");
+    if (open) {
+      (open.nextElementSibling as HTMLDialogElement | null)?.showModal();
+      return;
+    }
+    const dialog = target.closest<HTMLDialogElement>(".fz-poster-dialog");
+    if (dialog && (target === dialog || target.closest("[data-poster-close]"))) dialog.close();
+  });
+</script>

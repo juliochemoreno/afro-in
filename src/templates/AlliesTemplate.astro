@@ -1,0 +1,466 @@
+---
+// Allies page: a photo hero, this edition's allies (the night venues with their photo and date, then
+// the rest), every ally of past editions grouped by what they do, and an invitation to join.
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import FestivalFont from "@/components/FestivalFont.astro";
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+import { allies, type Ally } from "@/lib/allies";
+import { editionNav } from "@/lib/editionNav";
+import { baseSlug, dayAnchor, dayLabel, entryLang, type Lang } from "@/lib/programacion";
+import heroPhoto from "@/assets/img/2027/lugares/palenque-banner-un-millon-de-corazones.jpg";
+import laPuertaPhoto from "@/assets/img/2027/lugares/oh-la-la-la-puerta-fachada.jpg";
+import cokoaPhoto from "@/assets/img/2027/lugares/cokoa-fachada.jpg";
+import masayaPhoto from "@/assets/img/2027/lugares/masaya-fachada.jpg";
+import joinPhoto from "@/assets/img/2027/lugares/cokoa-patio-atardecer.jpg";
+import laPuertaLogo from "@/assets/img/aliados/la-puerta-dark.png";
+import cokoaLogo from "@/assets/img/aliados/cokoa-dark.png";
+import masayaLogo from "@/assets/img/aliados/masaya.webp";
+import caribeamLogo from "@/assets/img/aliados/caribeam-team-dark.png";
+import kombilesaLogo from "@/assets/img/aliados/kombilesa-mi.webp";
+import tayrosoftLogo from "@/assets/img/tayrosoft-logo-white.svg";
+import "@/styles/festival.css";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = "es" } = Astro.props;
+const t = useTranslations(lang);
+const { navLinks, ctaLink } = editionNav(lang);
+
+// The night venues: photo and logo here, date and link from the Santa Marta stop.
+const santaMarta = (await getCollection("tour2027")).find(
+  (entry) => entryLang(entry.filePath!) === lang && baseSlug(entry.filePath!) === "santa-marta"
+);
+const VENUES = [
+  { venue: "Oh la la! La Puerta", photo: laPuertaPhoto, logo: laPuertaLogo, logoHeight: 72 },
+  { venue: "Co·KoA", photo: cokoaPhoto, logo: cokoaLogo, logoHeight: 34 },
+  { venue: "Masaya", photo: masayaPhoto, logo: masayaLogo, logoHeight: 40 },
+];
+const venues = VENUES.map((v) => {
+  const day = santaMarta?.data.days.find((d) => d.venue === v.venue);
+  const label = day && dayLabel(day.date, lang);
+  return {
+    ...v,
+    name: day?.venueShort ?? v.venue,
+    when: label ? `${label.weekdayShort} ${label.dayMonth}` : "",
+    href: day && santaMarta ? `${getTranslatedPath("/programacion/2027/santa-marta", lang)}#${dayAnchor(day.date)}` : undefined,
+  };
+});
+
+const partners = [
+  { name: "Caribeam Team", logo: caribeamLogo, height: 64 },
+  { name: "Kombilesa Mi", logo: kombilesaLogo, height: 72 },
+  { name: "Tayrosoft", logo: tayrosoftLogo, height: 26, href: "https://tayrosoft.com" },
+];
+
+// Already shown as this edition's allies, so not repeated among the past ones.
+const CURRENT = new Set(["Masaya", "La Puerta", "Kombilesa Mi", "Caribeam Team", "Tayrosoft"]);
+const GROUPS: { key: Ally["group"]; label: string }[] = [
+  { key: "stay", label: t("alliesPage.groupStay") },
+  { key: "culture", label: t("alliesPage.groupCulture") },
+  { key: "dance", label: t("alliesPage.groupDance") },
+  { key: "services", label: t("alliesPage.groupServices") },
+];
+const pastGroups = GROUPS.map((group) => ({
+  ...group,
+  allies: allies.filter((ally) => ally.group === group.key && !CURRENT.has(ally.name)),
+})).filter((group) => group.allies.length > 0);
+---
+
+<Layout title={t("alliesPage.metaTitle")} description={t("alliesPage.lead")}>
+  <FestivalFont slot="head" />
+  <Header navLinks={navLinks} ctaLink={ctaLink} variant="festival" />
+
+  <main class="fz allies-page">
+    <section class="fz-photo-hero allies-hero">
+      <Image src={heroPhoto} alt="" widths={[768, 1440, 1600]} sizes="100vw" loading="eager" class="fz-photo-hero-img" style="object-position: center 35%" />
+      <div class="fz-wrap fz-photo-hero-content">
+        <a class="allies-back" href={getTranslatedPath("/programacion", lang)}><span aria-hidden="true">←</span> {t("edition.backToEdition")}</a>
+        <h1 class="fz-display allies-title">{t("alliesPage.title")}</h1>
+        <p class="allies-lead">{t("alliesPage.lead")}</p>
+      </div>
+    </section>
+
+    <section class="fz-wrap allies-section" aria-labelledby="allies-current-title">
+      <h2 id="allies-current-title" class="fz-display allies-h2">{t("alliesPage.currentTitle")}</h2>
+
+      <ul class="allies-venues">
+        {venues.map((venue) => {
+          const Tag = venue.href ? "a" : "div";
+          return (
+            <li>
+              <Tag class="allies-venue" href={venue.href}>
+                <Image src={venue.photo} alt="" widths={[480, 960]} sizes="(max-width: 900px) 100vw, 33vw" class="allies-venue-photo" loading="lazy" />
+                <span class="allies-venue-body">
+                  <Image src={venue.logo} alt={venue.name} height={venue.logoHeight * 2} style={`height: ${venue.logoHeight}px`} class="allies-venue-logo" loading="lazy" />
+                  {venue.when && <span class="allies-venue-when">{venue.when} · Santa Marta</span>}
+                </span>
+              </Tag>
+            </li>
+          );
+        })}
+      </ul>
+
+      <ul class="allies-partners">
+        {partners.map((partner) => (
+          <li class="allies-partner">
+            {partner.href ? (
+              <a href={partner.href} target="_blank" rel="noopener noreferrer">
+                <Image src={partner.logo} alt={partner.name} height={partner.height * 2} style={`height: ${partner.height}px`} loading="lazy" />
+              </a>
+            ) : (
+              <Image src={partner.logo} alt={partner.name} height={partner.height * 2} style={`height: ${partner.height}px`} loading="lazy" />
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="fz-wrap allies-section" aria-labelledby="allies-past-title">
+      <div>
+      <h2 id="allies-past-title" class="fz-display allies-h2">{t("alliesPage.pastTitle")}</h2>
+
+      {pastGroups.map((group) => (
+        <div class="allies-group">
+          <h3 class="allies-group-title">{group.label}</h3>
+          <ul class="allies-grid">
+            {group.allies.map((ally) => (
+              <li class="allies-card" title={ally.name}>
+                <span class="allies-logo">
+                  <Image src={ally.imageOnDark ?? ally.image} alt={ally.name} width={320} class="allies-logo-img" loading="lazy" />
+                </span>
+                <span class="allies-card-city">{ally.location}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      </div>
+    </section>
+
+    <section class="allies-join" aria-labelledby="allies-join-title">
+      <Image src={joinPhoto} alt="" widths={[768, 1440, 1920]} sizes="100vw" class="allies-join-photo" loading="lazy" />
+      <div class="fz-wrap allies-join-body">
+        <h2 id="allies-join-title" class="fz-display allies-join-title">{t("alliesPage.joinTitle")}</h2>
+        <p class="allies-join-text">{t("alliesPage.joinText")}</p>
+        <div class="allies-join-actions">
+          <a class="fz-button fz-button-solid" href={getTranslatedPath("/#contacto", lang)}>{t("alliesPage.joinBtn")}</a>
+          <a class="allies-end-link" href={getTranslatedPath("/programacion", lang)}>
+            <span aria-hidden="true">←</span> {t("edition.fullProgram")}
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer variant="festival" />
+</Layout>
+
+<style>
+  /* A shorter hero than the stop pages: the allies show up right away. */
+  .fz-photo-hero.allies-hero {
+    min-height: min(56vh, 520px);
+  }
+
+  .allies-hero .fz-photo-hero-content {
+    padding-top: 140px;
+    padding-bottom: 48px;
+  }
+
+  .allies-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    font-size: 15px;
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .allies-back:hover,
+  .allies-back:focus-visible {
+    color: #e6b84a;
+  }
+
+  .allies-title {
+    margin: 4px 0 0;
+    font-size: clamp(56px, 9vw, 128px);
+    line-height: 0.95;
+  }
+
+  .allies-lead {
+    max-width: 56ch;
+    margin: 20px 0 0;
+    font-size: 19px;
+  }
+
+  .allies-section {
+    padding-block: 72px 0;
+  }
+
+  /* Same scale as the Programación page's section titles and leads. */
+  .allies-h2 {
+    margin: 0 0 8px;
+    font-size: 64px;
+    line-height: 1;
+  }
+
+  .allies-section-lead {
+    max-width: 60ch;
+    margin: 0;
+    font-size: 18px;
+  }
+
+  /* The three night venues: facade photo, the venue's logo and its night. */
+  .allies-venues {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 36px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .allies-venue {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .allies-venue::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent 35%, rgba(14, 10, 8, 0.92));
+  }
+
+  .allies-venue-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+
+  a.allies-venue:hover .allies-venue-photo,
+  a.allies-venue:focus-visible .allies-venue-photo {
+    transform: scale(1.04);
+  }
+
+  .allies-venue-body {
+    position: absolute;
+    z-index: 1;
+    left: 24px;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .allies-venue-logo {
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .allies-venue-when {
+    font-weight: 600;
+    color: #e6b84a;
+  }
+
+  .allies-partners {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 40px 56px;
+    margin: 40px 0 0;
+    padding: 28px 0 0;
+    list-style: none;
+    border-top: 1px solid rgba(243, 233, 210, 0.12);
+  }
+
+  .allies-partner img {
+    display: block;
+    width: auto;
+  }
+
+  .allies-group {
+    margin-top: 44px;
+  }
+
+  .allies-group-title {
+    margin: 0 0 18px;
+    font-family: "Anton", var(--font-heading, "Outfit"), sans-serif;
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.1;
+  }
+
+  .allies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 28px 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .allies-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Past allies straight on the dark page: logos in their own colours (black ink turned cream),
+     each fitted into the same box so none looks bigger than the others. */
+  .allies-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    transition: transform 0.25s ease;
+  }
+
+  .allies-card:hover .allies-logo {
+    transform: translateY(-3px);
+  }
+
+  .allies-logo-img {
+    width: 82%;
+    height: 82%;
+    object-fit: contain;
+  }
+
+  .allies-card-city {
+    font-size: 14px;
+    color: var(--fz-muted);
+    text-align: center;
+  }
+
+  /* Invitation to join: a full-width photo band, darkened, with one line and the red button. */
+  .allies-join {
+    position: relative;
+    margin-block: 96px 48px;
+    min-height: clamp(380px, 56svh, 560px);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .allies-join::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(14, 10, 8, 0.92) 0%, rgba(14, 10, 8, 0.7) 45%, rgba(14, 10, 8, 0.25) 100%);
+  }
+
+  .allies-join-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+  }
+
+  .allies-join-body {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding-block: 64px;
+  }
+
+  .allies-join-title {
+    max-width: 14ch;
+    margin: 0;
+    font-size: clamp(44px, 6.5vw, 88px);
+    line-height: 0.98;
+  }
+
+  .allies-join-text {
+    max-width: 46ch;
+    margin: 18px 0 0;
+    font-size: 19px;
+  }
+
+  /* Both actions on one row: join first, then back to the tour. */
+  .allies-join-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .allies-end-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .allies-end-link:hover,
+  .allies-end-link:focus-visible {
+    background: #e6b84a;
+    border-color: #e6b84a;
+    color: #161616;
+  }
+
+  @media (max-width: 900px) {
+    .allies-venues {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .allies-venue {
+      aspect-ratio: 16 / 10;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .allies-hero .fz-photo-hero-content {
+      padding-top: 104px;
+    }
+
+    .allies-h2 {
+      font-size: 40px;
+    }
+
+    .allies-group-title {
+      font-size: 26px;
+    }
+
+    .allies-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px 14px;
+    }
+
+    .allies-partners {
+      gap: 28px 36px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .allies-venue-photo,
+    .allies-logo {
+      transition: none;
+    }
+  }
+</style>

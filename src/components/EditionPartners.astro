@@ -9,14 +9,16 @@ import masaya from "@/assets/img/aliados/masaya.webp";
 import caribeam from "@/assets/img/aliados/caribeam-team-dark.png";
 import kombilesaMi from "@/assets/img/aliados/kombilesa-mi.webp";
 import tayrosoft from "@/assets/img/tayrosoft-logo-white.svg";
-import { useTranslations } from "@/i18n/utils";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 import type { Lang } from "@/lib/programacion";
 
 interface Props {
   lang: Lang;
+  // The edition listing links to the allies page; the allies page itself does not.
+  showAll?: boolean;
 }
 
-const { lang } = Astro.props;
+const { lang, showAll = false } = Astro.props;
 const t = useTranslations(lang);
 
 // `height` evens out the visual size: wordmarks are wide, badges round, and some files carry padding.
@@ -46,9 +48,34 @@ const partners = [
       </li>
     ))}
   </ul>
+  {showAll && (
+    <a class="edition-partners-all" href={getTranslatedPath("/aliados", lang)}>
+      {t("edition.allAllies")} <span aria-hidden="true">→</span>
+    </a>
+  )}
 </section>
 
 <style>
+  .edition-partners-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 28px;
+    padding: 12px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .edition-partners-all:hover,
+  .edition-partners-all:focus-visible {
+    background: #e6b84a;
+    border-color: #e6b84a;
+    color: #161616;
+  }
+
   /* Same title and subtitle as the other sections of the page. */
   .edition-partners-title {
     margin: 0 0 8px;
