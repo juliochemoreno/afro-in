@@ -10,136 +10,53 @@ const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 ---
 
-<section class="store section" id="tienda">
-  <div class="container">
-    <div
-      class="store-header text-center animate-fade-in-up"
-      style="animation-delay: 0.1s"
-    >
-      <span class="section-badge">{t("store.hero.badge")}</span>
-      <h2 class="section-title">{t("store.hero.title")}</h2>
-      <p class="section-subtitle">
-        {t("store.hero.description")}
-      </p>
-    </div>
+<section class="hm-section hm-section--alt store" id="tienda" aria-labelledby="store-title">
+  <div class="fz-wrap">
+    <header class="hm-head">
+      <p class="fz-display hm-kicker">{t("store.hero.badge")}</p>
+      <h2 id="store-title" class="fz-display hm-title">{t("store.hero.title")}</h2>
+      <p class="hm-sub">{t("store.hero.description")}</p>
+    </header>
 
     <FeaturedProducts server:defer lang={lang}>
-      <div slot="fallback" class="products-grid"></div>
+      <div slot="fallback" class="store-fallback"></div>
     </FeaturedProducts>
 
-    <div class="store-note text-center">
-      <div class="note-card card-glass">
-        <span class="note-icon">💡</span>
-        <p>
-          <strong>{t("store.note.title")}</strong><br />
-          {t("store.note.description")}
-          <a href={getTranslatedPath("/#contacto", lang)}
-            >{t("store.note.contact")}</a
-          >
-        </p>
-      </div>
+    <div class="hm-actions">
+      <a class="fz-button fz-button-solid" href={getTranslatedPath("/tienda", lang)}>
+        {t("store.home.all")}
+      </a>
     </div>
+
+    <p class="store-note">
+      <strong>{t("store.note.title")}</strong>
+      {t("store.note.description")}
+      <a href={getTranslatedPath("/#contacto", lang)}>{t("store.note.contact")}</a>
+    </p>
   </div>
 </section>
 
 <style>
-  .store {
-    background: var(--color-white);
-  }
-
-  .section-badge {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-md);
-    background: rgba(227, 28, 37, 0.1);
-    border-radius: var(--radius-full);
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-md);
-  }
-
-  .section-title {
-    font-size: clamp(2rem, 5vw, 3rem);
-    color: var(--color-secondary);
-    margin-bottom: var(--space-md);
-  }
-
-  .section-subtitle {
-    font-size: 1.2rem;
-    color: var(--color-text-light);
-    max-width: 600px;
-    margin: 0 auto var(--space-xl);
-  }
-
-  .products-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-md);
-    margin-bottom: var(--space-lg);
-  }
-
-  .product-image,
-  .product-img,
-  .product-name,
-  .product-prices,
-  .price-cop,
-  .price-usd,
-  .product-btn,
-  .product-badge {
-    /* Styles moved to ProductCard component */
-    display: none; /* Just to be safe if any old HTML remains, though it shouldn't */
+  .store-fallback {
+    min-height: 320px;
   }
 
   .store-note {
-    max-width: 600px;
-    margin: 0 auto;
+    max-width: 640px;
+    margin: 32px auto 0;
+    font-size: 15px;
+    line-height: 1.55;
+    text-align: center;
+    color: #cfc8b6;
   }
 
-  /* ... rest of note-card styles ... */
-  .note-card {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-md);
-    text-align: left;
+  .store-note strong {
+    color: #fff;
   }
 
-  .note-icon {
-    font-size: 2rem;
-    flex-shrink: 0;
-  }
-
-  .note-card p {
-    color: var(--color-text-light);
-    font-size: 0.95rem;
-  }
-
-  .note-card a {
-    color: var(--color-primary);
+  .store-note a {
     font-weight: 600;
-  }
-
-  .note-card a:hover {
     text-decoration: underline;
-  }
-
-  @media (max-width: 968px) {
-    .products-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: 600px) {
-    .products-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--space-sm);
-    }
-
-    .note-card {
-      flex-direction: column;
-      text-align: center;
-    }
+    text-underline-offset: 4px;
   }
 </style>
-```

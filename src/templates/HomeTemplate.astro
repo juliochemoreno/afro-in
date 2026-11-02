@@ -12,14 +12,14 @@ import Allies from "../components/Allies.astro";
 import Community from "../components/Community.astro";
 import Contact from "../components/Contact.astro";
 import Footer from "../components/Footer.astro";
-import { getLangFromUrl, useTranslations } from "../i18n/utils";
+import FestivalFont from "../components/FestivalFont.astro";
+import "../styles/festival.css";
 
 interface Props {
   lang?: string;
 }
 
 const { lang = "es" } = Astro.props;
-const t = useTranslations(lang as "es" | "en" | "fr");
 
 // Get title based on language
 const titles = {
@@ -32,18 +32,19 @@ const title = titles[lang as keyof typeof titles] || titles.es;
 ---
 
 <Layout title={title}>
-  <Header />
-  <main>
+  <FestivalFont slot="head" />
+  <Header variant="festival" />
+  <main class="fz home">
     <Hero />
     <About />
     <Documentary />
     <Gallery />
-    <Store />
     <Events />
+    <Store />
     <Registration />
     <Allies />
     <Community />
     <Contact />
   </main>
-  <Footer />
+  <Footer variant="festival" />
 </Layout>

@@ -56,18 +56,13 @@ const categories = [
 ];
 ---
 
-<section class="gallery section" id="galeria">
-  <div class="container">
-    <div
-      class="gallery-header text-center animate-fade-in-up"
-      style="animation-delay: 0.1s"
-    >
-      <span class="section-badge">{t("gallery.badge")}</span>
-      <h2 class="section-title">{t("gallery.title")}</h2>
-      <p class="section-subtitle">
-        {t("gallery.subtitle")}
-      </p>
-    </div>
+<section class="hm-section hm-section--alt gallery" id="galeria" aria-labelledby="gallery-title">
+  <div class="fz-wrap">
+    <header class="hm-head">
+      <p class="fz-display hm-kicker">{t("gallery.badge")}</p>
+      <h2 id="gallery-title" class="fz-display hm-title">{t("gallery.title")}</h2>
+      <p class="hm-sub">{t("gallery.subtitle")}</p>
+    </header>
 
     <div class="gallery-filters">
       {
@@ -82,10 +77,10 @@ const categories = [
       }
     </div>
 
-    <div class="gallery-grid animate-fade-in-up" style="animation-delay: 0.3s">
+    <div class="gallery-grid">
       {
         galleryItems.map((item) => (
-          <div class="gallery-item">
+          <div class="gallery-item" data-category={item.category}>
             <Image
               src={item.image}
               alt={item.title}
@@ -100,190 +95,89 @@ const categories = [
       }
     </div>
 
-    <div class="gallery-cta text-center">
+    <div class="gallery-cta">
       <p>{t("gallery.cta")}</p>
-      <div class="gallery-social flex justify-center gap-4">
-        <a
-          href="https://instagram.com/afroin"
-          class="social-icon-link"
-          target="_blank"
-          aria-label="Instagram"
-        >
-          <Instagram size={24} />
-        </a>
-        <a
-          href="https://facebook.com/afroin"
-          class="social-icon-link"
-          target="_blank"
-          aria-label="Facebook"
-        >
-          <Facebook size={24} />
-        </a>
-        <a
-          href="https://www.youtube.com/@afroin5816"
-          class="social-icon-link"
-          target="_blank"
-          aria-label="YouTube"
-        >
-          <Youtube size={24} />
-        </a>
+      <div class="gallery-social">
+        <a href="https://instagram.com/afroin" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Instagram size={22} /></a>
+        <a href="https://facebook.com/afroin" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><Facebook size={22} /></a>
+        <a href="https://www.youtube.com/@afroin5816" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><Youtube size={22} /></a>
       </div>
     </div>
   </div>
 </section>
 
 <style>
-  .gallery {
-    background: var(--color-cream);
-  }
-
-  /* ... Estilos anteriores ... */
-
-  .social-icon-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: var(--color-white);
-    color: var(--color-primary);
-    border: 1px solid rgba(227, 28, 37, 0.2);
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  }
-
-  .social-icon-link:hover {
-    background: var(--color-primary);
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(227, 28, 37, 0.2);
-  }
-
-  .section-badge {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-md);
-    background: rgba(227, 28, 37, 0.1);
-    border-radius: var(--radius-full);
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-md);
-  }
-
-  .section-title {
-    font-size: clamp(2rem, 5vw, 3rem);
-    color: var(--color-secondary);
-    margin-bottom: var(--space-md);
-  }
-
-  .section-subtitle {
-    font-size: 1.2rem;
-    color: var(--color-text-light);
-    max-width: 600px;
-    margin: 0 auto var(--space-xl);
-  }
-
+  /* Filters stay hidden (as before): the photos are few enough to show at once. */
   .gallery-filters {
     display: none;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-xl);
-  }
-
-  .filter-btn {
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-full);
-    font-family: var(--font-body);
-    font-weight: 500;
-    font-size: 0.9rem;
-    color: var(--color-text-light);
-    background: var(--color-white);
-    border: 1px solid transparent;
-    transition: all var(--transition-normal);
-  }
-
-  .filter-btn:hover {
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-  }
-
-  .filter-btn.active {
-    background: var(--color-primary);
-    color: var(--color-white);
   }
 
   .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-lg);
-    margin-bottom: var(--space-xl);
-  }
-
-  @media (min-width: 1024px) {
-    .gallery-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .gallery-item {
-    position: relative;
-    aspect-ratio: 4/3;
-    border-radius: var(--radius-lg);
     overflow: hidden;
+    background: #222;
   }
 
-  .gallery-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .gallery-item :global(.gallery-img) {
     display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    height: auto;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .gallery-item:hover :global(.gallery-img) {
+    transform: scale(1.04);
   }
 
   .gallery-cta {
-    padding-top: var(--space-xl);
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    margin-top: 40px;
+    text-align: center;
   }
 
   .gallery-cta p {
-    color: var(--color-text-light);
-    margin-bottom: var(--space-md);
+    margin: 0 0 16px;
+    color: #e9e2d2;
   }
 
   .gallery-social {
     display: flex;
     justify-content: center;
-    gap: var(--space-md);
+    gap: 12px;
   }
 
-  @media (max-width: 968px) {
+  .gallery-social a {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    color: #fff;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .gallery-social a:hover,
+  .gallery-social a:focus-visible {
+    background: var(--fz-red);
+    border-color: var(--fz-red);
+  }
+
+  @media (max-width: 900px) {
     .gallery-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
     }
   }
 
-  @media (max-width: 600px) {
-    .gallery-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-    }
-
-    .gallery-item {
-      border-radius: 0;
-      aspect-ratio: 1;
-    }
-
-    /* Adjust placeholder size for smaller boxes */
-    .gallery-placeholder {
-      font-size: 2rem;
-    }
-
-    .gallery-social {
-      /* flex-direction: column; removido para mantener fila horizontal */
-      align-items: center;
+  @media (prefers-reduced-motion: reduce) {
+    .gallery-item :global(.gallery-img) {
+      transition: none;
     }
   }
 </style>
