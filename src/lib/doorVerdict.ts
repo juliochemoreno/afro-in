@@ -28,8 +28,12 @@ export type DoorTone = "ok" | "warn" | "bad";
 
 export interface DoorView {
   tone: DoorTone;
+  /** The verdict, short. */
   title: string;
-  detail?: string;
+  /** Who and which event, when known. */
+  lines: string[];
+  /** What happened and what the door staff should do. */
+  hint: string;
 }
 
 /** Green for a valid entry, amber for one already used, red for the rest. */
@@ -38,35 +42,69 @@ export function doorVerdict(v: Verdict): DoorView {
     case "ok":
       return {
         tone: "ok",
-        title: v.attendee,
-        detail: v.days ? `Válida · día ${v.day} de ${v.days}` : v.eventName,
+        title: "Puede entrar",
+        lines: [v.attendee, v.days ? `${v.eventName} · día ${v.day} de ${v.days}` : v.eventName],
+        hint: v.days ? "Entrada de hoy registrada." : "Entrada registrada.",
       };
     case "already":
-      return {
-        tone: "warn",
-        title: v.today ? "Ya entró hoy" : "Ya usada",
-        detail: `${v.attendee} · ${v.today ? "a las " : ""}${formatTime(v.checkedInAt)}`,
-      };
+      return v.today
+        ? {
+            tone: "warn",
+            title: "Ya entró hoy",
+            lines: [v.attendee, `Entró a las ${formatTime(v.checkedInAt)}`],
+            hint: "Este pase ya se usó hoy. No dejar pasar de nuevo.",
+          }
+        : {
+            tone: "warn",
+            title: "Entrada ya usada",
+            lines: [v.attendee, `Se usó el ${formatDateTime(v.checkedInAt)}`],
+            hint: "Esta entrada ya se usó. No dejar pasar de nuevo.",
+          };
     case "out_of_range":
       return {
         tone: "bad",
         title: "Fuera de fechas",
-        detail: `${v.attendee} · ${formatDay(v.startDate)} a ${formatDay(v.endDate)}`,
+        lines: [v.attendee, `Válido del ${formatDay(v.startDate)} al ${formatDay(v.endDate)}`],
+        hint: "Hoy no es un día de este pase.",
       };
     case "not_paid":
-      return { tone: "bad", title: "Pago no confirmado" };
+      return {
+        tone: "bad",
+        title: "Pago no confirmado",
+        lines: [],
+        hint: "La compra no aparece pagada. Pide el comprobante y consulta a un administrador.",
+      };
     case "error":
-      return { tone: "bad", title: "Error de red", detail: "Reintenta" };
+      return {
+        tone: "bad",
+        title: "Sin conexión",
+        lines: [],
+        hint: "No se pudo validar. Revisa el internet y vuelve a escanear.",
+      };
     case "expired":
-      return { tone: "bad", title: "Sesión vencida", detail: "Vuelve a ingresar" };
+      return {
+        tone: "bad",
+        title: "Sesión vencida",
+        lines: [],
+        hint: "Vuelve a ingresar para seguir validando entradas.",
+      };
     default:
-      return { tone: "bad", title: "No encontrada" };
+      return {
+        tone: "bad",
+        title: "Entrada no encontrada",
+        lines: [],
+        hint: "Este código no es una entrada de AFRO IN. Revísalo o escríbelo a mano.",
+      };
   }
+}
+
+function toDate(ts: string): Date {
+  return new Date(ts.includes("T") ? ts : ts.replace(" ", "T") + "Z");
 }
 
 export function formatTime(ts: string): string {
   if (!ts) return "";
-  const d = new Date(ts.includes("T") ? ts : ts.replace(" ", "T") + "Z");
+  const d = toDate(ts);
   if (isNaN(d.getTime())) return ts;
   return d.toLocaleTimeString("es-CO", {
     hour: "numeric",
@@ -74,6 +112,19 @@ export function formatTime(ts: string): string {
     hour12: true,
     timeZone: "America/Bogota",
   });
+}
+
+// "2027-01-16 02:30:00" (UTC) -> "15 ene a las 9:30 p. m." (Bogotá).
+export function formatDateTime(ts: string): string {
+  if (!ts) return "";
+  const d = toDate(ts);
+  if (isNaN(d.getTime())) return ts;
+  const day = d.toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "short",
+    timeZone: "America/Bogota",
+  });
+  return `${day} a las ${formatTime(ts)}`;
 }
 
 // "2027-01-15" -> "15 ene" (a calendar date, so read and shown in UTC).

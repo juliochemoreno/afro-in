@@ -418,14 +418,23 @@ export default function CheckinScanner({ exitHref }: { exitHref: string | null }
             paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
-          <div className="flex flex-1 flex-col items-center justify-center gap-5 p-8">
-            {view.tone === "ok" && <CheckCircle2 className="size-24" strokeWidth={2.5} />}
-            {view.tone === "warn" && <AlertTriangle className="size-24" strokeWidth={2.5} />}
-            {view.tone === "bad" && <XCircle className="size-24" strokeWidth={2.5} />}
-            <p className="door-display text-5xl leading-none break-words uppercase sm:text-7xl">
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
+            {view.tone === "ok" && <CheckCircle2 className="size-16" strokeWidth={2.5} />}
+            {view.tone === "warn" && <AlertTriangle className="size-16" strokeWidth={2.5} />}
+            {view.tone === "bad" && <XCircle className="size-16" strokeWidth={2.5} />}
+            <p className="door-display text-4xl leading-tight break-words uppercase">
               {view.title}
             </p>
-            {view.detail && <p className="text-xl font-semibold sm:text-2xl">{view.detail}</p>}
+            {view.lines.length > 0 && (
+              <div className="space-y-1">
+                {view.lines.map((line, i) => (
+                  <p key={i} className={i === 0 ? "text-2xl font-bold" : "text-lg font-semibold"}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
+            <p className="max-w-xs text-base opacity-90">{view.hint}</p>
           </div>
           <div className="p-4">
             {verdict.result === "expired" ? (
