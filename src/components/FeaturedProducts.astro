@@ -1,11 +1,13 @@
 ---
-import { getProducts } from "@/lib/products";
-import ProductCard from "./ProductCard.astro";
+import { getProducts, formatPrice } from "@/lib/products";
+import ImagePlaceholder from "./ImagePlaceholder.astro";
+import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 
 interface Props {
   lang: "es" | "en" | "fr";
 }
 const { lang } = Astro.props;
+const t = useTranslations(lang);
 
 // Rendered as a server island (server:defer from Store.astro) so the home page
 // stays statically built — and its <Image> assets keep being optimized at build
@@ -17,34 +19,148 @@ const db = (Astro.locals as any).runtime?.env?.DB;
 const featured = db
   ? (await getProducts(db, { visibleOnly: true })).slice(0, 8)
   : [];
+
+// Home cards keep the old home card's layout (photo, badge, name, prices, one button) in the
+// festival look: dark square card, the photo on its own white panel, red square button.
+// /tienda keeps ProductCard.
 ---
 
 <div class="products-grid">
   {
-    featured.map((product) => (
-      <ProductCard product={product} lang={lang} showQuickAdd={false} />
-    ))
+    featured.map((product) => {
+      const image = product.images[0]?.url ?? "";
+      const href = getTranslatedPath(`/tienda/${product.slug}`, lang);
+      return (
+        <article class="hm-card home-product">
+          {product.badge && <span class="home-product-badge">{product.badge[lang]}</span>}
+          <a href={href} class="home-product-image" tabindex="-1" aria-hidden="true">
+            {image ? <img src={image} alt="" loading="lazy" /> : <ImagePlaceholder />}
+          </a>
+          <h3 class="fz-display home-product-name"><a href={href}>{product.name[lang]}</a></h3>
+          <p class="home-product-prices">
+            <span class="home-product-price">{formatPrice(product.price)}</span>
+            {product.priceUSD ? <span class="home-product-usd">~${product.priceUSD} USD</span> : null}
+          </p>
+          <a href={href} class="fz-button fz-button-solid home-product-btn">
+            {product.sizes && product.sizes.length > 0 ? t("store.btn.viewOptions") : t("store.btn.viewDetails")}
+          </a>
+        </article>
+      );
+    })
   }
 </div>
 
 <style>
   .products-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-md);
-    margin-bottom: var(--space-lg);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
   }
 
-  @media (max-width: 968px) {
+  .home-product {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .home-product-badge {
+    position: absolute;
+    z-index: 1;
+    top: 20px;
+    right: 20px;
+    padding: 3px 10px;
+    background: var(--fz-red);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .home-product-image {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .home-product-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.4s ease;
+  }
+
+  .home-product:hover .home-product-image img {
+    transform: scale(1.04);
+  }
+
+  .home-product-name {
+    margin: 14px 0 6px;
+    font-size: 22px;
+    line-height: 1.05;
+  }
+
+  .home-product-name a {
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .home-product-prices {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 2px 8px;
+    margin: 0 0 14px;
+  }
+
+  .home-product-price {
+    color: var(--fz-gold);
+    font-weight: 600;
+  }
+
+  .home-product-usd {
+    font-size: 13px;
+    color: #cfc8b6;
+  }
+
+  .home-product-btn {
+    justify-content: center;
+    margin-top: auto;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  @media (max-width: 900px) {
     .products-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .home-product {
+      padding: 8px;
+    }
+
+    .home-product-badge {
+      top: 14px;
+      right: 14px;
+    }
+
+    .home-product-name {
+      font-size: 18px;
+    }
+
+    .home-product-btn {
+      font-size: 14px;
     }
   }
 
-  @media (max-width: 600px) {
-    .products-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--space-sm);
+  @media (prefers-reduced-motion: reduce) {
+    .home-product-image img {
+      transition: none;
     }
   }
 </style>
