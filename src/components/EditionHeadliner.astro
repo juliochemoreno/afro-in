@@ -50,7 +50,6 @@ const mobile = await getImage({ src: artist.photoMobile ?? artist.photo, widths:
           decoding="async"
         />
       </picture>
-      {artist.spotifyArtistId && <SpotifyPlayer artistId={artist.spotifyArtistId} name={artist.name} lang={lang} placement="photo" />}
     </div>
     <div class="fz-headliner-side">
     <div class="fz-headliner-body">
@@ -81,7 +80,7 @@ const mobile = await getImage({ src: artist.photoMobile ?? artist.photo, widths:
           ))}
         </ul>
       )}
-      {artist.spotifyArtistId && <SpotifyPlayer artistId={artist.spotifyArtistId} name={artist.name} lang={lang} placement="text" />}
+      {artist.spotifyArtistId && <SpotifyPlayer artistId={artist.spotifyArtistId} name={artist.name} lang={lang} />}
     </div>
     {Astro.slots.has("default") && (
       <div class="fz-headliner-extra">

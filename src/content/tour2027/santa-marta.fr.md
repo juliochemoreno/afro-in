@@ -96,17 +96,17 @@ days:
         kind: "Coupé-décalé 1 contre 1"
 tickets:
   tiers:
-    - period: "Jusqu'au 15 novembre ou jusqu'à épuisement des 50 billets"
+    - period: "Jusqu'au 15 nov"
       from: "2026-11-01"
       until: "2026-11-15"
       price: 20000
       note: "50 premiers billets, uniquement sur inscription sur afroin.org"
-    - period: "Du 16 novembre au 16 décembre"
+    - period: "Dès le 16 nov"
       from: "2026-11-16"
       until: "2026-12-16"
       price: 35000
       note: "Prévente, 150 billets"
-    - period: "À partir du 17 décembre"
+    - period: "Dès le 17 déc"
       from: "2026-12-17"
       price: 45000
       note: "150 billets"

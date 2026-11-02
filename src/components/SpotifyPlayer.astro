@@ -9,18 +9,16 @@ interface Props {
   artistId: string;
   name: string;
   lang: Lang;
-  // `photo` sits over the photo panel on desktop, `text` under the dates on phones and tablets.
-  placement: "photo" | "text";
 }
 
-const { artistId, name, lang, placement } = Astro.props;
+const { artistId, name, lang } = Astro.props;
 const t = useTranslations(lang);
 const src = spotifyEmbedUrl(artistId);
 const label = `${t("edition.listen")} ${name}`;
 ---
 
 {src && (
-  <div class={`fz-spotify fz-spotify--${placement}`} data-spotify-src={src} data-spotify-title={name}>
+  <div class="fz-spotify" data-spotify-src={src} data-spotify-title={name}>
     <button type="button" class="fz-spotify-btn">
       <svg class="fz-spotify-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
       <span class="fz-display">{label}</span>

@@ -966,31 +966,6 @@ html.has-stickybuy .whatsapp-float {
   height: 152px;
 }
 
-/* Desktop: the player rides on the photo panel (sticky with it); phones and tablets keep it under the dates. */
-.fz-spotify--photo {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .fz-spotify--photo {
-    display: block;
-    position: absolute;
-    left: var(--fz-bleed);
-    right: 24px;
-    bottom: 24px;
-    margin: 0;
-  }
-
-  .fz-spotify--text {
-    display: none;
-  }
-
-  .fz-headliner--reverse .fz-spotify--photo {
-    left: 24px;
-    right: var(--fz-bleed);
-  }
-}
-
 .fz-spotify-btn {
   display: flex;
   align-items: center;
