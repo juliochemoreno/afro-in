@@ -2,6 +2,8 @@
 import { countries } from "../data/countries";
 import CountryCombobox from "./CountryCombobox";
 import PhoneField from "./checkout/PhoneField";
+import User from "lucide-astro/User";
+import Mail from "lucide-astro/Mail";
 import "../styles/checkout-fields.css";
 import {
   getLangFromUrl,
@@ -20,28 +22,18 @@ const { currentCount = 12847 } = Astro.props;
 const thanksUrl = getTranslatedPath("/gracias", lang);
 ---
 
-<section class="registration section" id="unirse">
-  <div class="container">
+<section class="hm-section registration" id="unirse" aria-labelledby="join-title">
+  <div class="fz-wrap">
     <div class="registration-wrapper">
-      <div
-        class="registration-content animate-fade-in-up"
-        style="animation-delay: 0.1s"
-      >
-        <span class="section-badge">{t("join.badge")}</span>
-        <h2 class="section-title">
-          {t("join.title.part1")}<br /><span class="title-highlight"
-            >{t("join.title.part2")}</span
-          >
+      <div class="registration-content">
+        <p class="fz-display hm-kicker">{t("join.badge")}</p>
+        <h2 id="join-title" class="fz-display hm-title">
+          {t("join.title.part1")} {t("join.title.part2")}
         </h2>
-
-        <div class="counter-badge">
-          <span class="counter-number" id="live-counter">...</span>
-          <span class="counter-label">{t("join.counter")}</span>
-        </div>
 
         <p class="registration-description" set:html={t("join.description")} />
 
-        <ul class="benefits-list">
+        <ul class="hm-list benefits-list">
           <li>{t("join.benefit.1")}</li>
           <li>{t("join.benefit.2")}</li>
           <li>{t("join.benefit.3")}</li>
@@ -77,24 +69,30 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
 
               <div class="form-group">
                 <label for="name">{t("join.form.name")}</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  placeholder={t("join.form.name.placeholder")}
-                  required
-                />
+                <span class="hm-input-icon">
+                  <User size={18} aria-hidden="true" />
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder={t("join.form.name.placeholder")}
+                    required
+                  />
+                </span>
               </div>
 
               <div class="form-group">
                 <label for="email">{t("join.form.email")}</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder={t("join.form.email.placeholder")}
-                  required
-                />
+                <span class="hm-input-icon">
+                  <Mail size={18} aria-hidden="true" />
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder={t("join.form.email.placeholder")}
+                    required
+                  />
+                </span>
               </div>
 
               <div class="form-group">
@@ -329,8 +327,8 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
     </div>
 
     <style>
+      /* Two dark halves (as the old light/dark split): the text on the page colour, the form on a lighter one. */
       .registration {
-        background: var(--color-cream);
         position: relative;
         overflow: hidden;
       }
@@ -342,98 +340,40 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         right: 0;
         width: 50%;
         height: 100%;
-        background: var(--gradient-dark);
-        border-radius: 100px 0 0 100px;
+        background: #1b1b1b;
       }
 
       .registration-wrapper {
         position: relative;
         z-index: 1;
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--space-xl);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: clamp(32px, 6vw, 96px);
         align-items: center;
       }
 
-      /* Logo dimensions optimization */
-      .section-badge {
-        display: inline-block;
-        padding: var(--space-xs) var(--space-md);
-        background: rgba(227, 28, 37, 0.1);
-        border-radius: var(--radius-full);
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--color-primary);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: var(--space-md);
-      }
-
-      .section-title {
-        font-size: clamp(2rem, 5vw, 3rem);
-        color: var(--color-secondary);
-        margin-bottom: var(--space-md);
-      }
-
-      .title-highlight {
-        background: var(--gradient-gold);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+      .registration-content .hm-title {
+        margin-bottom: 18px;
       }
 
       .registration-description {
-        font-size: 1.1rem;
-        color: var(--color-text-light);
-        margin-bottom: var(--space-lg);
+        margin: 0 0 22px;
+        font-size: 18px;
+        line-height: 1.55;
+        color: #e9e2d2;
       }
 
-      .registration-description strong {
-        color: var(--color-primary);
-      }
-
-      .benefits-list {
-        list-style: none;
-      }
-
-      .benefits-list li {
-        padding: var(--space-sm) 0;
-        font-size: 1.05rem;
-        color: var(--color-text);
-      }
-
-      .counter-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-sm);
-        background: var(--color-white);
-        padding: var(--space-sm) var(--space-md);
-        border-radius: var(--radius-md);
-        margin-bottom: var(--space-lg);
-        box-shadow: var(--shadow-sm);
-      }
-
-      .counter-badge .counter-number {
-        font-family: var(--font-heading);
-        font-weight: 800;
-        font-size: 1.5rem;
-        color: var(--color-primary);
-      }
-
-      .counter-badge .counter-label {
-        font-size: 0.9rem;
-        color: var(--color-text);
-        font-weight: 500;
+      .registration-description :global(strong) {
+        color: var(--fz-gold);
       }
 
       .form-card {
-        background: var(--color-white);
-        border-radius: var(--radius-lg);
-        padding: var(--space-lg);
-        box-shadow: var(--shadow-lg);
-        min-height: 400px;
         display: flex;
         align-items: center;
+        min-height: 400px;
+        padding: 32px;
+        background: #222;
+        border: 1px solid #2e2e2e;
       }
 
       .registration-form {
@@ -449,51 +389,6 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         display: block;
       }
 
-      .step-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: var(--space-lg);
-        border-bottom: 1px solid var(--color-cream-dark);
-        padding-bottom: var(--space-sm);
-      }
-
-      .step-indicator {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--color-text-light);
-      }
-
-      .step-header h3 {
-        font-size: 1.2rem;
-        color: var(--color-secondary);
-        margin: 0;
-      }
-
-      .form-group {
-        margin-bottom: var(--space-md);
-      }
-
-      .btn-block {
-        width: 100%;
-        margin-top: var(--space-md);
-      }
-
-      .btn-back {
-        background: none;
-        border: none;
-        color: var(--color-text-light);
-        font-size: 0.9rem;
-        cursor: pointer;
-        padding: 0;
-        text-decoration: underline;
-      }
-
-      .btn-back:hover {
-        color: var(--color-primary);
-      }
-
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -505,130 +400,242 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         }
       }
 
+      .step-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 4px 12px;
+        margin-bottom: 22px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      }
+
+      .step-indicator {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--fz-gold);
+      }
+
+      .step-header h3 {
+        margin: 0;
+        font-family: "Anton", sans-serif;
+        font-weight: 400;
+        font-size: 26px;
+        color: #fff;
+      }
+
+      .btn-back {
+        padding: 0;
+        border: none;
+        background: none;
+        color: #cfc8b6;
+        font-size: 14px;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .btn-back:hover {
+        color: var(--fz-gold);
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
       .form-group label {
         display: block;
-        font-weight: 500;
-        margin-bottom: var(--space-xs);
-        color: var(--color-text);
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #cfc8b6;
+      }
+
+      .form-group input,
+      .form-group select,
+      .registration :global(.cc-trigger:not(.ph-dial)),
+      .registration :global(.ph-field) {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 0;
+        background: rgba(0, 0, 0, 0.3);
+        color: #fff;
+        font-family: inherit;
+        font-size: 16px;
       }
 
       .form-group input,
       .form-group select {
-        width: 100%;
-        padding: var(--space-sm) var(--space-md);
-        border: 1px solid var(--color-cream-dark);
-        border-radius: var(--radius-md);
-        font-family: inherit;
-        font-size: 1rem;
-        transition: all var(--transition-fast);
+        padding: 0 14px;
+      }
+
+      .form-group .hm-input-icon input {
+        padding-left: 42px;
+      }
+
+      .form-group input::placeholder,
+      .registration :global(.cc-trigger .cc-placeholder) {
+        color: #8f8878;
       }
 
       .form-group input:focus,
-      .form-group select:focus {
+      .form-group select:focus,
+      .registration :global(.cc-trigger:not(.ph-dial):focus-visible),
+      .registration :global(.cc-trigger[aria-expanded="true"]:not(.ph-dial)),
+      .registration :global(.ph-field:focus-within) {
         outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+        border-color: var(--fz-gold);
+        box-shadow: 0 0 0 3px rgba(242, 193, 78, 0.2);
+      }
+
+      .registration :global(.ph-field .cc-trigger.ph-dial) {
+        border-radius: 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.3);
+        background: transparent;
+        color: #fff;
+      }
+
+      .registration :global(.ph-field .cc-trigger.ph-dial:hover),
+      .registration :global(.ph-field .cc-trigger.ph-dial[aria-expanded="true"]) {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .registration :global(.ph-field input.ph-number) {
+        min-height: 46px;
+        border: none;
+        background: transparent;
+        color: #fff;
+        box-shadow: none;
+      }
+
+      .registration :global(.is-invalid .ph-field),
+      .registration :global(.form-group.is-invalid input:not([type="hidden"]):not(.ph-number)) {
+        border-color: #ff6b62;
+        background-color: rgba(208, 52, 44, 0.12);
+      }
+
+      .registration :global(.field-error) {
+        color: #ff8a82;
+      }
+
+      /* Primary actions ("Continuar", Bold pay): square red buttons. */
+      .btn-block {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 52px;
+        margin-top: 16px;
+        border: 0;
+        border-radius: 0;
+        background: var(--fz-red);
+        color: #fff;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: none;
+        transition: filter 0.2s ease;
+      }
+
+      .btn-block:hover,
+      .btn-block:focus-visible {
+        filter: brightness(1.1);
+        transform: none;
       }
 
       .form-donation {
-        margin: var(--space-lg) 0;
+        margin-bottom: 8px;
       }
 
-      /* Question titles in step 2 */
       .form-question {
-        font-family: var(--font-heading);
-        font-weight: 700;
-        font-size: 1.05rem;
-        color: var(--color-secondary);
-        margin: var(--space-lg) 0 var(--space-sm);
+        margin: 20px 0 10px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
       }
+
       .form-question:first-of-type {
         margin-top: 0;
       }
 
-      /* Payment method selector — stacked in 2 rows */
       .method-selector {
         display: grid;
-        grid-template-columns: 1fr;
-        gap: var(--space-sm);
-        margin-bottom: var(--space-md);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
       }
 
       .method-tab {
         display: flex;
-        flex-direction: row;
         align-items: center;
-        gap: var(--space-md);
-        padding: var(--space-md);
-        border: 2px solid var(--color-cream-dark);
-        border-radius: var(--radius-md);
-        background: var(--color-white);
-        cursor: pointer;
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 0;
+        background: transparent;
+        color: #fff;
+        font-family: inherit;
         text-align: left;
-        transition: all var(--transition-fast);
-      }
-
-      .method-logo {
-        width: 56px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        border-right: 1px solid var(--color-cream-dark);
-        padding-right: var(--space-md);
-      }
-
-      .method-logo-bold {
-        font-family: var(--font-heading);
-        font-weight: 800;
-        font-size: 1.4rem;
-        line-height: 1;
-        letter-spacing: -0.03em;
-        background: linear-gradient(95deg, #2b4bf2 0%, #8b3df0 50%, #f0425a 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        color: transparent;
-      }
-
-      .method-text {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
       }
 
       .method-tab:hover {
-        border-color: var(--color-primary);
+        border-color: rgba(255, 255, 255, 0.6);
       }
 
       .method-tab.active {
-        border-color: var(--color-primary);
-        background: rgba(227, 28, 37, 0.05);
+        border-color: var(--fz-gold);
+        background: rgba(242, 193, 78, 0.08);
+      }
+
+      .method-logo {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        background: #fff;
+      }
+
+      .method-logo-bold {
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #161616;
+      }
+
+      .method-text {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
       }
 
       .method-tab .method-name {
-        font-weight: 700;
-        color: var(--color-secondary);
-        font-size: 0.95rem;
+        font-size: 15px;
+        font-weight: 600;
       }
 
       .method-tab .method-hint {
-        font-size: 0.75rem;
-        color: var(--color-text-light);
-        line-height: 1.2;
+        font-size: 12px;
+        line-height: 1.3;
+        color: #cfc8b6;
       }
 
       #bold-pay-container {
         width: 100%;
-        margin-top: var(--space-md);
-        margin-bottom: var(--space-sm);
+        margin: 16px 0 8px;
       }
 
       .donation-options {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-sm);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
       }
 
       .donation-option input[type="radio"] {
@@ -640,29 +647,29 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: var(--space-md);
-        border: 2px solid var(--color-cream-dark);
-        border-radius: var(--radius-md);
-        transition: all var(--transition-fast);
         height: 100%;
-        min-height: 100px;
+        min-height: 96px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
       }
 
       .donation-option input:checked + .option-content {
-        border-color: var(--color-primary);
-        background: rgba(227, 28, 37, 0.05);
+        border-color: var(--fz-gold);
+        background: rgba(242, 193, 78, 0.1);
       }
 
       .option-amount {
-        font-family: var(--font-heading);
-        font-weight: 700;
-        font-size: 1.2rem;
-        color: var(--color-secondary);
+        font-family: "Anton", sans-serif;
+        font-weight: 400;
+        font-size: 24px;
+        color: #fff;
       }
 
       .option-desc {
-        font-size: 0.8rem;
-        color: var(--color-text-light);
+        font-size: 13px;
+        color: #cfc8b6;
       }
 
       /* Custom amount input group (shared by PayPal & Bold "Otro") */
@@ -671,47 +678,39 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         align-items: center;
         width: 100%;
         max-width: 180px;
-        margin-top: var(--space-sm);
-        border: 1px solid var(--color-cream-dark);
-        border-radius: var(--radius-sm);
-        background: var(--color-white);
+        margin-top: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(0, 0, 0, 0.3);
         overflow: hidden;
-        transition: all var(--transition-fast);
       }
 
       .amount-input-group:focus-within {
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+        border-color: var(--fz-gold);
       }
 
       .amount-input-prefix,
       .amount-input-suffix {
         display: flex;
         align-items: center;
-        padding: 0 0.5rem;
-        color: var(--color-text-light);
-        font-size: 0.85rem;
-        font-weight: 600;
-        background: var(--color-cream);
         align-self: stretch;
-      }
-
-      .amount-input-prefix {
-        font-size: 1rem;
-        color: var(--color-secondary);
+        padding: 0 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #cfc8b6;
+        background: rgba(255, 255, 255, 0.06);
       }
 
       .amount-input-group input {
         flex: 1;
         min-width: 0;
+        padding: 7px 6px;
         border: none;
         outline: none;
-        padding: 0.45rem 0.4rem;
-        font-family: inherit;
-        font-size: 1rem;
-        text-align: center;
         background: transparent;
-        color: var(--color-secondary);
+        color: #fff;
+        font-family: inherit;
+        font-size: 16px;
+        text-align: center;
       }
 
       /* Hide number input spinners for a cleaner look */
@@ -720,109 +719,105 @@ const thanksUrl = getTranslatedPath("/gracias", lang);
         -webkit-appearance: none;
         margin: 0;
       }
+
       .amount-input-group input[type="number"] {
         -moz-appearance: textfield;
         appearance: textfield;
       }
 
       .custom-usd-hint {
-        margin-top: var(--space-xs);
+        margin-top: 4px;
         font-weight: 600;
-        color: var(--color-primary);
+        color: var(--fz-gold);
       }
 
       /* "Cover the processing fee" opt-in (Bold only) */
       .fee-cover {
         display: flex;
         align-items: flex-start;
-        gap: var(--space-sm);
-        margin-top: var(--space-md);
-        padding: var(--space-sm) var(--space-md);
-        border: 1px solid var(--color-cream-dark);
-        border-radius: var(--radius-md);
+        gap: 10px;
+        margin-top: 14px;
+        padding: 12px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
         cursor: pointer;
-        transition: border-color var(--transition-fast);
       }
 
       .fee-cover:hover {
-        border-color: var(--color-primary);
+        border-color: rgba(255, 255, 255, 0.6);
       }
 
       .fee-cover input[type="checkbox"] {
-        width: 1.15rem;
-        height: 1.15rem;
-        margin-top: 2px;
-        accent-color: var(--color-primary);
         flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        accent-color: var(--fz-red);
         cursor: pointer;
       }
 
       .fee-cover-text {
-        font-size: 0.9rem;
-        color: var(--color-text);
+        font-size: 14px;
         line-height: 1.35;
+        color: #e9e2d2;
       }
 
       .fee-cover-amount {
         font-weight: 700;
-        color: var(--color-primary);
+        color: var(--fz-gold);
         white-space: nowrap;
       }
 
       #paypal-donate-container {
-        width: 100%;
-        min-height: 50px;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-top: var(--space-md);
-        margin-bottom: var(--space-sm);
+        width: 100%;
+        min-height: 50px;
+        margin: 16px 0 8px;
       }
 
       #paypal-donate-container img {
+        width: auto;
         max-width: 100%;
         height: 60px;
-        width: auto;
         cursor: pointer;
-        transition:
-          transform var(--transition-fast),
-          opacity var(--transition-fast);
-      }
-
-      #paypal-donate-container img:hover {
-        transform: scale(1.02);
-        opacity: 0.9;
       }
 
       .form-note {
+        margin-top: 14px;
+        font-size: 13px;
         text-align: center;
-        font-size: 0.85rem;
-        color: var(--color-text-light);
-        margin-top: var(--space-md);
+        color: #cfc8b6;
       }
 
       @media (max-width: 968px) {
         .registration::before {
           display: none;
         }
+
         .registration-wrapper {
-          grid-template-columns: 1fr;
-        }
-        .registration-content {
-          text-align: center;
-        }
-        .benefits-list {
-          display: inline-block;
-          text-align: left;
+          grid-template-columns: minmax(0, 1fr);
         }
       }
 
       @media (max-width: 600px) {
         .form-card {
-          padding: var(--space-lg) var(--space-md);
+          padding: 24px 18px;
         }
-        .donation-options {
-          grid-template-columns: 1fr;
+
+        .method-selector {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .option-content {
+          min-height: 84px;
+          padding: 12px 8px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .form-step {
+          animation: none;
         }
       }
     </style>

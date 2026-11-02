@@ -83,7 +83,8 @@
   font-weight: 600;
 }
 
-.fz a.fz-button-solid {
+.fz a.fz-button-solid,
+.fz button.fz-button-solid {
   background: var(--fz-red);
   border-color: var(--fz-red);
   color: #fff;
@@ -1752,5 +1753,212 @@ html.has-stickybuy .whatsapp-float {
 
   .fz-headliner--center .fz-headliner-side {
     align-self: center;
+  }
+}
+
+/* Home (D17): today's sections in the 2027 language. Sections alternate two dark tones,
+   content stays in the container (.fz-wrap), corners are square. */
+.hm-section {
+  padding: 88px 0;
+  scroll-margin-top: 80px;
+}
+
+.hm-section--alt {
+  background: #1b1b1b;
+}
+
+.hm-head {
+  max-width: 780px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.hm-kicker {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: var(--fz-red);
+}
+
+.hm-title {
+  margin: 0 0 16px;
+  font-size: clamp(36px, 4.6vw, 64px);
+  line-height: 1.02;
+}
+
+.hm-sub {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.55;
+  color: #e9e2d2;
+}
+
+.hm-sub strong {
+  color: var(--fz-text);
+}
+
+/* List with small red squares. */
+.hm-list {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.hm-list li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.hm-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 10px;
+  height: 10px;
+  background: var(--fz-red);
+}
+
+.hm-card {
+  background: #222;
+  border: 1px solid #2e2e2e;
+}
+
+.hm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px 28px;
+  margin-top: 40px;
+}
+
+.fz.home .fz-button {
+  border-radius: 0;
+}
+
+/* Outline button on the dark home: white, not gold. */
+.fz.home .fz-button:not(.fz-button-solid) {
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #fff;
+}
+
+.fz.home .fz-button:not(.fz-button-solid):hover,
+.fz.home .fz-button:not(.fz-button-solid):focus-visible {
+  border-color: var(--fz-gold);
+  color: var(--fz-gold);
+}
+
+/* Text fields with a leading icon (Julio: inputs carry an icon when one fits). */
+.hm-input-icon {
+  position: relative;
+  display: block;
+}
+
+.hm-input-icon > svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8f8878;
+  pointer-events: none;
+}
+
+.hm-input-icon--top > svg {
+  top: 16px;
+  transform: none;
+}
+
+.hm-textlink {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+@media (max-width: 900px) {
+  .hm-section {
+    padding: 56px 0;
+  }
+
+  .hm-head {
+    margin-bottom: 32px;
+  }
+}
+
+/* Country and dial-code dropdowns: they are portaled to <body>, out of the page's scope, so the
+   dark home styles them through :has() on its <main>. */
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="popover-content"] {
+  background: #222;
+  color: #fff;
+  border: 1px solid #3a3a3a;
+  border-radius: 0;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command"] {
+  background: transparent;
+  color: #fff;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-input-wrapper"] {
+  border-color: #3a3a3a;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-input-wrapper"] svg {
+  color: #cfc8b6;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-input"] {
+  color: #fff;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-input"]::placeholder {
+  color: #8f8878;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-item"] {
+  border-radius: 0;
+  color: #fff;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-item"][data-selected="true"] {
+  background: rgba(242, 193, 78, 0.14);
+  color: #fff;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-list"] {
+  scrollbar-color: #555 #222;
+  scrollbar-width: thin;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-list"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-list"]::-webkit-scrollbar-track {
+  background: #222;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-list"]::-webkit-scrollbar-thumb {
+  background: #555;
+}
+
+:root:has(:is(main.fz.home, main.fz.checkout-page, main.fz.pedido-page)) [data-slot="command-empty"] {
+  color: #cfc8b6;
+}
+
+/* Product grid shared by the home store section and /tienda: 4 columns, 2 on phones. */
+.fz-product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .fz-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 }

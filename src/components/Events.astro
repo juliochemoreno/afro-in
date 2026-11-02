@@ -1,13 +1,14 @@
 ---
-// Home section of the 2027 edition, in the home's own style: pill kicker, centered title and
-// subtitle, two rounded cards (badge, numbered circle, dates, place, highlights, link to the stop)
-// and the program / presale buttons.
+// Home section of the 2027 edition in the festival language: red kicker, centred title and
+// subtitle, two square cards (photo, badge, gold dates and place, highlights, link to the stop)
+// and the Santa Marta pass block (price stages + buy), the same one as on the stop page.
 import MapPin from "lucide-astro/MapPin";
 import Calendar from "lucide-astro/Calendar";
 import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import { getLangFromUrl, useTranslations, getTranslatedPath } from "../i18n/utils";
-import { SALES, baseSlug, dateRange, entryLang, joinList, stopPlace } from "../lib/programacion";
+import EditionTickets from "./EditionTickets.astro";
+import { baseSlug, dateRange, dayCount, entryLang, joinList, stopPlace, stubRange } from "../lib/programacion";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -28,352 +29,160 @@ const destinations = stops.map((stop, index) => {
     image: stop.data.cardImage,
     position: stop.data.cardPosition,
     location: venues.length ? joinList(venues, lang) : stopPlace(stop.data.location, stop.data.name),
-    highlights: [1, 2, 3, 4].map((n) => t(`events.${key}.h${n}` as never)),
+    // What happens at the stop, without days or places (those are on the stop page).
+    highlights: [1, 2, 3, 4, 5].map((n) => t(`events.${key}.h${n}` as never)),
     badge: t(index === 0 ? "events.stop1" : "events.stop2"),
     href: getTranslatedPath(`/programacion/2027/${slug}`, lang),
   };
 });
 
-const presaleUrl = SALES.tickets.url ? getTranslatedPath(SALES.tickets.url, lang) : "";
+// Stops that sell a pass show the same price-stage block as their own page, under the cards.
+const passes = stops
+  .filter((stop) => stop.data.tickets)
+  .map((stop) => ({
+    tickets: stop.data.tickets!,
+    pass: {
+      place: stop.data.name,
+      range: dateRange(stop.data.startDate, stop.data.endDate, lang),
+      stub: stubRange(stop.data.startDate, stop.data.endDate, lang),
+      days: dayCount(stop.data.startDate, stop.data.endDate),
+    },
+  }));
 ---
-<section class="events section" id="afrotour">
-  <div class="container">
-    <div
-      class="events-header text-center animate-fade-in-up"
-      style="animation-delay: 0.1s"
-    >
-      <span class="section-badge">{t("events.badge")}</span>
-      <h2 class="section-title">{t("events.title")}</h2>
-      <p class="section-subtitle">
-        {t("events.subtitle")}
-      </p>
-    </div>
-    <div class="tour-route">
-      <div class="route-line"></div>
-      <div class="destinations-grid">
-        {
-          destinations.map((dest, index) => (
-            <div class="destination-card">
-              <div class="destination-badge">{dest.badge}</div>
-              <div class="destination-image">
-                <Image
-                  src={dest.image}
-                  alt={dest.name}
-                  class="destination-img"
-                  style={`object-position: ${dest.position}`}
-                  loading="lazy"
-                  width={800}
-                  height={500}
-                  format="webp"
-                />
-                <div class="destination-overlay">
-                  <span class="destination-number">{index + 1}</span>
-                </div>
-              </div>
-              <div class="destination-content">
-                <div class="destination-header">
-                  <h3 class="destination-name">{dest.name}</h3>
-                  <div class="destination-meta">
-                    <span class="meta-item">
-                      <Calendar size={16} />
-                      {dest.dates}
-                    </span>
-                    <span class="meta-item">
-                      <MapPin size={16} />
-                      {dest.location}
-                    </span>
-                  </div>
-                </div>
-                <ul class="destination-highlights">
-                  {dest.highlights.map((highlight) => (
-                    <li>{highlight}</li>
-                  ))}
-                </ul>
-                <a href={dest.href} class="btn-program">{t("events.stopLink")} →</a>
-              </div>
+
+<section class="hm-section events" id="afrotour" aria-labelledby="events-title">
+  <div class="fz-wrap">
+    <header class="hm-head">
+      <p class="fz-display hm-kicker">{t("events.badge")}</p>
+      <h2 id="events-title" class="fz-display hm-title">{t("events.title")}</h2>
+      <p class="hm-sub">{t("events.subtitle")}</p>
+    </header>
+
+    <div class="stops">
+      {
+        destinations.map((dest) => (
+          <article class="hm-card stop">
+            <div class="stop-image">
+              <Image
+                src={dest.image}
+                alt={dest.name}
+                class="stop-img"
+                style={`object-position: ${dest.position}`}
+                loading="lazy"
+                width={800}
+                height={500}
+                format="webp"
+              />
+              <span class="stop-badge">{dest.badge}</span>
             </div>
-          ))
-        }
-      </div>
+            <div class="stop-body">
+              <h3 class="fz-display stop-name">{dest.name}</h3>
+              <p class="stop-meta"><Calendar size={16} />{dest.dates}</p>
+              <p class="stop-meta"><MapPin size={16} />{dest.location}</p>
+              <ul class="hm-list stop-list">
+                {dest.highlights.map((highlight) => <li>{highlight}</li>)}
+              </ul>
+              <a href={dest.href} class="fz-button fz-button-solid">{t("events.cta")}</a>
+            </div>
+          </article>
+        ))
+      }
     </div>
 
-    <div class="events-cta text-center">
-      <div class="events-buttons">
-        <a
-          href={getTranslatedPath("/programacion", lang)}
-          class="btn btn-primary btn-large"
-        >
-          {t("events.cta")}
-        </a>
-        {
-          presaleUrl ? (
-            <a href={presaleUrl} class="btn btn-outline btn-large">
-              {t("events.presale")}
-            </a>
-          ) : (
-            <span class="btn btn-outline btn-large btn-soon" aria-disabled="true">
-              {t("events.presale")} · {t("edition.offerSoon")}
-            </span>
-          )
-        }
+    {passes.map(({ tickets, pass }) => (
+      <div class="events-pass">
+        <EditionTickets tickets={tickets} lang={lang} pass={pass} />
       </div>
-    </div>
+    ))}
   </div>
 </section>
 
 <style>
-  .events {
-    background: var(--gradient-dark);
-    color: var(--color-white);
-    overflow: hidden;
-  }
-
-  .section-badge {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-md);
-    background: rgba(227, 28, 37, 0.2);
-    border-radius: var(--radius-full);
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-md);
-  }
-
-  .section-title {
-    font-size: clamp(2rem, 5vw, 3rem);
-    color: var(--color-white);
-    margin-bottom: var(--space-md);
-  }
-
-  .section-subtitle {
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.7);
-    max-width: 650px;
-    margin: 0 auto var(--space-xl);
-  }
-
-  .tour-route {
-    position: relative;
-    margin-bottom: var(--space-xl);
-  }
-
-  .route-line {
-    display: none;
-  }
-
-  .destinations-grid {
+  .stops {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-xl);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
   }
 
-  .destination-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
+  .stop {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stop-image {
     position: relative;
-    transition: all var(--transition-normal);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .destination-card:hover {
-    transform: translateY(-8px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--color-primary);
-  }
-
-  .destination-badge {
-    position: absolute;
-    top: var(--space-md);
-    left: var(--space-md);
-    z-index: 10;
-    background: var(--color-primary);
-    color: white;
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .destination-image {
-    position: relative;
-    aspect-ratio: 16/10;
+    aspect-ratio: 16 / 10;
     overflow: hidden;
   }
 
-  .destination-image .destination-img {
+  .stop-image :global(.stop-img) {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform var(--transition-normal);
+    -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+    mask-image: linear-gradient(to bottom, #000 70%, transparent);
   }
 
-  .destination-card:hover .destination-image .destination-img {
-    transform: scale(1.05);
-  }
-
-  .destination-overlay {
+  .stop-badge {
     position: absolute;
-    bottom: var(--space-md);
-    right: var(--space-md);
-    width: 48px;
-    height: 48px;
-    background: var(--color-primary);
-    border-radius: 50%;
+    left: 16px;
+    top: 16px;
+    padding: 6px 12px;
+    background: var(--fz-red);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* Column so the button sits at the bottom of both cards, whatever the list length. */
+  .stop-body {
     display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .destination-number {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: white;
-  }
-
-  .destination-content {
-    padding: var(--space-lg);
-  }
-
-  .destination-header {
-    margin-bottom: var(--space-md);
-  }
-
-  .destination-name {
-    font-size: 1.5rem;
-    color: var(--color-white);
-    margin-bottom: var(--space-sm);
-  }
-
-  .destination-meta {
-    display: flex;
+    flex: 1;
     flex-direction: column;
-    gap: var(--space-xs);
+    align-items: flex-start;
+    gap: 6px;
+    padding: 8px 28px 32px;
   }
 
-  .meta-item {
+  .stop-body .fz-button {
+    margin-top: auto;
+  }
+
+  .stop-name {
+    margin: 0 0 4px;
+    font-size: 34px;
+    line-height: 1.05;
+  }
+
+  .stop-meta {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-
-  .meta-item :global(svg) {
-    color: var(--color-primary);
-    flex-shrink: 0;
-  }
-
-  .destination-highlights {
-    list-style: none;
-    padding: 0;
+    gap: 8px;
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
+    color: var(--fz-gold);
+    font-weight: 600;
   }
 
-  .destination-highlights li {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
-    padding-left: var(--space-md);
-    position: relative;
+  .stop-list {
+    margin: 14px 0 20px;
   }
 
-  .destination-highlights li::before {
-    content: "→";
-    position: absolute;
-    left: 0;
-    color: var(--color-primary);
+  .stop-list li {
+    font-size: 16px;
   }
 
-  .btn-program {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    margin-top: var(--space-md);
-    padding: var(--space-sm) var(--space-md);
-    background: transparent;
-    border: 1px solid var(--color-primary);
-    border-radius: var(--radius-md);
-    color: var(--color-primary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all var(--transition-normal);
+  .events-pass {
+    margin-top: 56px;
   }
 
-  .btn-program:hover {
-    background: var(--color-primary);
-    color: white;
-  }
-
-  .btn-program :global(svg) {
-    flex-shrink: 0;
-  }
-  .events-cta {
-    padding-top: var(--space-lg);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  .events-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-md);
-  }
-
-  .btn-soon {
-    opacity: 0.6;
-    cursor: default;
-    pointer-events: none;
-  }
-
-  .events-cta .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
-
-  .btn-outline {
-    background: transparent;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    color: var(--color-white);
-  }
-
-  .btn-outline:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--color-white);
-  }
-
-  .events-note {
-    margin-top: var(--space-md);
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  @media (max-width: 968px) {
-    .destinations-grid {
-      grid-template-columns: 1fr;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-  }
-
-  @media (max-width: 600px) {
-    .destination-meta {
-      flex-direction: column;
+  @media (max-width: 900px) {
+    .stops {
+      grid-template-columns: minmax(0, 1fr);
     }
 
-    .destination-content {
-      padding: var(--space-md);
+    .stop-body {
+      padding: 4px 20px 28px;
     }
   }
 </style>

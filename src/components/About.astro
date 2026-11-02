@@ -3,15 +3,6 @@ import Drama from "lucide-astro/Drama";
 import Music from "lucide-astro/Music";
 import Shirt from "lucide-astro/Shirt";
 import BookOpen from "lucide-astro/BookOpen";
-import School from "lucide-astro/School";
-import Plane from "lucide-astro/Plane";
-import Tent from "lucide-astro/Tent";
-import BookText from "lucide-astro/BookText";
-import ArrowRight from "lucide-astro/ArrowRight";
-import Calendar from "lucide-astro/Calendar";
-import MapPin from "lucide-astro/MapPin";
-import Palette from "lucide-astro/Palette";
-import Users from "lucide-astro/Users";
 
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
 
@@ -46,85 +37,62 @@ const stats = [
     number: 10,
     suffix: "+",
     label: t("about.stats.history"),
-    Icon: Calendar,
   },
   {
     number: 8,
     suffix: "",
     label: t("about.stats.editions"),
-    Icon: MapPin,
   },
   {
     number: 100,
     suffix: "+",
     label: t("about.stats.artists"),
-    Icon: Palette,
   },
   {
     number: 5000,
     suffix: "+",
     label: t("about.stats.attendees"),
-    Icon: Users,
   },
 ];
 ---
 
-<section class="about section" id="sobre">
-  <div class="container">
-    <div
-      class="about-header text-center animate-fade-in-up"
-      style="animation-delay: 0.1s"
-    >
-      <span class="section-badge">{t("about.mission")}</span>
-      <h2 class="section-title">{t("about.title")}</h2>
-      <p class="section-subtitle">
+<section class="hm-section hm-section--alt about" id="sobre" aria-labelledby="about-title">
+  <div class="fz-wrap">
+    <header class="hm-head">
+      <p class="fz-display hm-kicker">{t("about.mission")}</p>
+      <h2 id="about-title" class="fz-display hm-title">{t("about.title")}</h2>
+      <p class="hm-sub">
         {t("about.subtitle.part1")}
         <strong>{t("about.subtitle.part2")}</strong>
         {t("about.subtitle.part3")}
       </p>
-    </div>
+    </header>
 
     <div class="about-content">
-      <div class="about-text animate-fade-in-up" style="animation-delay: 0.3s">
-        <h3>{t("about.community.title")}</h3>
+      <div class="about-text">
+        <h3 class="fz-display about-h3">{t("about.community.title")}</h3>
         <p>
           {t("about.community.desc.part1")}
           <strong>{t("about.community.desc.part2")}</strong>
           {t("about.community.desc.part3")}
         </p>
-        <ul class="impact-list">
-          <li>
-            <School size={20} class="impact-icon" />
-            {t("about.impact.school")}
-          </li>
-          <li>
-            <Plane size={20} class="impact-icon" />
-            {t("about.impact.artists")}
-          </li>
-          <li>
-            <Tent size={20} class="impact-icon" />
-            {t("about.impact.festivals")}
-          </li>
-          <li>
-            <BookText size={20} class="impact-icon" />
-            {t("about.impact.education")}
-          </li>
+        <ul class="hm-list">
+          <li>{t("about.impact.school")}</li>
+          <li>{t("about.impact.artists")}</li>
+          <li>{t("about.impact.festivals")}</li>
+          <li>{t("about.impact.education")}</li>
         </ul>
-        <a href="#unirse" class="btn btn-primary"
-          ><span>{t("about.cta")}</span> <ArrowRight size={20} /></a
-        >
+        <a href="#unirse" class="fz-button fz-button-solid">{t("about.cta")}</a>
       </div>
 
       <div class="about-features">
         {
           features.map((feature) => (
-            <div class="feature-card card">
-              <span class="feature-icon">
-                <feature.Icon size={40} />
-              </span>
-              <h4>{feature.title}</h4>
+            <article class="hm-card feature-card">
+              <feature.Icon size={28} class="feature-icon" />
+              <h4 class="fz-display">{feature.title}</h4>
               <p>{feature.description}</p>
-            </div>
+            </article>
           ))
         }
       </div>
@@ -134,11 +102,8 @@ const stats = [
       {
         stats.map((stat) => (
           <div class="stat-item">
-            <span class="stat-icon">
-              <stat.Icon size={24} />
-            </span>
             <span
-              class="stat-number"
+              class="fz-display stat-number"
               data-target={stat.number}
               data-suffix={stat.suffix}
             >
@@ -154,255 +119,97 @@ const stats = [
 </section>
 
 <style>
-  .about {
-    background: var(--color-white);
-  }
-
-  .section-badge {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-md);
-    background: rgba(227, 28, 37, 0.1);
-    border-radius: var(--radius-full);
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-md);
-  }
-
-  .section-title {
-    font-size: clamp(2rem, 5vw, 3rem);
-    color: var(--color-secondary);
-    margin-bottom: var(--space-md);
-  }
-
-  .section-subtitle {
-    font-size: 1.2rem;
-    color: var(--color-text-light);
-    max-width: 700px;
-    margin: 0 auto var(--space-xl);
-  }
-
-  .section-subtitle strong {
-    color: var(--color-primary);
-  }
-
   .about-content {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-xl);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 56px;
     align-items: start;
-    margin-bottom: var(--space-2xl);
   }
 
-  .about-text h3 {
-    font-size: 1.75rem;
-    color: var(--color-secondary);
-    margin-bottom: var(--space-md);
+  .about-h3 {
+    margin: 0 0 12px;
+    font-size: 30px;
+    line-height: 1.05;
   }
 
   .about-text p {
-    color: var(--color-text-light);
-    margin-bottom: var(--space-lg);
+    margin: 0 0 18px;
+    font-size: 18px;
+    line-height: 1.55;
+    color: #e9e2d2;
   }
 
   .about-text strong {
-    color: var(--color-primary);
-  }
-
-  .impact-list {
-    list-style: none;
-    margin-bottom: var(--space-xl);
-  }
-
-  .impact-list li {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) 0;
-    font-size: 1.1rem;
-    color: var(--color-text);
-  }
-
-  .impact-icon {
-    color: var(--color-primary);
-    flex-shrink: 0;
+    color: var(--fz-gold);
   }
 
   .about-features {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
   }
 
   .feature-card {
-    text-align: center;
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 24px;
   }
 
-  .feature-icon {
-    font-size: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: var(--space-md);
-    color: var(--color-primary);
+  .feature-card :global(.feature-icon) {
+    color: var(--fz-red);
   }
 
   .feature-card h4 {
-    font-size: 1.1rem;
-    color: var(--color-secondary);
-    margin-bottom: var(--space-sm);
+    margin: 4px 0 0;
+    font-size: 24px;
   }
 
   .feature-card p {
-    font-size: 0.9rem;
-    color: var(--color-text-light);
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #cfc8b6;
   }
 
   .about-stats {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-lg);
-    padding: var(--space-xl) var(--space-2xl);
-    background: linear-gradient(
-      135deg,
-      rgba(20, 20, 20, 0.98) 0%,
-      rgba(35, 35, 35, 0.95) 100%
-    );
-    border-radius: 1.5rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 56px;
+    padding: 36px 24px;
+    background: var(--fz-night);
     text-align: center;
-    position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .stat-item {
-    position: relative;
-    padding: 0 var(--space-md);
-  }
-
-  .stat-item:not(:last-child)::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    top: 20%;
-    height: 60%;
-    width: 1px;
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      rgba(255, 255, 255, 0.2),
-      transparent
-    );
-  }
-
-  .stat-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: var(--space-sm);
-    color: var(--color-primary);
-    opacity: 0.8;
+    display: grid;
+    gap: 6px;
   }
 
   .stat-number {
-    display: block;
-    font-family: var(--font-heading);
-    font-size: 2.75rem;
-    font-weight: 800;
-    color: var(--color-primary);
-    margin-bottom: var(--space-xs);
-    text-shadow: 0 0 30px rgba(227, 28, 37, 0.4);
+    font-size: clamp(40px, 5vw, 68px);
+    line-height: 1;
+    color: var(--fz-gold);
   }
 
   .stat-label {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 15px;
+    color: #cfc8b6;
   }
 
-  @media (max-width: 968px) {
+  @media (max-width: 900px) {
     .about-content {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 40px;
     }
 
-    .about-stats {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    /* Reset borders for 2-column layout */
-    .stat-item::after {
-      display: none;
-    }
-
-    /* Add borders to odd items only (1 and 3) to separate from even items (2 and 4) */
-    .stat-item:nth-child(odd)::after {
-      display: block;
-      content: "";
-      position: absolute;
-      right: 0;
-      top: 20%;
-      height: 60%;
-      width: 1px;
-      background: linear-gradient(
-        to bottom,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-      );
-    }
-  }
-
-  @media (max-width: 600px) {
     .about-features {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .about-stats {
-      grid-template-columns: repeat(2, 1fr); /* 2 columnas en movil */
-      gap: var(--space-lg) var(--space-md); /* Menos gap horizontal */
-      padding: var(--space-lg) var(--space-md);
-    }
-
-    /* Manejo de bordes para Grid 2x2 */
-    .stat-item::after {
-      display: none !important;
-    }
-
-    /* Reset borders previos */
-    .stat-item {
-      border: none !important;
-      padding-bottom: 0 !important;
-      margin-bottom: 0 !important;
-    }
-
-    /* Borde a la derecha para elementos impares (1 y 3) */
-    .stat-item:nth-child(odd)::after {
-      display: block !important;
-      content: "";
-      position: absolute;
-      right: 0;
-      top: 10%;
-      height: 80%;
-      width: 1px;
-      background: linear-gradient(
-        to bottom,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-      );
-    }
-
-    /* Borde abajo para los dos primeros elementos (1 y 2) */
-    .stat-item:nth-child(-n + 2) {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-      padding-bottom: var(--space-lg) !important;
-      margin-bottom: var(--space-lg) !important;
-    }
-
-    .stat-number {
-      font-size: 2rem; /* Un poco mas pequeño para que quepa bien */
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px 16px;
     }
   }
 </style>

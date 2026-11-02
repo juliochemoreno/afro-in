@@ -1,178 +1,100 @@
 ---
+// Home allies: this edition's allies first (same logos as the allies page), then every other
+// ally, each logo once, in square dark tiles. The full story lives on /aliados.
 import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
 import { allies } from "@/lib/allies";
-import { getLangFromUrl, useTranslations } from "../i18n/utils";
+import laPuertaLogo from "@/assets/img/aliados/la-puerta-dark.png";
+import cokoaLogo from "@/assets/img/aliados/cokoa-dark.png";
+import masayaLogo from "@/assets/img/aliados/masaya.webp";
+import caribeamLogo from "@/assets/img/aliados/caribeam-team-dark.png";
+import kombilesaLogo from "@/assets/img/aliados/kombilesa-mi.webp";
+import tayrosoftLogo from "@/assets/img/tayrosoft-logo-white.svg";
+import { getLangFromUrl, getTranslatedPath, useTranslations } from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+
+const edition: { name: string; logo: ImageMetadata }[] = [
+  { name: "La Puerta", logo: laPuertaLogo },
+  { name: "Co·KoA", logo: cokoaLogo },
+  { name: "Masaya", logo: masayaLogo },
+  { name: "Caribeam Team", logo: caribeamLogo },
+  { name: "Kombilesa Mi", logo: kombilesaLogo },
+  { name: "Tayrosoft", logo: tayrosoftLogo },
+];
+const editionNames = new Set(edition.map((ally) => ally.name));
+const logos = [
+  ...edition,
+  ...allies
+    .filter((ally) => !editionNames.has(ally.name))
+    .map((ally) => ({ name: ally.name, logo: ally.imageOnDark ?? ally.image })),
+];
 ---
 
-<section class="allies section" id="aliados">
-  <div class="container">
-    <div
-      class="allies-header text-center animate-fade-in-up"
-      style="animation-delay: 0.1s"
-    >
-      <span class="section-badge">{t("allies.badge")}</span>
-      <h2 class="section-title">{t("allies.title")}</h2>
-      <p class="section-subtitle">
-        {t("allies.subtitle")}
-      </p>
-    </div>
+<section class="hm-section hm-section--alt allies" id="aliados" aria-labelledby="allies-title">
+  <div class="fz-wrap">
+    <header class="hm-head">
+      <p class="fz-display hm-kicker">{t("allies.badge")}</p>
+      <h2 id="allies-title" class="fz-display hm-title">{t("allies.title")}</h2>
+      <p class="hm-sub">{t("allies.subtitle")}</p>
+    </header>
 
-    <div class="allies-grid animate-fade-in-up" style="animation-delay: 0.3s">
+    <ul class="allies-grid">
       {
-        allies.map((ally) => (
-          <div
-            class="ally-card"
-            title={`${ally.name} - ${ally.type} • ${ally.location}`}
-          >
-            <div class="ally-logo">
-              <Image
-                src={ally.image}
-                alt={ally.name}
-                class="ally-img"
-                loading="lazy"
-              />
-            </div>
-          </div>
+        logos.map((ally) => (
+          <li class="hm-card ally-tile" title={ally.name}>
+            <Image src={ally.logo} alt={ally.name} width={320} class="ally-logo" loading="lazy" />
+          </li>
         ))
       }
-    </div>
+    </ul>
 
-    <div class="become-ally text-center">
-      <div class="ally-cta card-glass">
-        <h3>{t("allies.cta.title")}</h3>
-        <p>
-          {t("allies.cta.desc")}
-        </p>
-        <a href="#contacto" class="btn btn-primary">{t("allies.cta.btn")}</a>
-      </div>
+    <div class="hm-actions">
+      <a class="fz-button fz-button-solid" href={getTranslatedPath("/aliados", lang)}>
+        {t("allies.home.all")}
+      </a>
     </div>
   </div>
 </section>
 
 <style>
-  .allies {
-    background: var(--color-white);
-  }
-
-  .section-badge {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-md);
-    background: rgba(227, 28, 37, 0.1);
-    border-radius: var(--radius-full);
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-md);
-  }
-
-  .section-title {
-    font-size: clamp(2rem, 5vw, 3rem);
-    color: var(--color-secondary);
-    margin-bottom: var(--space-md);
-  }
-
-  .section-subtitle {
-    font-size: 1.2rem;
-    color: var(--color-text-light);
-    max-width: 600px;
-    margin: 0 auto var(--space-xl);
-  }
-
-  /* Flexbox Grid for Centering Orphans */
   .allies-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-lg);
-    margin-bottom: var(--space-xl);
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
-  .ally-card {
-    text-align: center;
-    padding: var(--space-sm);
-    background: transparent;
-    box-shadow: none;
-    border: none;
-    /* 5 columns: 20% minus gap adjustment */
-    flex: 0 0 calc(20% - var(--space-lg));
-    max-width: 250px;
+  .ally-tile {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    padding: 14px;
   }
 
-  .ally-logo {
-    width: 140px;
-    height: 140px;
-    margin: 0 auto;
-    background: white;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-
-  .ally-img {
-    width: 100%;
-    height: 100%;
+  .ally-tile :global(.ally-logo) {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 72px;
     object-fit: contain;
   }
 
-  .become-ally {
-    max-width: 600px;
-    margin: 0 auto;
-  }
-
-  .ally-cta {
-    text-align: center;
-    padding: var(--space-xl);
-  }
-
-  .ally-cta h3 {
-    font-size: 1.5rem;
-    color: var(--color-secondary);
-    margin-bottom: var(--space-md);
-  }
-
-  .ally-cta p {
-    color: var(--color-text-light);
-    margin-bottom: var(--space-lg);
-  }
-
-  @media (max-width: 1100px) {
-    .ally-card {
-      flex: 0 0 calc(33.333% - var(--space-lg)); /* 3 columns tablet landscape */
-      max-width: 33.333%;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .ally-card {
-      flex: 0 0 calc(50% - var(--space-lg)); /* 2 columns tablet portrait */
-      max-width: 50%;
-    }
-  }
-
-  @media (max-width: 600px) {
+  @media (max-width: 900px) {
     .allies-grid {
-      gap: var(--space-sm);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
     }
 
-    .ally-card {
-      /* 3 columns mobile, tighter spacing */
-      flex: 0 0 calc(33.333% - var(--space-sm));
-      max-width: 33.333%;
-      padding: var(--space-xs);
+    .ally-tile {
+      padding: 10px;
     }
 
-    .ally-logo {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 1;
-      border-radius: var(--radius-sm);
+    .ally-tile :global(.ally-logo) {
+      max-height: 48px;
     }
   }
 </style>

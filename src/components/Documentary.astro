@@ -5,294 +5,156 @@ const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 ---
 
-<section class="documentary" id="documental">
-  <div class="container relative z-10">
-    <div
-      class="doc-header text-center animate-fade-in-up"
-      style="animation-delay: 0.1s"
-    >
-      <span class="doc-badge">{t("doc.badge")}</span>
-      <h2 class="doc-title">{t("doc.title")}</h2>
-      <p class="doc-subtitle">
+<section class="hm-section documentary" id="documental" aria-labelledby="doc-title">
+  <div class="fz-wrap">
+    <header class="hm-head">
+      <p class="fz-display hm-kicker">{t("doc.badge")}</p>
+      <h2 id="doc-title" class="fz-display hm-title">{t("doc.title")}</h2>
+      <p class="hm-sub">
         {t("doc.subtitle.part1")}
-        <span class="highlight">{t("doc.subtitle.part2")}</span>.
+        <strong>{t("doc.subtitle.part2")}</strong>.
       </p>
-    </div>
+    </header>
 
-    <div
-      class="video-card-wrapper animate-fade-in-up"
-      style="animation-delay: 0.3s"
+    <a
+      href="https://www.youtube.com/watch?v=vWgm4qWTN_Y"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="doc-video"
     >
-      <div class="video-card-frame">
-        <a
-          href="https://www.youtube.com/watch?v=vWgm4qWTN_Y"
-          target="_blank"
-          class="video-card-anchor"
-          rel="noopener noreferrer"
-        >
-          <div class="video-card-overlay">
-            <div class="play-btn-pulse">
-              <div class="pulse-ring"></div>
-              <div class="play-btn-icon">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="glass-label">
-              <span>{t("doc.play")}</span>
-            </div>
-          </div>
-          <img
-            src="https://img.youtube.com/vi/vWgm4qWTN_Y/hqdefault.jpg"
-            alt={t("doc.alt")}
-            class="video-card-img"
-          />
-        </a>
-      </div>
-    </div>
+      <img
+        src="https://img.youtube.com/vi/vWgm4qWTN_Y/maxresdefault.jpg"
+        alt={t("doc.alt")}
+        class="doc-video-img"
+        loading="lazy"
+      />
+      <span class="doc-play" aria-hidden="true"></span>
+      <span class="doc-label">{t("doc.play")}</span>
+    </a>
 
-    <div
-      class="doc-footer text-center animate-fade-in-up"
-      style="animation-delay: 0.5s"
-    >
-      <p class="quote">
-        {t("doc.quote")}
-      </p>
-    </div>
+    <p class="doc-quote">{t("doc.quote")}</p>
   </div>
-  <div class="bg-glow"></div>
 </section>
 
 <style>
-  .documentary {
-    background: #0a0a0a;
-    padding: 100px 0;
+  .doc-video {
     position: relative;
-    overflow: hidden;
-    color: white;
-  }
-
-  .bg-glow {
-    position: absolute;
-    top: -20%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    height: 60%;
-    background: radial-gradient(
-      circle,
-      rgba(227, 28, 37, 0.1) 0%,
-      transparent 70%
-    );
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  .doc-badge {
-    display: inline-block;
-    padding: 6px 16px;
-    background: rgba(227, 28, 37, 0.15);
-    border: 1px solid rgba(227, 28, 37, 0.3);
-    border-radius: 100px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #ff3e47;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 24px;
-    box-shadow: 0 0 20px rgba(227, 28, 37, 0.1);
-  }
-
-  .doc-title {
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    font-weight: 800;
-    margin-bottom: 20px;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-
-  .doc-subtitle {
-    font-size: 1.25rem;
-    color: #a0a0a0;
-    max-width: 650px;
-    margin: 0 auto 60px;
-    line-height: 1.6;
-  }
-
-  .highlight {
-    color: white;
-    font-weight: 600;
-  }
-
-  .video-card-wrapper {
-    max-width: 1100px;
-    margin: 0 auto 60px;
-    position: relative;
-    padding: 0 20px;
-  }
-
-  .video-card-frame {
-    position: relative;
-    border-radius: 24px;
-    overflow: hidden;
-    background: #151515;
-    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .video-card-anchor {
     display: block;
-    aspect-ratio: 16/9;
-    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #000;
+    color: #fff;
+    text-decoration: none;
   }
 
-  .video-card-img {
+  /* The thumbnail has the video's own caption baked in at the bottom: zoom a little to keep it out. */
+  .doc-video-img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: scale(1.18);
+    transform-origin: 50% 18%;
   }
 
-  .video-card-overlay {
+  .doc-video::after {
+    content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(
-      circle at center,
-      rgba(0, 0, 0, 0.2) 0%,
-      rgba(0, 0, 0, 0.6) 100%
-    );
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    transition: background 0.4s ease;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.5), transparent 50%);
   }
 
-  /* Pulse Animation & Play Button */
-  .play-btn-pulse {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 30px;
-  }
-
-  .pulse-ring {
+  .doc-play {
     position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #e31c25;
-    border-radius: 50%;
+    z-index: 2;
+    left: 50%;
+    top: 50%;
+    display: grid;
+    place-items: center;
+    width: 88px;
+    height: 88px;
+    transform: translate(-50%, -50%);
+    background: var(--fz-red);
+    transition: transform 0.2s ease;
+    isolation: isolate;
+  }
+
+  /* Pulse ring behind the square play button (as before, square now). */
+  .doc-play::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--fz-red);
     opacity: 0.4;
-    animation: pulse 2s infinite ease-out;
+    animation: doc-pulse 2s infinite ease-out;
+    z-index: -1;
   }
 
-  .play-btn-icon {
-    position: relative;
-    width: 80px;
-    height: 80px;
-    background: #e31c25;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    box-shadow: 0 10px 30px rgba(227, 28, 37, 0.5);
-    transition: all 0.3s ease;
-    padding-left: 6px;
-  }
-
-  .play-btn-icon svg {
-    width: 32px;
-    height: 32px;
-  }
-
-  .glass-label {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 10px 24px;
-    border-radius: 100px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.4s ease;
-  }
-
-  /* Hover Effects */
-  .video-card-anchor:hover .video-card-img {
-    transform: scale(1.04);
-  }
-
-  .video-card-anchor:hover .video-card-overlay {
-    background: rgba(0, 0, 0, 0.2);
-  }
-
-  .video-card-anchor:hover .play-btn-icon {
-    transform: scale(1.1);
-    background: #ff2d38;
-  }
-
-  .video-card-anchor:hover .glass-label {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .quote {
-    font-size: 1.25rem;
-    color: #888;
-    font-style: italic;
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.6;
-  }
-
-  @keyframes pulse {
+  @keyframes doc-pulse {
     0% {
-      transform: scale(0.8);
+      transform: scale(0.9);
       opacity: 0.6;
     }
     100% {
-      transform: scale(1.8);
+      transform: scale(1.7);
       opacity: 0;
     }
   }
 
-  @media (max-width: 768px) {
-    .documentary {
-      padding: 60px 0;
-    }
-    .doc-title {
-      font-size: 2.25rem;
-    }
-    .play-btn-pulse {
-      width: 80px;
-      height: 80px;
-      margin-bottom: 20px;
-    }
-    .play-btn-icon {
+  .doc-play::after {
+    content: "";
+    margin-left: 7px;
+    border-left: 26px solid #fff;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+  }
+
+  .doc-video:hover .doc-play,
+  .doc-video:focus-visible .doc-play {
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+
+  .doc-label {
+    position: absolute;
+    z-index: 2;
+    left: 24px;
+    bottom: 20px;
+    font-weight: 600;
+  }
+
+  .doc-quote {
+    max-width: 760px;
+    margin: 40px auto 0;
+    font-size: 22px;
+    line-height: 1.5;
+    text-align: center;
+    color: #e9e2d2;
+  }
+
+  @media (max-width: 720px) {
+    .doc-play {
       width: 64px;
       height: 64px;
     }
-    .play-btn-icon svg {
-      width: 24px;
-      height: 24px;
+
+    .doc-play::after {
+      border-left-width: 20px;
+      border-top-width: 12px;
+      border-bottom-width: 12px;
     }
 
-    /* En móvil mostramos el label siempre para indicar acción clara */
-    .glass-label {
-      opacity: 1;
-      transform: translateY(0);
-      font-size: 0.8rem;
-      padding: 8px 20px;
+    .doc-quote {
+      font-size: 18px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .doc-play {
+      transition: none;
+    }
+
+    .doc-play::before {
+      animation: none;
     }
   }
 </style>
