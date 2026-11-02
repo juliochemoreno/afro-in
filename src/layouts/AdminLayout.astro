@@ -10,7 +10,6 @@ import Package from "lucide-astro/Package";
 import ShoppingBag from "lucide-astro/ShoppingBag";
 import Tags from "lucide-astro/Tags";
 import CalendarDays from "lucide-astro/CalendarDays";
-import Ticket from "lucide-astro/Ticket";
 import ScanLine from "lucide-astro/ScanLine";
 import ShieldCheck from "lucide-astro/ShieldCheck";
 import LogOut from "lucide-astro/LogOut";
@@ -25,16 +24,27 @@ interface Props {
 const { title = "Admin | AFRO IN" } = Astro.props;
 
 const path = Astro.url.pathname;
-const navItems = [
-  { href: "/admin", label: "Resumen", icon: LayoutDashboard },
-  { href: "/admin/donadores", label: "Aportes", icon: Users },
-  { href: "/admin/productos", label: "Productos", icon: Package },
-  { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
-  { href: "/admin/atributos", label: "Atributos", icon: Tags },
-  { href: "/admin/eventos", label: "Eventos", icon: CalendarDays },
-  { href: "/admin/entradas", label: "Entradas", icon: Ticket },
-  { href: "/admin/checkin", label: "Check-in", icon: ScanLine },
-  { href: "/admin/administradores", label: "Administradores", icon: ShieldCheck },
+// Grouped menu (Julio): events, store and community apart; "Puerta" is the
+// door scanner used from the phone on event days.
+const navGroups = [
+  { label: null, items: [{ href: "/admin", label: "Resumen", icon: LayoutDashboard }] },
+  {
+    label: "Eventos",
+    items: [
+      { href: "/admin/eventos", label: "Eventos", icon: CalendarDays },
+      { href: "/admin/checkin", label: "Puerta", icon: ScanLine },
+    ],
+  },
+  {
+    label: "Tienda",
+    items: [
+      { href: "/admin/productos", label: "Productos", icon: Package },
+      { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
+      { href: "/admin/atributos", label: "Atributos", icon: Tags },
+    ],
+  },
+  { label: "Comunidad", items: [{ href: "/admin/donadores", label: "Aportes", icon: Users }] },
+  { label: "Ajustes", items: [{ href: "/admin/administradores", label: "Administradores", icon: ShieldCheck }] },
 ];
 const isActive = (href: string) =>
   href === "/admin"
@@ -91,21 +101,30 @@ const isActive = (href: string) =>
           <img src={afroinLogo.src} alt="AFRO IN" class="h-7 w-auto" loading="eager" />
           <span class="text-muted-foreground text-xs font-semibold">Admin</span>
         </div>
-        <nav class="flex-1 space-y-1 p-3">
+        <nav class="flex-1 space-y-4 overflow-y-auto p-3">
           {
-            navItems.map((item) => (
-              <a
-                href={item.href}
-                class:list={[
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  isActive(item.href)
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
-                ]}
-              >
-                <item.icon size={18} />
-                {item.label}
-              </a>
+            navGroups.map((group) => (
+              <div class="space-y-1">
+                {group.label && (
+                  <p class="text-muted-foreground/70 px-3 pb-1 text-[11px] font-semibold tracking-wider uppercase">
+                    {group.label}
+                  </p>
+                )}
+                {group.items.map((item) => (
+                  <a
+                    href={item.href}
+                    class:list={[
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      isActive(item.href)
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
+                    ]}
+                  >
+                    <item.icon size={18} />
+                    {item.label}
+                  </a>
+                ))}
+              </div>
             ))
           }
         </nav>
@@ -136,6 +155,16 @@ const isActive = (href: string) =>
           class="border-border bg-background/85 sticky top-0 z-30 flex items-center justify-between gap-3 border-b px-4 py-3 backdrop-blur-md lg:hidden"
         >
           <img src={afroinLogo.src} alt="AFRO IN" class="h-7 w-auto" />
+          {/* The door scanner always one tap away on the phone. */}
+          <a
+            href="/admin/checkin"
+            class:list={[
+              "ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold",
+              isActive("/admin/checkin") ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary",
+            ]}
+          >
+            <ScanLine size={18} /> Puerta
+          </a>
           <button
             id="mobile-menu-toggle"
             type="button"
@@ -153,21 +182,30 @@ const isActive = (href: string) =>
             id="mobile-menu"
             class="border-border bg-background absolute inset-x-0 top-full hidden border-b shadow-lg"
           >
-            <nav class="space-y-1 p-3">
+            <nav class="max-h-[75vh] space-y-3 overflow-y-auto p-3">
               {
-                navItems.map((item) => (
-                  <a
-                    href={item.href}
-                    class:list={[
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
-                      isActive(item.href)
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground",
-                    ]}
-                  >
-                    <item.icon size={18} />
-                    {item.label}
-                  </a>
+                navGroups.map((group) => (
+                  <div class="space-y-1">
+                    {group.label && (
+                      <p class="text-muted-foreground/70 px-3 pb-1 text-[11px] font-semibold tracking-wider uppercase">
+                        {group.label}
+                      </p>
+                    )}
+                    {group.items.map((item) => (
+                      <a
+                        href={item.href}
+                        class:list={[
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
+                          isActive(item.href)
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground",
+                        ]}
+                      >
+                        <item.icon size={18} />
+                        {item.label}
+                      </a>
+                    ))}
+                  </div>
                 ))
               }
               <div class="border-border my-1 border-t"></div>
