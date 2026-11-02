@@ -13,6 +13,7 @@
 import { TICKETS_FROM, TICKETS_REPLY_TO, sendEmail } from "@/lib/email";
 import { buildTicketEmail, ticketsPath } from "@/lib/ticketEmail";
 import { getTicketOrderByBoldId, orderLocale } from "@/lib/tickets";
+import { LOGO_PNG } from "@/lib/emailLogo";
 
 /** Automatic attempts per order; after that only the admin button sends. */
 export const MAX_EMAIL_ATTEMPTS = 3;
@@ -98,6 +99,7 @@ export async function sendTicketEmail(
       codes: view.tickets.map((t) => t.code),
       ticketsUrl: `${env.EMAIL_SUBJECT_PREFIX ? opts.origin : PRODUCTION_ORIGIN}${ticketsPath(lang, order.access_token)}`,
       subjectPrefix: env.EMAIL_SUBJECT_PREFIX ?? "",
+      logoPng: LOGO_PNG,
     });
 
     // One key per order for automatic sends (a retry after a lost answer is
