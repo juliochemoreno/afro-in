@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import TicketList, { type TicketView } from "@/components/TicketList";
-import { shortDate } from "@/lib/eventDisplay";
+import { shortDateRange } from "@/lib/eventDisplay";
 
 interface Props {
   t: Record<string, string>;
@@ -15,12 +15,17 @@ interface Props {
   lang?: string;
 }
 
-type Phase = "loading" | "success" | "pending" | "failed";
+type Phase = "loading" | "success" | "pending" | "failed" | "notfound";
+
+// The contact the failed / not-found states offer (same number as the site's
+// floating button, the inbox that answers the ticket emails).
+const WHATSAPP_URL = "https://wa.me/41782231433";
+const CONTACT_EMAIL = "afroinsantamarta@gmail.com";
 
 function eventSubtitle(event: any, lang: string): string | null {
   if (!event) return null;
   const parts: string[] = [];
-  const day = event.event_date ? shortDate(event.event_date, lang) : null;
+  const day = event.event_date ? shortDateRange(event.event_date, lang, event.end_date) : null;
   if (day) parts.push(day);
   const place = [event.venue, event.city].filter(Boolean).join(", ");
   if (place) parts.push(place);
@@ -55,7 +60,7 @@ export default function TicketReceipt({
       params.get("orderId");
 
     if (!orderId) {
-      setPhase("failed");
+      setPhase("notfound");
       return;
     }
 
@@ -93,6 +98,15 @@ export default function TicketReceipt({
     };
   }, [initialOrderId]);
 
+  // The page hero (server-rendered, outside this island) says "Tus entradas"
+  // only once there are tickets; "Tu compra" while loading or on an error.
+  React.useEffect(() => {
+    if (phase === "loading") return;
+    const title = document.querySelector(".tix-hero .tx-hero-title");
+    const text = phase === "success" ? t["tix.receipt.yourtickets"] : t["tix.receipt.yourorder"];
+    if (title && text) title.textContent = text;
+  }, [phase, t]);
+
   if (phase === "loading") {
     return (
       <div className="receipt-status">
@@ -112,54 +126,57 @@ export default function TicketReceipt({
       : null;
     return (
       <div className="tix-success">
-        <div className="tix-success-head">
-          <div className="receipt-badge ok" aria-hidden="true">
-            ✓
-          </div>
-          <h2>{t["tix.receipt.success.title"]}</h2>
-          <p className="receipt-text">{t["tix.receipt.success.text"]}</p>
-        </div>
+        {/* The hero already says "Tus entradas": one small line, no second headline. */}
+        <p className="tix-confirmed">
+          <span aria-hidden="true">✓</span> {t["tix.receipt.confirmed"]}
+        </p>
         <TicketList
           eventName={order.event_name}
           eventSubtitle={eventSubtitle(event, lang ?? "es")}
           eventImage={eventImage}
           eventDate={event?.event_date ?? null}
+          eventEndDate={event?.end_date ?? null}
           lang={lang}
-          orderNumber={order.id}
+          orderNumber={order.ref ?? ""}
           tickets={tickets}
           permalink={permalink}
+          continueHref={eventsPath}
+          continueLabel={t["tix.receipt.continue"]}
           t={t}
         />
-        <a href={eventsPath} className="btn btn-primary tix-continue">
-          {t["tix.receipt.continue"]}
-        </a>
       </div>
     );
   }
 
-  const head =
-    phase === "pending"
-      ? {
-          cls: "pending",
-          icon: "⏳",
-          title: t["tix.receipt.pending.title"],
-          text: t["tix.receipt.pending.text"],
-        }
-      : {
-          cls: "fail",
-          icon: "✕",
-          title: t["tix.receipt.failed.title"],
-          text: t["tix.receipt.failed.text"],
-        };
+  const head = {
+    pending: { cls: "pending", icon: "…", key: "pending" },
+    failed: { cls: "fail", icon: "!", key: "failed" },
+    notfound: { cls: "fail", icon: "?", key: "notfound" },
+    // "success" without an order (should not happen): the pending screen.
+    success: { cls: "pending", icon: "…", key: "pending" },
+  }[phase];
+  const needsContact = phase !== "pending";
 
   return (
     <div className="receipt">
-      <div className={`receipt-badge ${head.cls}`} aria-hidden="true">
-        {head.icon}
+      <div className="receipt-head">
+        <span className={`receipt-icon ${head.cls}`} aria-hidden="true">
+          {head.icon}
+        </span>
+        <h2>{t[`tix.receipt.${head.key}.title`]}</h2>
       </div>
-      <h2>{head.title}</h2>
-      <p className="receipt-text">{head.text}</p>
-      <a href={eventsPath} className="btn btn-primary">
+      <p className="receipt-text">{t[`tix.receipt.${head.key}.text`]}</p>
+      {needsContact && (
+        <div className="receipt-contact">
+          <a href={WHATSAPP_URL} className="btn btn-primary" target="_blank" rel="noopener">
+            {t["tix.receipt.contact.whatsapp"]}
+          </a>
+          <p>
+            {t["tix.receipt.contact.email"]} <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+          </p>
+        </div>
+      )}
+      <a href={eventsPath} className="tix-continue">
         {t["tix.receipt.continue"]}
       </a>
     </div>

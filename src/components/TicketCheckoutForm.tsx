@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Mail, User } from "lucide-react";
 import PhoneField from "@/components/checkout/PhoneField";
 import type { CountryEntry } from "@/components/CountryCombobox";
 import { formatPrice } from "@/lib/cart";
@@ -14,6 +15,10 @@ interface Props {
   countries: CountryEntry[];
   price: number;
   remaining: number;
+  /** Short "Quedan 3 a este precio" note shown beside the quantity (few left only). */
+  remainingNote?: string;
+  /** Single-price events: the price shown beside the quantity ("$50.000 COP"). */
+  qtyPrice?: string;
   /** Localized success page path, e.g. /entradas. */
   successPath: string;
   t: Record<string, string>;
@@ -63,6 +68,8 @@ const ERROR_KEYS: Record<string, string> = {
 };
 
 export default function TicketCheckoutForm({
+  remainingNote,
+  qtyPrice,
   lang,
   eventSlug,
   eventName,
@@ -125,6 +132,8 @@ export default function TicketCheckoutForm({
           quantity: qty,
           // Lets the server refuse if the price moved on; it never sets the charge.
           expectedUnitPrice: price,
+          // The confirmation email is written in this language.
+          lang,
           buyer: {
             name: form.name,
             email: form.email,
@@ -220,7 +229,19 @@ export default function TicketCheckoutForm({
   return (
     <div className="tix-form">
       <div className="tix-qty">
-        <label>{t["tix.form.quantity"]}</label>
+        {/* Left of the stepper: the price (single-price events) or a short
+            caption, plus the few-left note; the full question is for screen readers. */}
+        <span className="tix-qty-label">
+          <label className="tix-qty-q">{t["tix.form.quantity"]}</label>
+          {qtyPrice ? (
+            <span className="tix-qty-price">
+              <strong>{qtyPrice}</strong>
+            </span>
+          ) : (
+            !remainingNote && <span className="tix-qty-caption" aria-hidden="true">{t["tix.form.qtyShort"]}</span>
+          )}
+          {remainingNote && <span className="tix-qty-left">{remainingNote}</span>}
+        </span>
         <div className="tix-stepper">
           <button
             type="button"
@@ -244,32 +265,38 @@ export default function TicketCheckoutForm({
 
       <div className={fieldClass("name")}>
         <label htmlFor="tix-name">{t["tix.form.name"]}</label>
-        <input
-          id="tix-name"
-          type="text"
-          autoComplete="name"
-          maxLength={100}
-          placeholder={t["tix.form.name.ph"]}
-          value={form.name}
-          onChange={set("name")}
-          aria-invalid={!!errors.name || undefined}
-          aria-describedby={describedBy("name")}
-        />
+        <span className="tix-input-icon">
+          <User aria-hidden="true" size={18} />
+          <input
+            id="tix-name"
+            type="text"
+            autoComplete="name"
+            maxLength={100}
+            placeholder={t["tix.form.name.ph"]}
+            value={form.name}
+            onChange={set("name")}
+            aria-invalid={!!errors.name || undefined}
+            aria-describedby={describedBy("name")}
+          />
+        </span>
         {errorText("name")}
       </div>
       <div className={fieldClass("email")}>
         <label htmlFor="tix-email">{t["tix.form.email"]}</label>
-        <input
-          id="tix-email"
-          type="email"
-          autoComplete="email"
-          maxLength={120}
-          placeholder={t["tix.form.email.ph"]}
-          value={form.email}
-          onChange={set("email")}
-          aria-invalid={!!errors.email || undefined}
-          aria-describedby={describedBy("email")}
-        />
+        <span className="tix-input-icon">
+          <Mail aria-hidden="true" size={18} />
+          <input
+            id="tix-email"
+            type="email"
+            autoComplete="email"
+            maxLength={120}
+            placeholder={t["tix.form.email.ph"]}
+            value={form.email}
+            onChange={set("email")}
+            aria-invalid={!!errors.email || undefined}
+            aria-describedby={describedBy("email")}
+          />
+        </span>
         {errorText("email")}
       </div>
       <div className={fieldClass("phone")}>
@@ -290,16 +317,8 @@ export default function TicketCheckoutForm({
         {errorText("phone")}
       </div>
 
-      <div className="tix-total">
-        <span>{t["tix.form.total"]}</span>
-        <strong>
-          {price === 0 ? (
-            t["tix.form.total.free"]
-          ) : (
-            formatPrice(total)
-          )}
-        </strong>
-      </div>
+      {/* No separate total row: the price per ticket is above the form and the
+          pay button says the total (Julio). */}
 
       {error && <p className="ck-error">{error}</p>}
 
@@ -313,7 +332,7 @@ export default function TicketCheckoutForm({
           ? t["tix.form.processing"]
           : price === 0
             ? t["tix.form.reserve"]
-            : t["tix.form.pay"]}
+            : t["tix.form.pay"].replace("{total}", formatPrice(total))}
       </button>
       <p className="tix-secure">{t["tix.form.securenote"]}</p>
     </div>

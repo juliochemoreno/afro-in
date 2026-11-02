@@ -5,11 +5,14 @@ import type { ImageMetadata } from "astro";
 import { useTranslations } from "@/i18n/utils";
 import Pin from "@/components/Pin.astro";
 import Flag from "@/components/Flag.astro";
-import type { Lang } from "@/lib/programacion";
+import DayCalendar from "@/components/DayCalendar.astro";
+import SpotifyPlayer from "@/components/SpotifyPlayer.astro";
+import { dayLabel, type Lang } from "@/lib/programacion";
 
 interface Props {
-  artist: { name: string; countryCode?: string; country?: Record<Lang, string>; photo: ImageMetadata; photoMobile?: ImageMetadata; photoPosition?: string };
-  appearances: { when: string; where: string; title: string; href: string }[];
+  artist: { name: string; countryCode?: string; country?: Record<Lang, string>; photo: ImageMetadata; photoMobile?: ImageMetadata; photoPosition?: string; spotifyArtistId?: string };
+  // `date` (ISO) shows the gold calendar block; `when` stays as the readable date for screen readers.
+  appearances: { date?: string; when: string; where: string; title: string; href: string }[];
   lang: Lang;
   // The artists page repeats this block for every artist: `star` shows the "Artista estrella" label,
   // `reverse` puts the photo on the right, `center` centres the text beside the photo, `id` keeps headings unique.
@@ -61,8 +64,15 @@ const mobile = await getImage({ src: artist.photoMobile ?? artist.photo, widths:
         <ul class="fz-headliner-dates">
           {appearances.map((a) => (
             <li>
-              <a href={a.href}>
-                <span class="fz-display fz-gold">{a.when}</span>
+              <a href={a.href} class:list={{ "fz-headliner-date--cal": a.date }}>
+                {a.date ? (
+                  <span class="fz-headliner-cal">
+                    <DayCalendar weekday={dayLabel(a.date, lang).weekdayShort} number={dayLabel(a.date, lang).dayNumber} />
+                    <span class="sr-only">{a.when}</span>
+                  </span>
+                ) : (
+                  <span class="fz-display fz-gold">{a.when}</span>
+                )}
                 <span class="fz-headliner-where"><Pin /><span>{a.where}</span></span>
                 <span class="fz-muted">{a.title}</span>
               </a>
@@ -70,6 +80,7 @@ const mobile = await getImage({ src: artist.photoMobile ?? artist.photo, widths:
           ))}
         </ul>
       )}
+      {artist.spotifyArtistId && <SpotifyPlayer artistId={artist.spotifyArtistId} name={artist.name} lang={lang} />}
     </div>
     {Astro.slots.has("default") && (
       <div class="fz-headliner-extra">

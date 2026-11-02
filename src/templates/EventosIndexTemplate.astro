@@ -9,10 +9,13 @@ import Pin from "@/components/Pin.astro";
 import { getVisibleEvents } from "@/lib/tickets";
 import { formatPrice } from "@/lib/cart";
 import { stageName } from "@/lib/ticketStages";
-import { calParts, cardStatus, localeTag } from "@/lib/eventDisplay";
+import { calParts, cardStatus, eventTime, localeTag, shortDateRange, untilDate } from "@/lib/eventDisplay";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
+import { getCollection } from "astro:content";
+import { bogotaToday } from "@/lib/ticketStages";
 // Static asset (no astro:assets optimizing: this page is SSR, rule 4).
 import heroPhoto from "@/assets/img/2017/2017-afroin-img-1.jpg";
+import promoPhoto from "@/assets/img/2027/lugares/santa-marta-el-morro.jpg";
 import "@/styles/festival.css";
 import "@/styles/tickets-theme.css";
 
@@ -48,11 +51,21 @@ const cards = events.map((e) => {
     name: (lang === "en" ? e.name_en : lang === "fr" ? e.name_fr : e.name_es) || e.name_es,
     image: e.image_r2_key ? `/media/${e.image_r2_key}` : null,
     cal: calParts(e.event_date, lang),
+    // Multi-day events (Julio): the block shows the start day and the time
+    // line says until when, "Hasta dom 17 · 9:00 p. m.".
+    range: e.end_date ? shortDateRange(e.event_date, lang, e.end_date) : null,
+    time: [untilDate(e.event_date, lang, e.end_date), eventTime(e.event_date, lang)]
+      .filter(Boolean)
+      .join(" · "),
     place: [e.venue, e.city].filter(Boolean).join(" · "),
     flag,
     soldOut: status.kind === "soldout",
     free: e.price === 0,
-    price: e.price === 0 ? t("tix.price.free") : formatPrice(e.price),
+    // The stage on sale sets the price when the event has stages.
+    price:
+      e.price === 0
+        ? t("tix.price.free")
+        : formatPrice(status.kind === "stage" ? status.stage.price : e.price),
   };
 });
 
@@ -62,6 +75,14 @@ const navLinks = [
   { href: getTranslatedPath("/eventos", lang), label: t("nav.events") },
 ];
 const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
+
+// With no events, the 2027 festival fills the space, but only until its last
+// day (the page is server-rendered, so this is checked on every visit).
+const festivalEnd = (await getCollection("tour2027"))
+  .map((stop) => stop.data.endDate)
+  .sort()
+  .at(-1);
+const showFestival = !!festivalEnd && bogotaToday() <= festivalEnd;
 ---
 
 <Layout title={t("tix.list.title")}>
@@ -73,19 +94,47 @@ const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
       <div class="fz-wrap fz-photo-hero-content">
         <p class="fz-display fz-gold tx-hero-kicker">AFRO IN</p>
         <h1 class="fz-display tx-hero-title">{t("tix.list.title")}</h1>
-        <p class="tx-hero-lead">{t("tix.list.subtitle")}</p>
+        <p class="tx-hero-lead">{t(cards.length ? "tix.list.subtitle" : "tix.list.subtitle.empty")}</p>
       </div>
     </section>
 
     <section class="fz-wrap events-list" aria-labelledby="events-list-title">
-      <h2 id="events-list-title" class="fz-display tx-h2">{t("tix.list.upcoming")}</h2>
+      {/* The hero already says "Eventos" and the list shows only upcoming ones: the
+          heading stays for screen readers only (Julio). */}
+      <h2 id="events-list-title" class="sr-only">{t("tix.list.upcoming")}</h2>
       {
         cards.length === 0 ? (
           <div class="events-empty">
-            <p class="fz-muted">{t("tix.list.empty")}</p>
-            <a class="fz-button" href={getTranslatedPath("/programacion", lang)}>
-              {t("tix.list.empty.cta")}
-            </a>
+            <div class="events-empty-text">
+              <p class="fz-display events-empty-title">{t("tix.list.empty.title")}</p>
+              {showFestival && <p class="events-empty-lead">{t("tix.list.empty")}</p>}
+              <div class="events-empty-actions">
+                {showFestival ? (
+                  <>
+                    <a class="fz-button fz-button-solid" href={getTranslatedPath("/programacion", lang)}>
+                      {t("tix.list.empty.cta")}
+                    </a>
+                    <a class="events-empty-follow" href="https://instagram.com/afro_in_" target="_blank" rel="noopener noreferrer">
+                      {t("tix.list.empty.follow")} ↗
+                    </a>
+                  </>
+                ) : (
+                  <a class="fz-button fz-button-solid" href="https://instagram.com/afro_in_" target="_blank" rel="noopener noreferrer">
+                    {t("tix.list.empty.follow")} ↗
+                  </a>
+                )}
+              </div>
+            </div>
+            {/* No events: the 2027 festival takes the space until it ends (Julio). */}
+            {showFestival && (
+              <a class="events-promo" href={getTranslatedPath("/programacion", lang)}>
+                <img src={promoPhoto.src} alt="" loading="lazy" decoding="async" />
+                <span class="events-promo-text">
+                  <span class="fz-display events-promo-title">AFRO IN 2027</span>
+                  <span class="events-promo-sub">{t("tix.list.empty.promo")}</span>
+                </span>
+              </a>
+            )}
           </div>
         ) : (
           <ul class="ev-grid">
@@ -93,19 +142,22 @@ const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
               <li>
                 <a href={eventPath(c.slug)} class:list={["ev-card", { "is-soldout": c.soldOut }]}>
                   <span class="ev-photo">
-                    {c.image ? (
-                      <img src={c.image} alt="" loading="lazy" decoding="async" />
-                    ) : (
-                      <span class="ev-fallback fz-display" aria-hidden="true">AFRO IN</span>
+                    {/* The panel sits under the photo, so a missing or broken photo shows it. */}
+                    <span class="ev-fallback fz-display" aria-hidden="true">AFRO IN</span>
+                    {c.image && (
+                      <img src={c.image} alt="" loading="lazy" decoding="async" onerror="this.hidden=true" />
                     )}
-                    <span class="ev-top">
-                      <span class="fz-cal ev-cal" aria-hidden="true">
-                        <span class="fz-cal-wd">{c.cal.weekday}</span>
-                        <span class="fz-cal-num fz-display">{c.cal.day}</span>
-                      </span>
-                      {c.flag && <span class="ev-flag">{c.flag}</span>}
+                    <span class="fz-cal ev-cal" aria-hidden="true">
+                      <span class="fz-cal-wd">{c.cal.weekday}</span>
+                      <span class="fz-cal-num fz-display">{c.cal.day}</span>
+                      <span class="fz-cal-wd">{c.cal.month}</span>
                     </span>
-                    <span class="ev-bottom">
+                  </span>
+                  <span class="ev-info">
+                    <span class="ev-head">
+                      {/* The gold block shows the day; the full date stays for screen readers. */}
+                      <span class="sr-only">{c.range ?? `${c.cal.weekday} ${c.cal.day} ${c.cal.month}`}</span>
+                      {c.time && <span class="ev-when">{c.time}</span>}
                       <span class="fz-display ev-name">{c.name}</span>
                       {c.place && (
                         <span class="ev-place">
@@ -113,17 +165,13 @@ const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
                           <span>{c.place}</span>
                         </span>
                       )}
+                      {c.flag && <span class="ev-flag">{c.flag}</span>}
                     </span>
-                  </span>
-                  <span class="ev-foot">
-                    <span class="ev-date">
-                      {c.cal.weekday} {c.cal.day} {c.cal.month}
-                    </span>
-                    <span class="ev-price">
-                      <span class="fz-display">
-                        {c.price}
+                    <span class="ev-foot">
+                      <span class="fz-display ev-price">{c.price}</span>
+                      <span class="fz-button fz-button-solid ev-cta">
+                        {c.soldOut ? t("tix.list.soldout") : t("tix.list.cta")}
                       </span>
-                      <span class="ev-arrow" aria-hidden="true">→</span>
                     </span>
                   </span>
                 </a>
@@ -148,41 +196,122 @@ const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
   .events-list .tx-h2 {
     margin-bottom: 32px;
   }
+  /* Empty list: an invitation on the left, the 2027 festival on the right. */
   .events-empty {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: 40px;
+    align-items: center;
+  }
+  .events-empty-title {
+    margin: 0;
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: 1.05;
+    color: var(--tx-fg);
+  }
+  .events-empty-lead {
+    margin: 14px 0 0;
+    font-size: 18px;
+    color: var(--tx-muted);
+  }
+  .events-empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 24px;
+    margin-top: 28px;
+  }
+  .fz .events-empty-follow {
+    color: var(--tx-accent);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .fz .events-empty-follow:hover {
+    text-decoration: underline;
+  }
+  .events-promo {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border: 1px solid var(--tx-line);
+    text-decoration: none;
+  }
+  .events-promo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .events-promo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent 40%, rgba(14, 10, 8, 0.9));
+  }
+  .events-promo-text {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 18px;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-    padding-top: 24px;
-    border-top: 1px solid var(--tx-line);
+    gap: 4px;
   }
-  .events-empty p {
-    margin: 0;
-    font-size: 18px;
+  .events-promo-title {
+    font-size: 40px;
+    line-height: 1;
+    color: #f3e9d2;
+  }
+  .events-promo-sub {
+    font-size: 15px;
+    color: var(--tx-accent);
+    font-weight: 600;
+  }
+  .events-promo:hover img {
+    transform: scale(1.03);
+  }
+  @media (max-width: 800px) {
+    .events-empty {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 28px;
+    }
   }
 
+  /* Two cards per row: a portrait photo with the gold date block on the left,
+     the event and the button on the right (Julio). */
   .ev-grid {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 40px 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
   }
   .fz .ev-card {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    height: 100%;
+    background: var(--tx-surface);
+    border: 1px solid var(--tx-line);
     color: var(--tx-fg);
     text-decoration: none;
+    transition: border-color 0.2s ease;
   }
-  /* Photo card like the 2027 guest cards: the photo fills it, date and flag on
-     top, name and venue at the bottom, over soft scrims. */
+  /* The photo stretches to the card's height (no aspect ratio, so it never
+     grows wider than its column). */
   .ev-photo {
     position: relative;
     display: block;
-    aspect-ratio: 4 / 5;
+    min-height: 280px;
     overflow: hidden;
     background: #2a2018;
+  }
+  .ev-photo img[hidden] {
+    display: none;
   }
   .ev-photo img {
     position: absolute;
@@ -193,73 +322,54 @@ const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
     display: block;
     transition: transform 0.4s ease;
   }
-  .ev-photo::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(rgba(14, 10, 8, 0.7), transparent 30%, transparent 50%, rgba(14, 10, 8, 0.92));
-    pointer-events: none;
-  }
   .ev-fallback {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-bottom: 20%;
-    font-size: 48px;
+    font-size: 36px;
     color: rgba(230, 184, 74, 0.3);
   }
-  .ev-top,
-  .ev-bottom {
-    position: absolute;
-    z-index: 2;
-    left: 12px;
-    right: 12px;
-  }
-  .ev-top {
-    top: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 10px;
-  }
   .ev-cal {
-    width: 48px;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    width: 50px;
     --fz-cal-num: 26px;
   }
-  .ev-flag {
-    min-width: 0;
-    padding: 2px 10px;
-    border: 1px solid rgba(242, 193, 78, 0.45);
-    background: rgba(22, 22, 22, 0.55);
-    color: #f3e9d2;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .ev-bottom {
-    bottom: 14px;
+  .ev-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    justify-content: space-between;
+    gap: 18px;
+    min-width: 0;
+    padding: 20px 22px;
+  }
+  .ev-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+  }
+  .ev-when {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tx-accent);
   }
   .ev-name {
     font-size: clamp(26px, 2.4vw, 32px);
     line-height: 1.05;
-    color: #f3e9d2;
+    color: var(--tx-fg);
   }
   .ev-place {
     display: flex;
     align-items: center;
-    min-width: 0;
+    max-width: 100%;
     font-size: 14px;
-    color: #d9ccb3;
+    color: var(--tx-muted);
   }
   .ev-place span {
     min-width: 0;
@@ -267,74 +377,102 @@ const eventPath = (slug: string) => getTranslatedPath(`/eventos/${slug}`, lang);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .ev-flag {
+    margin-top: 4px;
+    padding: 2px 10px;
+    border: 1px solid var(--tx-line);
+    color: var(--tx-fg);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
   .ev-foot {
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
+    flex-direction: column;
     gap: 12px;
-    padding: 12px 0 0;
-    border-top: 1px solid var(--tx-line);
-    margin-top: 12px;
-  }
-  .ev-date {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--tx-accent);
   }
   .ev-price {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 10px;
-    color: var(--tx-accent);
-    white-space: nowrap;
-  }
-  .ev-price .fz-display {
-    font-size: 26px;
+    font-size: 28px;
     line-height: 1;
+    color: var(--tx-accent);
   }
-  .ev-arrow {
-    font-size: 20px;
-    transition: transform 0.2s ease;
+  .fz .ev-cta {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    background: var(--fz-red, #d0342c);
+    border-color: var(--fz-red, #d0342c);
+    color: #fff;
   }
   .ev-card.is-soldout .ev-price {
     color: var(--tx-muted);
-  }
-  .ev-card.is-soldout .ev-price .fz-display {
     text-decoration: line-through;
+  }
+  .fz .ev-card.is-soldout .ev-cta {
+    background: transparent;
+    border-color: var(--tx-line);
+    color: var(--tx-muted);
   }
   .ev-card.is-soldout .ev-photo img {
     filter: grayscale(0.6);
+  }
+  .fz .ev-card:hover,
+  .fz .ev-card:focus-visible {
+    border-color: var(--tx-accent);
   }
   .ev-card:hover .ev-photo img,
   .ev-card:focus-visible .ev-photo img {
     transform: scale(1.03);
   }
-  .ev-card:hover .ev-arrow,
-  .ev-card:focus-visible .ev-arrow {
-    transform: translateX(4px);
-  }
   .fz .ev-card:focus-visible {
     outline: 2px solid var(--tx-accent);
-    outline-offset: 6px;
+    outline-offset: 4px;
   }
   @media (prefers-reduced-motion: reduce) {
     .ev-photo img,
-    .ev-arrow {
+    .fz .ev-card {
       transition: none;
     }
   }
-  @media (max-width: 1023px) {
-    .ev-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-  @media (max-width: 639px) {
-    .events-list .tx-h2 {
-      margin-bottom: 24px;
-    }
+  /* Medium screens and phones: one card per row, still photo beside text. */
+  @media (max-width: 900px) {
     .ev-grid {
       grid-template-columns: minmax(0, 1fr);
-      gap: 36px;
+    }
+  }
+  /* Phones: the card stands up, photo on top and the event under it (Julio). */
+  @media (max-width: 639px) {
+    .fz .ev-card {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .ev-photo {
+      min-height: 0;
+      aspect-ratio: 16 / 10;
+    }
+    .ev-info {
+      padding: 16px 18px 18px;
+      gap: 16px;
+    }
+    .ev-name {
+      font-size: 28px;
+    }
+    /* Price and button share a row; on very narrow phones the button wraps under. */
+    .ev-foot {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px 14px;
+    }
+    .ev-price {
+      font-size: 26px;
+      white-space: nowrap;
+    }
+    .fz .ev-cta {
+      width: auto;
+      flex: 1 0 auto;
+      white-space: nowrap;
     }
   }
 </style>

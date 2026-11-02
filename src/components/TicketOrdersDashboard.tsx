@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Eye, Ticket, Clock, CheckCircle2, Copy, Check, Gift, Download } from "lucide-react";
+import { Eye, Ticket, Clock, CheckCircle2, Copy, Check, Gift, Download, Mail } from "lucide-react";
 
 import type { ColDef } from "ag-grid-community";
 import AdminGrid from "@/components/admin/AdminGrid";
+import { orderRef } from "@/lib/orderRef";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,9 @@ interface TicketOrderRow {
   checked_in_count: number;
   created_at: string;
   paid_at?: string | null;
+  email_status?: string | null;
+  email_sent_at?: string | null;
+  email_error?: string | null;
 }
 
 interface TicketItem {
@@ -77,6 +81,74 @@ function formatDate(ts?: string | null): string {
     })
     .toLowerCase();
   return `${date} · ${time}`;
+}
+
+function emailStatusText(o: TicketOrderRow): string {
+  switch (o.email_status) {
+    case "sent":
+      return `Enviado · ${formatDate(o.email_sent_at)}`;
+    case "failed":
+      return `Falló${o.email_error ? `: ${o.email_error}` : ""}`;
+    case "sending":
+      return "Enviando…";
+    case "skipped":
+      return "No enviado (compra anterior al correo)";
+    default:
+      return "No enviado";
+  }
+}
+
+// Send / resend the ticket email of a completed order from its detail.
+function EmailSection({
+  order,
+  onSent,
+}: {
+  order: TicketOrderRow;
+  onSent: (o: Partial<TicketOrderRow>) => void;
+}) {
+  const [sending, setSending] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const send = async () => {
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/tickets/${order.id}/email`, { method: "POST" });
+      const data = (await res.json()) as {
+        error?: string;
+        order?: Partial<TicketOrderRow>;
+      };
+      if (data.order) onSent(data.order);
+      if (!res.ok) setError(data.error || "No se pudo enviar el correo.");
+    } catch {
+      setError("Error de conexión al enviar el correo.");
+    } finally {
+      setSending(false);
+    }
+  };
+  return (
+    <section>
+      <h4 className="text-muted-foreground mb-1 text-xs font-semibold uppercase">
+        Correo
+      </h4>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-foreground min-w-0 flex-1">{emailStatusText(order)}</span>
+        <button
+          type="button"
+          onClick={send}
+          disabled={sending}
+          className="border-border text-foreground hover:bg-muted inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold disabled:opacity-50"
+        >
+          <Mail className="size-3.5" />
+          {sending
+            ? "Enviando…"
+            : order.email_status === "sent"
+              ? "Reenviar correo"
+              : "Enviar correo"}
+        </button>
+      </div>
+      {error && <p className="text-destructive mt-1 text-xs">{error}</p>}
+    </section>
+  );
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -236,6 +308,7 @@ export default function TicketOrdersDashboard() {
     email: "",
     phone: "",
     quantity: 1,
+    lang: "es",
   });
 
   const openCourtesyModal = async () => {
@@ -284,6 +357,7 @@ export default function TicketOrdersDashboard() {
         body: JSON.stringify({
           eventId: Number(courtesyForm.eventId),
           quantity: Number(courtesyForm.quantity),
+          lang: courtesyForm.lang,
           buyer: {
             name: courtesyForm.name.trim(),
             email: courtesyForm.email.trim(),
@@ -310,6 +384,7 @@ export default function TicketOrdersDashboard() {
         email: "",
         phone: "",
         quantity: 1,
+        lang: courtesyForm.lang,
       });
       fetchOrders();
     } catch (err: any) {
@@ -523,6 +598,9 @@ export default function TicketOrdersDashboard() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   Compra #{selected.id}
+                  <span className="text-muted-foreground font-mono text-sm font-normal">
+                    Ref. {orderRef(selected.bold_order_id)}
+                  </span>
                   <StatusPill status={selected.status} />
                 </DialogTitle>
                 <DialogDescription>
@@ -546,6 +624,18 @@ export default function TicketOrdersDashboard() {
                     </p>
                   )}
                 </section>
+
+                {selected.status === "completed" && (tickets?.length ?? 0) > 0 && (
+                  <EmailSection
+                    order={selected}
+                    onSent={(patch) => {
+                      setSelected((s) => (s ? { ...s, ...patch } : s));
+                      setOrders((list) =>
+                        list.map((o) => (o.id === selected.id ? { ...o, ...patch } : o))
+                      );
+                    }}
+                  />
+                )}
 
                 {selected.status === "completed" && (
                   <section>
@@ -786,6 +876,23 @@ export default function TicketOrdersDashboard() {
                     className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-foreground mb-1 block text-xs font-semibold uppercase">
+                  Idioma del correo
+                </label>
+                <select
+                  value={courtesyForm.lang}
+                  onChange={(e) =>
+                    setCourtesyForm((f) => ({ ...f, lang: e.target.value }))
+                  }
+                  className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 sm:w-1/2"
+                >
+                  <option value="es">Español</option>
+                  <option value="en">English</option>
+                  <option value="fr">Français</option>
+                </select>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

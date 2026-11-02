@@ -96,17 +96,17 @@ days:
         kind: "Coupé décalé 1 vs 1"
 tickets:
   tiers:
-    - period: "Until November 15 or while the 50 tickets last"
+    - period: "Until Nov 15"
       from: "2026-11-01"
       until: "2026-11-15"
       price: 20000
       note: "First 50 tickets, registration on afroin.org only"
-    - period: "November 16 – December 16"
+    - period: "From Nov 16"
       from: "2026-11-16"
       until: "2026-12-16"
       price: 35000
       note: "Presale, 150 tickets"
-    - period: "From December 17"
+    - period: "From Dec 17"
       from: "2026-12-17"
       price: 45000
       note: "150 tickets"

@@ -96,17 +96,17 @@ days:
         kind: "Coupé décalé 1 vs 1"
 tickets:
   tiers:
-    - period: "Hasta el 15 de noviembre o hasta agotar las 50 boletas"
+    - period: "Hasta 15 nov"
       from: "2026-11-01"
       until: "2026-11-15"
       price: 20000
       note: "Primeras 50 boletas, solo con registro en afroin.org"
-    - period: "16 de noviembre al 16 de diciembre"
+    - period: "Desde 16 nov"
       from: "2026-11-16"
       until: "2026-12-16"
       price: 35000
       note: "Preventa, 150 boletas"
-    - period: "Desde el 17 de diciembre"
+    - period: "Desde 17 dic"
       from: "2026-12-17"
       price: 45000
       note: "150 boletas"

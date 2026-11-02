@@ -9,6 +9,7 @@ import { normalizeStoredPhone } from "@/lib/checkoutFields";
 import {
   HOLD_MINUTES,
   bogotaToday,
+  isEventOver,
   nowBogotaWallClock,
   resolveSale,
   stageStatuses,
@@ -24,6 +25,13 @@ const clean = (s: unknown, max = 200): string | null => {
   const v = typeof s === "string" ? s.trim() : "";
   return v ? v.slice(0, max) : null;
 };
+
+export type OrderLocale = "es" | "en" | "fr";
+
+/** The buyer's language for the order email; anything unknown is Spanish. */
+export function orderLocale(raw: unknown): OrderLocale {
+  return raw === "en" || raw === "fr" ? raw : "es";
+}
 
 // Crockford base32 (no I/L/O/U) — unambiguous for manual door entry.
 const CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -62,6 +70,7 @@ export interface EventRow {
   department?: string | null;
   country?: string | null;
   event_date: string;
+  end_date?: string | null; // last day (YYYY-MM-DD) of a multi-day event
   price: number;
   capacity: number;
   image_r2_key: string | null;
@@ -100,7 +109,8 @@ function nowIso(): string {
 // Events store their start as Colombia wall-clock time without a zone
 // (e.g. 2026-01-17T20:00, sometimes with seconds); nowBogotaWallClock() gives
 // "now" in the same format, to the second, so string comparison is exact for
-// both stored forms. An event is on sale until it starts.
+// both stored forms. An event is on sale until it is over: until it starts, or
+// until its last day ends when it has an end_date (ticketStages.eventEndsAt).
 
 // A pending order holds its tickets for HOLD_MINUTES so concurrent buyers do
 // not oversell a small quota. A paid order whose tickets are not issued yet
@@ -249,13 +259,16 @@ function toPublic(
 
 /** Visible, not-yet-past events with their sold counts, soonest first. */
 export async function getVisibleEvents(db: D1Database): Promise<PublicEvent[]> {
+  // The WHERE repeats ticketStages.eventEndsAt in SQL (NULL || text is NULL;
+  // NULLIF makes an empty end_date count as none, like the TS rule).
   const res = await db
     .prepare(
       `SELECT e.*, COALESCE(t.sold, 0) AS sold, ${HELD_FOR_EVENT} AS held
        FROM events e
        LEFT JOIN (SELECT event_id, COUNT(*) AS sold FROM tickets GROUP BY event_id) t
          ON t.event_id = e.id
-       WHERE e.visible = 1 AND e.event_date > ?
+       WHERE e.visible = 1
+         AND COALESCE(NULLIF(e.end_date, '') || 'T23:59:59', e.event_date) > ?
        ORDER BY e.event_date ASC`
     )
     .bind(nowBogotaWallClock())
@@ -282,7 +295,7 @@ export async function getEventBySlug(
     .bind(slug)
     .first<(EventRow & { sold: number; held: number }) | null>();
   if (!row) return null;
-  if (!row.visible || row.event_date <= nowBogotaWallClock()) return null;
+  if (!row.visible || isEventOver(row)) return null;
   const stages = await loadStagesWithSales(db, [row.id]);
   return toPublic(row, stages.get(row.id));
 }
@@ -294,6 +307,8 @@ export interface TicketCheckoutInput {
   // PriceChangedError when it differs; the charge is always computed here.
   expectedUnitPrice?: number | string | null;
   buyer?: { name?: string; email?: string; phone?: string | null };
+  /** Page language (es/en/fr): the language of the confirmation email. */
+  lang?: string;
 }
 
 export interface CreatedTicketOrder {
@@ -335,7 +350,7 @@ export async function createPendingTicketOrder(
 
   const event = await db
     .prepare(
-      `SELECT id, slug, name_es, price, capacity, visible, event_date
+      `SELECT id, slug, name_es, price, capacity, visible, event_date, end_date
        FROM events WHERE slug = ?`
     )
     .bind(slug)
@@ -347,10 +362,11 @@ export async function createPendingTicketOrder(
       capacity: number;
       visible: number;
       event_date: string;
+      end_date: string | null;
     } | null>();
 
   if (!event) throw new CheckoutError("El evento no existe");
-  if (!event.visible || event.event_date <= nowBogotaWallClock())
+  if (!event.visible || isEventOver(event))
     throw new CheckoutError("El evento no está disponible");
 
   // With price stages, the price and quota come from the stage on sale today
@@ -448,8 +464,8 @@ export async function createPendingTicketOrder(
         (bold_order_id, status, provider, provider_status, currency, amount,
          event_id, event_name, unit_price, quantity,
          buyer_name, buyer_email, buyer_phone, access_token,
-         tickets_issued, paid_at, stage_id)
-       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17
+         tickets_issued, paid_at, stage_id, locale)
+       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18
        FROM events e
        WHERE e.id = ?7
          AND (SELECT COUNT(*) FROM tickets WHERE event_id = e.id)
@@ -474,7 +490,8 @@ export async function createPendingTicketOrder(
       accessToken,
       isFree ? 1 : 0,
       paidAt,
-      stageId
+      stageId,
+      orderLocale(input.lang)
     );
 
   // Free orders are completed at once: the order and its tickets are written in
@@ -514,6 +531,7 @@ export interface CourtesyTicketInput {
   eventId?: number | string;
   quantity?: number | string;
   buyer?: { name?: string; email?: string; phone?: string | null };
+  lang?: string;
 }
 
 export interface CreatedCourtesyOrder {
@@ -572,11 +590,11 @@ export async function createCourtesyTicketOrder(
         (bold_order_id, status, provider, provider_status, currency, amount,
          event_id, event_name, unit_price, quantity,
          buyer_name, buyer_email, buyer_phone, access_token,
-         tickets_issued, paid_at)
+         tickets_issued, paid_at, locale)
        VALUES (?, 'completed', 'courtesy', 'COMPLIMENTARY', 'COP', 0,
                ?, ?, 0, ?,
                ?, ?, ?, ?,
-               1, CURRENT_TIMESTAMP)`
+               1, CURRENT_TIMESTAMP, ?)`
     )
     .bind(
       orderId,
@@ -586,7 +604,8 @@ export async function createCourtesyTicketOrder(
       name,
       email,
       clean(input.buyer?.phone, 40),
-      accessToken
+      accessToken,
+      orderLocale(input.lang)
     );
 
   // Order + tickets in one batch (single transaction): all or nothing.
@@ -624,6 +643,7 @@ interface TicketOrderRow {
   access_token: string;
   paid_at: string | null;
   created_at: string;
+  locale?: string | null;
 }
 
 /**

@@ -15,11 +15,15 @@ interface Props {
   eventSubtitle?: string | null;
   eventImage?: string | null;
   eventDate?: string | null;
+  eventEndDate?: string | null;
   lang?: string;
   orderNumber: number | string;
   tickets: TicketView[];
   /** Permanent link to this order, or null to hide the save-link block. */
   permalink: string | null;
+  /** "Back to events" link at the end of the side column. */
+  continueHref?: string;
+  continueLabel?: string;
   t: Record<string, string>;
 }
 
@@ -28,13 +32,19 @@ export default function TicketList({
   eventSubtitle,
   eventImage,
   eventDate,
+  eventEndDate,
   lang,
   orderNumber,
   tickets,
   permalink,
+  continueHref,
+  continueLabel,
   t,
 }: Props) {
   const [copied, setCopied] = React.useState(false);
+  // The URL is hidden behind the copy button; shown when copying fails
+  // (in-app browsers), so the buyer can still select it by hand.
+  const [showUrl, setShowUrl] = React.useState(false);
   const [active, setActive] = React.useState(0);
   const trackRef = React.useRef<HTMLDivElement>(null);
   const isSlider = tickets.length > 1;
@@ -46,7 +56,7 @@ export default function TicketList({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* clipboard unavailable */
+      setShowUrl(true);
     }
   };
 
@@ -74,6 +84,7 @@ export default function TicketList({
       eventName={eventName}
       eventSubtitle={eventSubtitle}
       eventDate={eventDate}
+      eventEndDate={eventEndDate}
       lang={lang}
       kindLabel={t["tix.ticket.kind"]}
       indexLabel={isSlider ? `${i + 1} / ${tickets.length}` : undefined}
@@ -81,82 +92,108 @@ export default function TicketList({
   );
 
   return (
+    // Desktop: tickets on the left, order details and actions in a side
+    // column; on phones it stacks with the order line first (CSS).
     <div className="tix-list">
-      <div className="tix-list-head">
-        <div className="tix-list-row">
-          <span>{t["tix.receipt.event"]}</span>
-          <strong>{eventName}</strong>
+      <div className="tix-list-tickets">
+        <h2 className="tix-list-title">{t["tix.receipt.yourtickets"]}</h2>
+        {/* Desktop: the event once, above its tickets; each ticket then shows
+            only its number, QR and code (CSS, screen only: printed tickets keep the
+            event). Phones swipe through them one at a time. */}
+        <div className="tix-event-head">
+          <p className="tix-event-name">{eventName}</p>
+          {eventSubtitle && <p className="tix-event-sub">{eventSubtitle}</p>}
         </div>
-        <div className="tix-list-row">
-          <span>{t["tix.receipt.number"]}</span>
-          <strong>#{orderNumber}</strong>
-        </div>
+        {isSlider ? (
+          <div className="tix-slider">
+            <button
+              type="button"
+              className="tix-slider-arrow prev"
+              onClick={() => goTo(Math.max(0, active - 1))}
+              disabled={active === 0}
+              aria-label={t["tix.receipt.prev"]}
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+
+            <div className="tix-slider-track" ref={trackRef} onScroll={onScroll}>
+              {tickets.map((tk, i) => (
+                <div className="tix-slide" key={tk.code}>
+                  {stub(tk, i)}
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="tix-slider-arrow next"
+              onClick={() => goTo(Math.min(tickets.length - 1, active + 1))}
+              disabled={active === tickets.length - 1}
+              aria-label={t["tix.receipt.next"]}
+            >
+              <ChevronRight className="size-5" />
+            </button>
+
+            <div className="tix-dots">
+              {tickets.map((tk, i) => (
+                <button
+                  key={tk.code}
+                  type="button"
+                  className={`tix-dot ${i === active ? "on" : ""}`}
+                  onClick={() => goTo(i)}
+                  aria-label={t["tix.receipt.ticketn"].replace("{n}", String(i + 1))}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="tix-single">{tickets.map((tk, i) => stub(tk, i))}</div>
+        )}
       </div>
 
-      <h2 className="tix-list-title">{t["tix.receipt.yourtickets"]}</h2>
-
-      {isSlider ? (
-        <div className="tix-slider">
-          <button
-            type="button"
-            className="tix-slider-arrow prev"
-            onClick={() => goTo(Math.max(0, active - 1))}
-            disabled={active === 0}
-            aria-label={t["tix.receipt.prev"]}
-          >
-            <ChevronLeft className="size-5" />
-          </button>
-
-          <div className="tix-slider-track" ref={trackRef} onScroll={onScroll}>
-            {tickets.map((tk, i) => (
-              <div className="tix-slide" key={tk.code}>
-                {stub(tk, i)}
-              </div>
-            ))}
+      <aside className="tix-list-side">
+        <div className="tix-list-head">
+          <div className="tix-list-row tix-list-row-event">
+            <span>{t["tix.receipt.event"]}</span>
+            <strong>{eventName}</strong>
           </div>
+          {orderNumber !== "" && (
+            <div className="tix-list-row">
+              <span>{t["tix.receipt.number"]}</span>
+              <strong>#{orderNumber}</strong>
+            </div>
+          )}
+        </div>
 
-          <button
-            type="button"
-            className="tix-slider-arrow next"
-            onClick={() => goTo(Math.min(tickets.length - 1, active + 1))}
-            disabled={active === tickets.length - 1}
-            aria-label={t["tix.receipt.next"]}
-          >
-            <ChevronRight className="size-5" />
-          </button>
+        <button type="button" className="tix-print" onClick={() => window.print()}>
+          {t["tix.receipt.print"]}
+        </button>
 
-          <div className="tix-dots">
-            {tickets.map((tk, i) => (
-              <button
-                key={tk.code}
-                type="button"
-                className={`tix-dot ${i === active ? "on" : ""}`}
-                onClick={() => goTo(i)}
-                aria-label={t["tix.receipt.ticketn"].replace("{n}", String(i + 1))}
+        {permalink && (
+          <div className="tix-savelink">
+            <p className="tix-savelink-title">{t["tix.receipt.savelink.title"]}</p>
+            <p className="tix-savelink-text">{t["tix.receipt.savelink.text"]}</p>
+            <div className="tix-savelink-row">
+              <input
+                readOnly
+                className={showUrl ? "show" : undefined}
+                value={permalink}
+                onFocus={(e) => e.target.select()}
               />
-            ))}
+              <button type="button" className="btn btn-primary" onClick={copy}>
+                {copied ? t["tix.receipt.copied"] : t["tix.receipt.copy"]}
+              </button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="tix-single">{tickets.map((tk, i) => stub(tk, i))}</div>
-      )}
+        )}
 
-      <button type="button" className="tix-print" onClick={() => window.print()}>
-        {t["tix.receipt.print"]}
-      </button>
-
-      {permalink && (
-        <div className="tix-savelink">
-          <p className="tix-savelink-title">{t["tix.receipt.savelink.title"]}</p>
-          <p className="tix-savelink-text">{t["tix.receipt.savelink.text"]}</p>
-          <div className="tix-savelink-row">
-            <input readOnly value={permalink} onFocus={(e) => e.target.select()} />
-            <button type="button" className="btn btn-primary" onClick={copy}>
-              {copied ? t["tix.receipt.copied"] : t["tix.receipt.copy"]}
-            </button>
-          </div>
-        </div>
-      )}
+        {continueHref && (
+          // A text link: "Imprimir entradas" is the only primary button here.
+          <a href={continueHref} className="tix-continue">
+            {continueLabel}
+          </a>
+        )}
+      </aside>
     </div>
   );
 }

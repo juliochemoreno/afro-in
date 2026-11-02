@@ -15,7 +15,7 @@ import EditionActivities from "@/components/EditionActivities.astro";
 import { getEntries, type CollectionEntry } from "astro:content";
 import { Image } from "astro:assets";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
-import { activityArtistIds, artistLines, baseSlug, dateRange, dayAnchor, dayLabel, isComingSoon, stopPlace, type Lang } from "@/lib/programacion";
+import { activityArtistIds, artistLines, baseSlug, dateRange, dayAnchor, dayCount, stubRange, dayLabel, isComingSoon, stopPlace, type Lang } from "@/lib/programacion";
 import { editionNav } from "@/lib/editionNav";
 import "@/styles/festival.css";
 
@@ -152,6 +152,22 @@ const { navLinks, ctaLink } = editionNav(lang);
       </div>
     </section>
 
+    {/* Tickets right after the hero (Julio): the hero already gives the dates and venues. */}
+    {data.tickets && (
+      <div class="fz-wrap stop-tickets">
+        <EditionTickets
+          tickets={data.tickets}
+          lang={lang}
+          pass={{
+            place: data.name,
+            range: dateRange(data.startDate, data.endDate, lang),
+            stub: stubRange(data.startDate, data.endDate, lang),
+            days: dayCount(data.startDate, data.endDate),
+          }}
+        />
+      </div>
+    )}
+
     <div class="fz-wrap stop-days">
       {comingSoon ? (
         <div class="fz-tba">
@@ -180,12 +196,6 @@ const { navLinks, ctaLink } = editionNav(lang);
         </FestivalScrolly>
       )}
     </div>
-
-    {data.tickets && (
-      <div class="fz-wrap stop-tickets">
-        <EditionTickets tickets={data.tickets} lang={lang} />
-      </div>
-    )}
 
     {linkedStopCard && (
       <div class="stop-link-wrap">

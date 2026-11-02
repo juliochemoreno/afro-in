@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { MAX_STAGES, validateStages } from "@/lib/ticketStages";
+import { MAX_STAGES, validateEndDate, validateStages } from "@/lib/ticketStages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,6 +130,7 @@ export interface EventRow {
   department?: string | null;
   country?: string | null;
   event_date: string;
+  end_date?: string | null;
   price: number | string;
   capacity: number | string;
   image_r2_key?: string | null;
@@ -150,6 +151,7 @@ interface FormState {
   department: string;
   country: string;
   event_date: string;
+  end_date: string;
   price: string;
   is_free: boolean;
   capacity: string;
@@ -173,6 +175,7 @@ const EMPTY: FormState = {
   department: "",
   country: "Colombia",
   event_date: "",
+  end_date: "",
   price: "",
   is_free: false,
   capacity: "",
@@ -182,6 +185,14 @@ const EMPTY: FormState = {
   stages_on: false,
   stages: [],
 };
+
+// The day after a YYYY-MM-DD date (min of the "last day" picker), or undefined.
+function nextDay(day: string): string | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return undefined;
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
 
 function toStageForm(s: StageRowWithSales): StageForm {
   return {
@@ -231,6 +242,7 @@ function toForm(e: EventRow, stages: StageRowWithSales[] = []): FormState {
     department: e.department || "",
     country: e.country || "Colombia",
     event_date: e.event_date || "",
+    end_date: e.end_date || "",
     price: e.price != null ? String(e.price) : "",
     is_free: p === 0 && e.id != null,
     capacity: e.capacity != null ? String(e.capacity) : "",
@@ -509,10 +521,17 @@ export default function EventForm({
         setSaving(false);
         return;
       }
+      const end = validateEndDate(form.event_date, form.end_date);
+      if ("error" in end) {
+        setError(end.error);
+        setSaving(false);
+        return;
+      }
       if (stagesOn) {
         // Same rules as the server (lib/ticketStages.ts), checked before saving.
         const check = validateStages(form.stages.map(stagePayload), {
           eventDate: form.event_date,
+          endDate: end.endDate,
           minAmount: 1000,
         });
         if ("error" in check) {
@@ -528,6 +547,7 @@ export default function EventForm({
       const { stages_on: _on, stages: _stages, ...fields } = form;
       const payload = {
         ...fields,
+        end_date: end.endDate,
         price: stagesOn ? Number(form.stages[0].price) : form.is_free ? 0 : Number(form.price),
         capacity: Number(form.capacity),
         // An empty list removes the stages (the server refuses if one has orders).
@@ -951,6 +971,31 @@ export default function EventForm({
                   value={datePart}
                   onChange={(e) => updateDateTime(e.target.value, timePart)}
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <Label htmlFor="e-end-date" className="text-xs">
+                    Último día (si dura varios días)
+                  </Label>
+                  {form.end_date && (
+                    <button
+                      type="button"
+                      onClick={() => set("end_date", "")}
+                      className="text-xs text-muted-foreground underline hover:text-foreground"
+                    >
+                      Quitar
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id="e-end-date"
+                  type="date"
+                  min={nextDay(datePart)}
+                  value={form.end_date}
+                  onChange={(e) => set("end_date", e.target.value)}
+                />
+                <p className="text-muted-foreground mt-1 text-[11px]">Vacío = evento de un día.</p>
               </div>
 
               <div>
