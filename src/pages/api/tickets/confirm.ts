@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { confirmBoldOrder, CONFIRM_TARGETS, type ConfirmResult } from "@/lib/bold";
 import { issueTicketsForOrder, getTicketOrderByBoldId } from "@/lib/tickets";
+import { sendTicketEmail } from "@/lib/ticketEmailSend";
 
 export const prerender = false;
 
@@ -78,6 +79,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (view.order?.status === "completed" && view.tickets.length === 0) {
       await issueTicketsForOrder(env.DB, orderId);
       view = await getTicketOrderByBoldId(env.DB, orderId);
+    }
+
+    // Confirmation email, once per order (the webhook may send it first; the
+    // claim decides), after the response: it never delays or fails the receipt.
+    if (view.order?.status === "completed") {
+      locals.runtime.ctx.waitUntil(
+        sendTicketEmail(env, orderId, { origin: new URL(request.url).origin })
+      );
     }
 
     // D1 is the source of truth: the status shown is the order's status after

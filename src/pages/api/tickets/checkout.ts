@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { generateIntegritySignature } from "@/lib/bold";
 import { CheckoutError } from "@/lib/orders";
 import { PriceChangedError, createPendingTicketOrder } from "@/lib/tickets";
+import { sendTicketEmail } from "@/lib/ticketEmailSend";
 
 export const prerender = false;
 
@@ -49,6 +50,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     if (order.isFree || order.amount === 0) {
+      // A free reservation is completed with its tickets already: email them
+      // after the response.
+      locals.runtime.ctx.waitUntil(
+        sendTicketEmail(env, order.orderId, { origin: new URL(request.url).origin })
+      );
       return json(
         {
           free: true,

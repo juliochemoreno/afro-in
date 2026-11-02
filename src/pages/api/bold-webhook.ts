@@ -6,6 +6,7 @@ import {
   orderKindFromId,
 } from "@/lib/bold";
 import { issueTicketsForOrder } from "@/lib/tickets";
+import { sendTicketEmail } from "@/lib/ticketEmailSend";
 
 export const prerender = false;
 
@@ -66,6 +67,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       } catch (e) {
         console.error("Bold webhook: ticket issuance failed", orderId, e);
       }
+      // Confirmation email, once per order (the claim decides), after the
+      // response: it never delays or fails the webhook.
+      locals.runtime.ctx.waitUntil(
+        sendTicketEmail(env, orderId, { origin: new URL(request.url).origin })
+      );
     }
 
     return json(
