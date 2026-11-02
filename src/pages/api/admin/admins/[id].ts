@@ -7,6 +7,7 @@ import {
   setAdminSessionCookie,
   MIN_ADMIN_PASSWORD_LENGTH,
 } from "@/lib/adminAuth";
+import { validActiveUntil } from "@/lib/adminRoles";
 
 export const prerender = false;
 
@@ -63,7 +64,12 @@ export const PUT: APIRoute = async (ctx) => {
     return json({ error: "Administrador no encontrado" }, 404);
   }
 
-  if (body.role !== undefined && body.role !== "admin" && body.role !== "superadmin") {
+  if (
+    body.role !== undefined &&
+    body.role !== "admin" &&
+    body.role !== "superadmin" &&
+    body.role !== "door"
+  ) {
     return json({ error: "Rol inválido" }, 400);
   }
   if (body.is_active !== undefined && ![0, 1, true, false].includes(body.is_active)) {
@@ -85,6 +91,26 @@ export const PUT: APIRoute = async (ctx) => {
         ? 1
         : 0
       : existing.is_active;
+
+  // Door accounts (D26) always carry a valid "Activo hasta"; the other roles
+  // none. Only superadmins set it (like the role).
+  let activeUntil: string | null = existing.active_until ?? null;
+  if (role === "door") {
+    const changed =
+      currentAdmin.role === "superadmin" &&
+      body.active_until !== undefined &&
+      body.active_until !== existing.active_until;
+    if (changed) {
+      // A new date must be today or later; an unchanged (even past) date
+      // keeps an expired account editable (rename, password, deactivate).
+      activeUntil = validActiveUntil(body.active_until);
+      if (!activeUntil) return json({ error: "Fecha 'Activo hasta' inválida" }, 400);
+    } else if (existing.role !== "door" || !activeUntil) {
+      return json({ error: "Fecha 'Activo hasta' inválida" }, 400);
+    }
+  } else {
+    activeUntil = null;
+  }
 
   // A superadmin cannot lock themselves out by demoting or deactivating their own account.
   if (isSelf && (role !== existing.role || isActive !== existing.is_active)) {
@@ -119,10 +145,10 @@ export const PUT: APIRoute = async (ctx) => {
     await db
       .prepare(
         `UPDATE admins
-         SET name = ?, email = ?, role = ?, is_active = ?, password_hash = ?, salt = ?, updated_at = CURRENT_TIMESTAMP
+         SET name = ?, email = ?, role = ?, is_active = ?, active_until = ?, password_hash = ?, salt = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`
       )
-      .bind(name, email, role, isActive, passwordHash, salt, targetId)
+      .bind(name, email, role, isActive, activeUntil, passwordHash, salt, targetId)
       .run();
 
     // A password change ends every session of that account (see adminAuth).

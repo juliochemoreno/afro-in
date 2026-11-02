@@ -8,6 +8,7 @@ import {
   setAdminSessionCookie,
   timingSafeEqualStrings,
 } from "../../lib/adminAuth";
+import { accountActive } from "../../lib/adminRoles";
 
 export const prerender = false;
 
@@ -64,12 +65,13 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     try {
       const adminRow = await db
         .prepare(
-          "SELECT id, email, name, password_hash, salt, role, is_active FROM admins WHERE LOWER(email) = LOWER(?) OR LOWER(email) = LOWER(?)"
+          "SELECT id, email, name, password_hash, salt, role, is_active, active_until FROM admins WHERE LOWER(email) = LOWER(?) OR LOWER(email) = LOWER(?)"
         )
         .bind(user, user.includes("@") ? user : `${user}@afroin.com`)
         .first();
 
-      if (adminRow && adminRow.is_active === 1) {
+      // An expired door account (D26) is refused like a wrong password.
+      if (adminRow && adminRow.is_active === 1 && accountActive(adminRow)) {
         const valid = await verifyPassword(pass, adminRow.password_hash, adminRow.salt);
         if (valid) {
           authenticatedAdmin = {

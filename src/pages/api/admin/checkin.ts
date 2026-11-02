@@ -14,9 +14,10 @@ interface CheckinBody {
   code?: string;
 }
 
-// POST { code } -> check in a ticket. Admin only.
+// POST { code } -> check in a ticket. Admins and door accounts (D26): the
+// only admin API a door account may call.
 export const POST: APIRoute = async (ctx) => {
-  if (!(await requireAdmin(ctx))) return adminUnauthorized();
+  if (!(await requireAdmin(ctx, { allowDoor: true }))) return adminUnauthorized();
   const db = (ctx.locals as any).runtime.env.DB;
 
   let body: CheckinBody;
