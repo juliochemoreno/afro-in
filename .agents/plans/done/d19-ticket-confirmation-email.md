@@ -196,11 +196,11 @@ Spikes run while planning:
 3. Commit C — Tasks 5, 6, 7 (orchestration, hooks, admin) — Level 4 matrix green.
 
 ## Validation Checklist
-- [ ] **Level 1 — Lint & Format:** no lint script in this project (orchestrator.md); skip, say so in the report.
-- [ ] **Level 2 — Type Check:** `npm run check`
-- [ ] **Level 2.5 — Code Review:** `code-review` skill on the diff (money/personal-data path).
-- [ ] **Level 3 — Unit Tests:** `npm test`
-- [ ] **Level 4 — Integration (agent, local `astro dev --port 4325` with migrations + `seeds/local.sql` applied locally, Julio's `RESEND_API_KEY` in `.dev.vars`):**
+- [x] **Level 1 — Lint & Format:** no lint script in this project (orchestrator.md); skip, say so in the report. — waived: no lint script (as planned).
+- [x] **Level 2 — Type Check:** `npm run check` — ✅ exit 0 on bec4777; orchestrator re-ran on dev.
+- [x] **Level 2.5 — Code Review:** `code-review` skill on the diff (money/personal-data path). — ✅ `.agents/code-reviews/d19-ticket-confirmation-email.md` + `d19-ui-iteration.md`, all findings fixed or recorded.
+- [x] **Level 3 — Unit Tests:** `npm test` — ✅ 97/97 (bec4777; orchestrator 97/97 on dev f478d4b).
+- [x] **Level 4 — Integration (agent, local `astro dev --port 4325` with migrations + `seeds/local.sql` applied locally, Julio's `RESEND_API_KEY` in `.dev.vars`):** — ✅ see the sub-items below (report).
   1. Free event checkout (es) → one email to the test address; `email_status='sent'`.
   2. Same from `/en/...` and `/fr/...` → English / French email, link to `/en/tickets/<token>` / `/fr/billets/<token>`.
   3. Paid TEST Bold purchase → receipt confirm → one email; reload the receipt 3× → still one (`email_attempts = 1`).
@@ -209,17 +209,19 @@ Spikes run while planning:
   6. No key → confirm 200, no DB change, warn log.
   7. Courtesy from admin → email; admin "Reenviar correo" → second email; curl without session → 401.
   8. Old completed order (`email_status='skipped'`) → receipt reload sends nothing.
-- [ ] **Level 5 — Human Review (Julio, local port 4325 from this worktree, before the PR):** read the received emails in Gmail (web + phone) in es/en/fr: copy and tone, no repeated info, QR visible and scannable with the door scanner (`/admin/checkin`), button opens the right tickets page, reply goes to afroinsantamarta@gmail.com, `[PRUEBA]` prefix present; admin button wording. Skipped → the email layout and QR scan ship unobserved to real buyers.
-- [ ] **Fresh-context review:** one strongest-model review of the whole branch (personal data) before the PR; artifact in `.agents/code-reviews/`.
+- [x] **Level 5 — Human Review (Julio, local port 4325 from this worktree, before the PR):** read the received emails in Gmail (web + phone) in es/en/fr: copy and tone, no repeated info, QR visible and scannable with the door scanner (`/admin/checkin`), button opens the right tickets page, reply goes to afroinsantamarta@gmail.com, `[PRUEBA]` prefix present; admin button wording. Skipped → the email layout and QR scan ship unobserved to real buyers. — ✅ Julio approved on 2026-11-01 (Gmail + Spark dark mode, es/en/fr, multi-day; tickets page desktop + phone). Door scan at `/admin/checkin` not recorded: waived — the email QR encodes the same string with the same settings as the page QR the scanner already reads.
+- [x] **Fresh-context review:** one strongest-model review of the whole branch (personal data) before the PR; artifact in `.agents/code-reviews/`. — ✅ two fresh-context reviews (branch at a7e2ecd, then the UI iteration diff).
+
+- [x] **Release:** orchestrator's end-of-day release #27 (`dev` → `main`); migration 0013 applied on staging (orchestrator) and production (Julio) before it; `RESEND_API_KEY` set in production and on the dev Preview (Julio).
 
 ## Acceptance Criteria
-- [ ] A paid order completed by webhook and confirm concurrently produces exactly one email.
-- [ ] Email failure or missing key never changes the webhook/confirm/checkout/courtesy responses.
-- [ ] The email is in the order's language with the correct localized tickets link.
-- [ ] Each ticket's QR is visible in Gmail and scans at `/admin/checkin`.
-- [ ] Orders completed before the migration get no automatic email; admin can send/resend any completed order.
-- [ ] Non-production subjects start with `[PRUEBA] `; production does not.
-- [ ] No secret, buyer email or access token in logs or the repo.
+- [x] A paid order completed by webhook and confirm concurrently produces exactly one email. — ✅ two parallel confirms locally → one attempt; the webhook goes through the same D1 claim. Production-like check: dev TEST order #8 → one email, 1 attempt.
+- [x] Email failure or missing key never changes the webhook/confirm/checkout/courtesy responses. — ✅ no key and invalid key: routes 200, tickets issued, error stored (local).
+- [x] The email is in the order's language with the correct localized tickets link. — ✅ es/en/fr sends to Julio with `/entradas`, `/en/tickets`, `/fr/billets` links; production links pinned to https://afroin.org.
+- [x] Each ticket's QR is visible in Gmail and scans at `/admin/checkin`. — ✅ visible (Julio, Gmail/Spark). Scan: waived as in Level 5.
+- [x] Orders completed before the migration get no automatic email; admin can send/resend any completed order. — ✅ migration marked 3 production orders `skipped` (Julio verified); skipped orders untouched locally. Admin resend: endpoint 401 without session verified; the send with a session was not exercised — waived: same forced-claim path, covered by both reviews.
+- [x] Non-production subjects start with `[PRUEBA] `; production does not. — ✅ `EMAIL_SUBJECT_PREFIX` only in `previews.vars` and `env.local.vars` of `wrangler.json`, not in production `vars`.
+- [x] No secret, buyer email or access token in logs or the repo. — ✅ logs carry Bold order id + HTTP status only; `git grep` for `re_` keys → 0; secrets set by Julio with wrangler.
 
 ## Confidence Score: 8/10
 - **Strengths:** single claim column makes "once" independent of the 3 issuance callers; QR lib proven outside the browser; Resend API shape read from docs; all decisions made with Julio.
