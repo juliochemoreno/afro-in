@@ -48,8 +48,6 @@ async function getDetector(): Promise<BarcodeDetectorLike | null> {
 // The same code is ignored this long after its result closes, so a QR still
 // in front of the camera does not come back as "Ya entró hoy".
 const DEBOUNCE_MS = 3000;
-// A result covers the screen this long, then the camera is back (Julio).
-const RESULT_MS = 2500;
 const MUTE_KEY = "door-muted";
 
 const TONE_BG: Record<DoorTone, string> = {
@@ -170,13 +168,6 @@ export default function CheckinScanner({ exitHref }: { exitHref: string | null }
     // Restart the debounce now, so the code still in front is not re-sent.
     lastCodeRef.current = { ...lastCodeRef.current, at: Date.now() };
   }, []);
-
-  // Results close by themselves; "Sesión vencida" waits for the login link.
-  React.useEffect(() => {
-    if (!verdict || verdict.result === "expired") return;
-    const t = setTimeout(dismiss, RESULT_MS);
-    return () => clearTimeout(t);
-  }, [verdict, dismiss]);
 
   const submitCode = React.useCallback(async (raw: string) => {
     const code = raw.trim();
@@ -413,33 +404,48 @@ export default function CheckinScanner({ exitHref }: { exitHref: string | null }
         </form>
       )}
 
-      {/* Result, full screen; a tap closes it sooner */}
+      {/* Result, full screen; it stays until the door staff taps the action
+          (Julio), so nobody misses a red or amber result. */}
       {view && verdict && (
         <div
           role="status"
           aria-live="assertive"
-          onClick={verdict.result === "expired" ? undefined : dismiss}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 p-8 text-center"
+          className="fixed inset-0 z-50 flex flex-col text-center"
           style={{
             background: TONE_BG[view.tone],
             color: view.tone === "warn" ? "#161616" : "#fff",
+            paddingTop: "env(safe-area-inset-top)",
+            paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
-          {view.tone === "ok" && <CheckCircle2 className="size-24" strokeWidth={2.5} />}
-          {view.tone === "warn" && <AlertTriangle className="size-24" strokeWidth={2.5} />}
-          {view.tone === "bad" && <XCircle className="size-24" strokeWidth={2.5} />}
-          <p className="door-display text-5xl leading-none break-words uppercase sm:text-7xl">
-            {view.title}
-          </p>
-          {view.detail && <p className="text-xl font-semibold sm:text-2xl">{view.detail}</p>}
-          {verdict.result === "expired" && (
-            <a
-              href="/admin/login?next=/admin/checkin"
-              className="mt-2 bg-white px-6 py-3 text-lg font-bold text-[#161616]"
-            >
-              Ingresar
-            </a>
-          )}
+          <div className="flex flex-1 flex-col items-center justify-center gap-5 p-8">
+            {view.tone === "ok" && <CheckCircle2 className="size-24" strokeWidth={2.5} />}
+            {view.tone === "warn" && <AlertTriangle className="size-24" strokeWidth={2.5} />}
+            {view.tone === "bad" && <XCircle className="size-24" strokeWidth={2.5} />}
+            <p className="door-display text-5xl leading-none break-words uppercase sm:text-7xl">
+              {view.title}
+            </p>
+            {view.detail && <p className="text-xl font-semibold sm:text-2xl">{view.detail}</p>}
+          </div>
+          <div className="p-4">
+            {verdict.result === "expired" ? (
+              <a
+                href="/admin/login?next=/admin/checkin"
+                className="door-display block w-full bg-[#161616] py-5 text-2xl text-[#f3e9d2] uppercase"
+              >
+                Ingresar
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={dismiss}
+                autoFocus
+                className="door-display block w-full bg-[#161616] py-5 text-2xl text-[#f3e9d2] uppercase active:opacity-80"
+              >
+                Siguiente
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

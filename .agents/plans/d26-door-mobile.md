@@ -7,7 +7,7 @@ The door scanner (`/admin/checkin`) becomes a full-screen, phone-first screen: t
 - Mobile-first door screen (Julio: "debe ser más atractiva para móvil"):
   - full screen, camera as the centre; manual code entry kept as fallback;
   - full-screen result using D25's states: green "Válida · día X de N" (or the event name for a one-day ticket), amber "Ya entró hoy" / "Ya usada", red "Fuera de fechas" / "No encontrada" / "Pago no confirmado" / "Error de red";
-  - short sound and vibration per result; **the result returns to the camera by itself after ~2.5 s, a tap closes it sooner** (Julio, 2026-11-01);
+  - short sound and vibration per result; **the result stays on screen until the door staff taps "Siguiente"** (Julio, 2026-11-01, after the local Level 5; it replaced the first choice, back to the camera by itself after ~2.5 s);
   - **the same full-screen door on `afroin.org/admin/checkin`, with a ✕ back to the admin panel; on `checkin.afroin.org` there is no way out to the admin** (Julio, 2026-11-01).
 - Subdomain **`checkin.afroin.org`** (Julio, 2026-11-01) shows only the door, behind the existing admin login, without weakening auth.
 - PWA: manifest with the AFRO IN icon, standalone display, a minimal service worker for the app shell. **No offline validation in v1: every scan hits the server.**
