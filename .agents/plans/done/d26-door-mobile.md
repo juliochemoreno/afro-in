@@ -274,12 +274,12 @@ Confirm or correct each before execution:
 - Regression (manual, Level 5): the main admin still works (sidebar, mobile menu "Puerta" link, logout), and login on `afroin.org/admin/login` still lands on `/admin/donadores`.
 
 ## Validation Checklist
-- [ ] **Level 1 — Lint & Format:** no lint script in the repo (N/A).
-- [ ] **Level 2 — Type Check:** `npx tsc --noEmit`, then `npm run check` (astro build + tsc + wrangler dry-run).
-- [ ] **Level 2.5 — Code Review:** `code-review` skill on the changed files; review saved to `.agents/code-reviews/d26-door-mobile.md`.
-- [ ] **Level 3 — Unit Tests:** `npm test`.
-- [ ] **Level 4 — Integration:** `astro dev` (worktree, `--env-file` = main checkout `.env`, local D1). curl matrix, no cookie: `checkin.localhost:4321/admin/pedidos` → 302 `/admin/checkin`; `/admin/checkin` → 302 `/admin/login?next=…`; `/api/admin/orders` → 404; `/api/admin/checkin` POST → 401; `localhost:4321/admin/pedidos` → 302 login (unchanged); `/checkin.webmanifest` and `/checkin-sw.js` → 200. Door session: a local-only test door user (row inserted in local D1 with a generated test password, recorded in the scratchpad, never committed) logs in through `/api/admin-login`; with its cookie, GET each of the 14 non-door admin pages → 302 `/admin/checkin`, call each of the 16 non-check-in API files (one method each) → 401, POST `/api/admin/checkin` → 200; set its `active_until` to yesterday → the same cookie gets 302 login / 401, and login → 401.
-- [ ] **Level 5 — Human (Julio, before merge):**
+- [x] **Level 1 — Lint & Format:** (waived: the repo has no lint script) no lint script in the repo (N/A).
+- [x] **Level 2 — Type Check:** ✓ `tsc` on b885c64; `npm run check` exit 0 on 3b70c4d and 56a004b (later commits UI-only + docs, tsc re-run) — `npx tsc --noEmit`, then `npm run check` (astro build + tsc + wrangler dry-run).
+- [x] **Level 2.5 — Code Review:** ✓ `.agents/code-reviews/d26-door-mobile.md` (1 high, 5 medium, 4 low; fixed in 56a004b except M5/L1/L3/logout) — `code-review` skill on the changed files; review saved to `.agents/code-reviews/d26-door-mobile.md`.
+- [x] **Level 3 — Unit Tests:** ✓ 120/120 on b885c64 — `npm test`.
+- [x] **Level 4 — Integration:** ✓ run on port 4331 (2026-11-01): every row below matched, plus `/%61dmin/…` → login after the H1 fix — `astro dev` (worktree, `--env-file` = main checkout `.env`, local D1). curl matrix, no cookie: `checkin.localhost:4321/admin/pedidos` → 302 `/admin/checkin`; `/admin/checkin` → 302 `/admin/login?next=…`; `/api/admin/orders` → 404; `/api/admin/checkin` POST → 401; `localhost:4321/admin/pedidos` → 302 login (unchanged); `/checkin.webmanifest` and `/checkin-sw.js` → 200. Door session: a local-only test door user (row inserted in local D1 with a generated test password, recorded in the scratchpad, never committed) logs in through `/api/admin-login`; with its cookie, GET each of the 14 non-door admin pages → 302 `/admin/checkin`, call each of the 16 non-check-in API files (one method each) → 401, POST `/api/admin/checkin` → 200; set its `active_until` to yesterday → the same cookie gets 302 login / 401, and login → 401.
+- [x] **Level 5 — Human (Julio, before merge):** ✓ local on checkin.localhost:4331 ("Okay parece que todo está en orden") and phone on checkin-d26.afroin.org with one QR per case ("Todo bien"), after two UX changes (a550688, b885c64) —
   1. Local, Julio's browser: `http://checkin.localhost:4321` → login (dark) → door; scan/enter a valid code, the same code again, a wrong code: green/amber/red full screen, sound, back to camera in ~2.5 s, tap closes sooner; `http://localhost:4321/admin/checkin` shows the ✕ to the admin.
   2. Phone (the LAN is blocked by the https redirect): push the branch, deploy a Preview named `checkin-d26` (`npm run build && npx wrangler preview --name checkin-d26 --env-file=<main checkout>/.env`) → `https://checkin-d26.afroin.org` acts as the door host on staging data. Julio logs in with a staging admin, scans `DEV0000001` (green, then amber), a wrong code (red), checks vibration (Android) and sound, and installs it ("Añadir a pantalla de inicio") to see the icon and the standalone screen. First `curl -sI` the URL: a 302 to `cloudflareaccess.com` means Access covers it.
   3. Local, as superadmin: in Administradores create a "Puerta" user with "Activo hasta" = today, log in with it in a private window: only the door, no ✕, "Salir" works; typing `/admin/pedidos` lands on the door.
@@ -296,15 +296,15 @@ Confirm or correct each before execution:
 4. Never create a Preview named `checkin`.
 
 ## Acceptance Criteria
-- [ ] On a phone, the door fills the screen; results are full-screen green/amber/red with D25's wording, sound and vibration (where supported), and return to the camera in ~2.5 s or on tap.
-- [ ] Manual code entry works and shows the same result screen.
-- [ ] On the door host, only the door and its login are reachable among SSR pages and APIs; other admin pages redirect to the door, other APIs 404; auth unchanged (host-only cookie, its own login).
-- [ ] On afroin.org the door has a ✕ back to `/admin`; the rest of the admin is unchanged.
-- [ ] The app installs (manifest valid, icon, standalone); scans always reach the server.
-- [ ] A door user reaches only the door screen and the check-in API; every other admin page redirects to the door and every other admin API answers 401, proven by `tests/door-access.test.ts` and the Level 4 curls.
-- [ ] A door user stops working after its "Activo hasta" door day, in an open session too.
-- [ ] Superadmins create, edit, disable and delete door users in Administradores; other admins cannot.
-- [ ] `npm run check` and `npm test` pass.
+- [x] On a phone, the door fills the screen; results are full-screen green/amber/red with D25's wording, sound and vibration (where supported) — ✓ Julio's phone test. Changed by Julio: the result now stays until "Siguiente" (a550688) instead of returning in ~2.5 s.
+- [x] Manual code entry works and shows the same result screen. — ✓ browser check ("No encontrada") and phone test.
+- [x] On the door host, only the door and its login are reachable among SSR pages and APIs; other admin pages redirect to the door, other APIs 404; auth unchanged (host-only cookie, its own login). — ✓ curls on checkin.localhost and on checkin-d26.afroin.org.
+- [x] On afroin.org the door has a ✕ back to `/admin`; the rest of the admin is unchanged. — ✓ Julio's local test (localhost:4331/admin/checkin).
+- [x] The app installs (manifest valid, icon, standalone); scans always reach the server. — ✓ manifest served as `application/manifest+json`, SW activated with scope `/admin/checkin`, no console errors; SW skips `/api/`. Home-screen install was part of Julio's phone checklist; his "Todo bien" did not single it out.
+- [x] A door user reaches only the door screen and the check-in API; every other admin page redirects to the door and every other admin API answers 401, proven by `tests/door-access.test.ts` and the Level 4 curls. — ✓ 14 pages → door, 16 APIs → 401, check-in 200.
+- [x] A door user stops working after its "Activo hasta" door day, in an open session too. — ✓ curl with the date set to the past (302 login / 401, login 401) and `tests/admin-roles.test.ts`.
+- [x] Superadmins create, edit, disable and delete door users in Administradores; other admins cannot. — ✓ API curls as superadmin (create, reject missing/past date, edit expired account, change role, delete); the superadmin-only rule is the existing one (POST/DELETE 403 for admins); Julio's local test of the UI.
+- [x] `npm run check` and `npm test` pass. — ✓ (see Level 2 and 3).
 
 ## Confidence Score: 7/10
 - **Strengths:** host-only cookies already give a separate, equally strong session on the subdomain; the door role is deny-by-default in the one API guard and in the one page guard; the scanner's camera and detection code stays; the role needs no schema change, only the expiry column.
