@@ -89,7 +89,7 @@ const linkedStopCard = linkedStop && {
   range: dateRange(linkedStop.data.startDate, linkedStop.data.endDate, lang),
   name: linkedStop.data.name,
   place: `${stopPlace(linkedStop.data.location, linkedStop.data.name)}, ${t("edition.stopCountry")}`,
-  linkText: t("edition.viewStop").replace("{name}", linkedStop.data.name),
+  linkText: t("edition.viewProgram"),
 };
 
 // "<" escaped so content can never close the JSON-LD script tag.
@@ -131,7 +131,7 @@ const { navLinks, ctaLink } = editionNav(lang);
       />
       <div class="fz-wrap fz-photo-hero-content">
         <div class="stop-hero-text">
-        <a class="stop-back" href={getTranslatedPath("/programacion", lang)}>{t("edition.backToEdition")}</a>
+        <a class="stop-back" href={getTranslatedPath("/programacion", lang)}><span aria-hidden="true">←</span> {t("edition.backToEdition")}</a>
         <p class="fz-display fz-gold stop-range">{range}</p>
         <h1 class="fz-display stop-name">{data.name}</h1>
         <p class="stop-intro">{data.intro}</p>
@@ -202,6 +202,15 @@ const { navLinks, ctaLink } = editionNav(lang);
         <StopLinkCard {...linkedStopCard} />
       </div>
     )}
+
+    <div class="fz-wrap stop-full">
+      <a class="stop-full-link" href={getTranslatedPath("/programacion", lang)}>
+        <span aria-hidden="true">←</span> {t("edition.fullProgram")}
+      </a>
+      <a class="stop-full-link" href={getTranslatedPath("/artistas", lang)}>
+        {t("edition.allArtists")} <span aria-hidden="true">→</span>
+      </a>
+    </div>
   </main>
 
   <Footer variant="festival" />
@@ -216,8 +225,37 @@ const { navLinks, ctaLink } = editionNav(lang);
   .stop-back {
     display: inline-flex;
     align-items: center;
+    gap: 8px;
     min-height: 44px;
     font-size: 15px;
+  }
+
+  /* Way back to the whole edition at the end of the page, after the other stop. */
+  .stop-full {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    padding-block: 40px 64px;
+  }
+
+  .stop-full-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .stop-full-link:hover,
+  .stop-full-link:focus-visible {
+    background: #e6b84a;
+    border-color: #e6b84a;
+    color: #161616;
   }
 
   /* One fluid scale for both stop pages: small on phones, up to 96px / 32px / 18px on desktop. */
@@ -251,7 +289,7 @@ const { navLinks, ctaLink } = editionNav(lang);
     display: flex;
     align-items: center;
     gap: 12px;
-    color: var(--fz-cream);
+    color: var(--fz-text);
     text-decoration: none;
   }
 

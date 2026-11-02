@@ -14,7 +14,8 @@
   --fz-jungle: #123326;
   --fz-jungle-2: #1a4a35;
   --fz-gold: #f2c14e;
-  --fz-cream: #f4ead5;
+  --fz-cream: #f4ead5; /* the ticket and its stub only: paper colour */
+  --fz-text: #ffffff; /* titles and text */
   --fz-muted: #c9bfa8;
   --fz-heliconia: #e8742a;
   --fz-teal: #47c1b0;
@@ -22,7 +23,7 @@
   --fz-line: rgba(242, 193, 78, 0.45);
 
   background: var(--fz-night);
-  color: var(--fz-cream);
+  color: var(--fz-text);
   font-family: var(--font-heading, "Outfit"), sans-serif;
   padding-top: 80px; /* fixed site header */
 }
@@ -32,7 +33,7 @@
 }
 
 .fz a:hover {
-  color: var(--fz-cream);
+  color: var(--fz-text);
 }
 
 .fz a:focus-visible {
@@ -232,7 +233,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--fz-cream);
+  color: var(--fz-text);
 }
 
 .fz-tickets-layout .fz-tier-price {
@@ -789,7 +790,7 @@ html.has-stickybuy .whatsapp-float {
 
 .fz-countries-name {
   font-size: 16px;
-  color: var(--fz-cream);
+  color: var(--fz-text);
 }
 
 /* Phones: the earlier look, bigger flags in a 3-column grid with the name under each. */
@@ -921,7 +922,7 @@ html.has-stickybuy .whatsapp-float {
   grid-template-columns: 180px minmax(0, 1fr);
   gap: 2px 16px;
   padding: 12px 0;
-  color: var(--fz-cream);
+  color: var(--fz-text);
   text-decoration: none;
 }
 
@@ -976,7 +977,7 @@ html.has-stickybuy .whatsapp-float {
   border: 1px solid var(--fz-line);
   border-radius: 12px;
   background: rgba(244, 234, 213, 0.05);
-  color: var(--fz-cream);
+  color: var(--fz-text);
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -1230,7 +1231,7 @@ html.has-stickybuy .whatsapp-float {
 .fz-slide-title {
   font-size: clamp(26px, 2.6vw, 44px);
   line-height: 1.05;
-  color: #f3e9d2;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1264,7 +1265,7 @@ html.has-stickybuy .whatsapp-float {
   display: block;
   height: 100%;
   width: 0;
-  background: #f3e9d2;
+  background: #ffffff;
 }
 
 .fz-slide-bar.is-done .fz-slide-bar-fill {
@@ -1408,7 +1409,7 @@ html.has-stickybuy .whatsapp-float {
   display: flex;
   align-items: baseline;
   font-size: 15px;
-  color: #f3e9d2;
+  color: #ffffff;
   min-width: 0;
 }
 
@@ -1532,6 +1533,78 @@ html.has-stickybuy .whatsapp-float {
   margin-top: 12px;
 }
 
+/* An activity with a poster: the thumbnail sits on the right of the row. */
+.fz-agenda-has-poster {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 16px;
+  align-items: start;
+}
+
+.fz-agenda-has-poster.fz-agenda-timed {
+  grid-template-columns: 84px minmax(0, 1fr) 72px;
+}
+
+.fz-agenda-poster {
+  display: block;
+  width: 72px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.fz-agenda-poster img {
+  display: block;
+  width: 100%;
+  height: auto;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s ease;
+}
+
+.fz-agenda-poster:hover img,
+.fz-agenda-poster:focus-visible img {
+  transform: scale(1.04);
+}
+
+.fz-poster-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(560px, 92vw);
+  height: fit-content;
+  max-height: 92vh;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.fz-poster-dialog::backdrop {
+  background: rgba(10, 10, 10, 0.85);
+}
+
+.fz-poster-dialog img {
+  display: block;
+  width: 100%;
+  max-height: 92vh;
+  object-fit: contain;
+}
+
+.fz-poster-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: #ffffff;
+  color: #161616;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .fz-tba {
   padding: 20px 0;
 }
@@ -1549,6 +1622,14 @@ html.has-stickybuy .whatsapp-float {
   .fz-agenda-timed {
     grid-template-columns: 64px minmax(0, 1fr);
     gap: 12px;
+  }
+
+  .fz-agenda-has-poster.fz-agenda-timed {
+    grid-template-columns: 64px minmax(0, 1fr) 56px;
+  }
+
+  .fz-agenda-poster {
+    width: 56px;
   }
 
   .fz-day-date {

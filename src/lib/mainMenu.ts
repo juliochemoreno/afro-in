@@ -43,7 +43,7 @@ export function buildMainMenu(t: T, path: PathFn, lang: string) {
       children: [
         { href: path("/#sobre", lang), label: t("nav.about") },
         { href: path("/#galeria", lang), label: t("nav.gallery") },
-        { href: path("/#aliados", lang), label: t("nav.allies") },
+        { href: path("/aliados", lang), label: t("nav.allies") },
       ],
     },
   ];

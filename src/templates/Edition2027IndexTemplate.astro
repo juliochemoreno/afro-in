@@ -238,9 +238,12 @@ const { navLinks, ctaLink } = editionNav(lang);
           </article>
         ))}
       </div>
+      <a class="edition-artists-all" href={getTranslatedPath("/artistas", lang)}>
+        {t("edition.allArtists")} <span aria-hidden="true">→</span>
+      </a>
     </section>
 
-    <EditionPartners lang={lang} />
+    <EditionPartners lang={lang} showAll />
   </main>
 
   <Footer variant="festival" />
@@ -255,7 +258,7 @@ const { navLinks, ctaLink } = editionNav(lang);
   .edition-tagline {
     margin: 0 0 12px;
     font-size: 18px;
-    color: var(--fz-cream);
+    color: var(--fz-text);
   }
 
   .edition-intro {
@@ -310,6 +313,26 @@ const { navLinks, ctaLink } = editionNav(lang);
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
+  }
+
+  .edition-artists-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 28px;
+    padding: 12px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .edition-artists-all:hover,
+  .edition-artists-all:focus-visible {
+    background: #e6b84a;
+    border-color: #e6b84a;
+    color: #161616;
   }
 
   /* Guest card: the photo fills it; country and dates on top, name and venues at the bottom, over soft scrims. */
@@ -381,7 +404,7 @@ const { navLinks, ctaLink } = editionNav(lang);
     margin: 0;
     font-size: 24px;
     line-height: 1.05;
-    color: #f3e9d2;
+    color: #ffffff;
   }
 
   .edition-artist-venues {
