@@ -1,28 +1,36 @@
 ---
 export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
+import DoorLayout from "@/layouts/DoorLayout.astro";
 import Lock from "lucide-astro/Lock";
+import { DOOR_PATH, isDoorHost } from "@/lib/doorHost";
 
 // If already authenticated, bounce straight to the dashboard.
 import { ADMIN_COOKIE, isValidAdminSession } from "@/lib/adminAuth";
+// On the door host (checkin.afroin.org) the login leads to the door and
+// shows no public-site chrome.
+const door = isDoorHost(Astro.url.hostname);
+const home = door ? DOOR_PATH : "/admin/donadores";
 const env = (Astro.locals as any).runtime?.env ?? {};
 const cookie = Astro.cookies.get(ADMIN_COOKIE)?.value;
 if (await isValidAdminSession(env, cookie)) {
-  return Astro.redirect("/admin/donadores", 302);
+  return Astro.redirect(home, 302);
 }
 
 // Only same-site admin paths: `next` ends up in window.location after login.
 const rawNext = Astro.url.searchParams.get("next") || "";
-const nextParam = /^\/admin(\/|$)/.test(rawNext) ? rawNext : "/admin/donadores";
+const nextParam = /^\/admin(\/|$)/.test(rawNext) ? rawNext : home;
+const Shell = door ? DoorLayout : Layout;
+const title = door ? "Puerta | AFRO IN" : "Acceso Admin | AFRO IN";
 ---
 
-<Layout title="Acceso Admin | AFRO IN">
-  <main class="login-page">
+<Shell title={title}>
+  <main class:list={["login-page", { door }]}>
     <div class="login-card">
       <div class="login-icon">
         <Lock size={26} />
       </div>
-      <h1>Panel de Administración</h1>
+      <h1>{door ? "Puerta" : "Panel de Administración"}</h1>
       <p class="login-sub">Ingresa tus credenciales para continuar</p>
 
       <form id="loginForm" data-next={nextParam}>
@@ -55,7 +63,7 @@ const nextParam = /^\/admin(\/|$)/.test(rawNext) ? rawNext : "/admin/donadores";
       </form>
     </div>
   </main>
-</Layout>
+</Shell>
 
 <style>
   .login-page {
@@ -145,12 +153,77 @@ const nextParam = /^\/admin(\/|$)/.test(rawNext) ? rawNext : "/admin/donadores";
     width: 100%;
     margin-top: 0.5rem;
   }
+
+  /* Door host: dark, square, no public chrome (DoorLayout). */
+  .login-page.door {
+    min-height: 100dvh;
+    padding: 1.5rem 1rem;
+    background: #161616;
+  }
+
+  .door .login-card {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    color: #f3e9d2;
+  }
+
+  .door .login-icon {
+    border-radius: 0;
+    background: #d0342c;
+  }
+
+  .door h1 {
+    font-family: "Anton", "Outfit", sans-serif;
+    font-size: 2.5rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    color: #f3e9d2;
+  }
+
+  .door .login-sub,
+  .door .form-group label {
+    color: rgba(243, 233, 210, 0.7);
+  }
+
+  .door .form-group input {
+    border-radius: 0;
+    border: 1px solid rgba(243, 233, 210, 0.3);
+    background: rgba(243, 233, 210, 0.06);
+    color: #f3e9d2;
+    padding: 0.85rem;
+    font-size: 1.05rem;
+  }
+
+  .door .form-group input:focus {
+    border-color: #f3e9d2;
+    box-shadow: none;
+  }
+
+  .door .login-error {
+    border-radius: 0;
+  }
+
+  .door .btn-block {
+    border: 0;
+    border-radius: 0;
+    background: #d0342c;
+    color: #fff;
+    padding: 0.95rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
 </style>
 
 <script>
-  document.addEventListener("astro:page-load", () => {
+  // The public Layout has the ClientRouter (astro:page-load); DoorLayout does
+  // not, so also run once now. The flag keeps it from binding twice.
+  const init = () => {
     const form = document.getElementById("loginForm") as HTMLFormElement | null;
-    if (!form) return;
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = "1";
 
     const errorEl = document.getElementById("loginError");
     const btn = document.getElementById("loginBtn") as HTMLButtonElement | null;
@@ -200,5 +273,7 @@ const nextParam = /^\/admin(\/|$)/.test(rawNext) ? rawNext : "/admin/donadores";
         }
       }
     });
-  });
+  };
+  document.addEventListener("astro:page-load", init);
+  init();
 </script>

@@ -1,5 +1,6 @@
 import { defineMiddleware, sequence } from "astro:middleware";
 import { ADMIN_COOKIE, isValidAdminSession } from "./lib/adminAuth";
+import { DOOR_PATH, doorHostRoute, isDoorHost } from "./lib/doorHost";
 
 const SUPPORTED_LANGS = ["es", "en", "fr"] as const;
 const DEFAULT_LANG = "es";
@@ -21,6 +22,20 @@ const noindexOutsideProduction = defineMiddleware(async (context, next) => {
 const handleRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
   const pathname = url.pathname;
+
+  // Door host (checkin.afroin.org): only the door and its login. Other admin
+  // pages go to the door, other APIs do not exist there. Static files are
+  // served before the Worker, so they never reach this.
+  if (isDoorHost(url.hostname)) {
+    const route = doorHostRoute(pathname);
+    if (route === "door") return context.redirect(DOOR_PATH, 302);
+    if (route === "not_found") {
+      return new Response(JSON.stringify({ error: "not_found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
 
   // 0. Protect /admin routes with a cookie-based session. The login page
   // itself is excluded so unauthenticated users can reach it.
