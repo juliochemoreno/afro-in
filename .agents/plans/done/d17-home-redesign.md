@@ -1,5 +1,7 @@
 # Plan: D17 — Home redesign: today's sections in the 2027 language
 
+> Archived 2026-11-02. Done: commit 25a0bce, merged into `dev` as ef0263e. Report: `.agents/execution-reports/d17-home-redesign.md`. Not in production yet.
+
 ## Overview
 Redesign each section of today's home without moving away from it (Julio, 2026-11-02): same 10 sections, same order, same container, all on a dark background, with the 2027 visual language (Anton titles, red kicker, square corners, red square buttons, faded photos instead of rounded frames, dark header/footer). The donation is called **Afro Acción**. Approved look: the throwaway preview `src/pages/d17-preview.astro` (theme "Todo oscuro"), not committed.
 
@@ -127,19 +129,19 @@ Workflow classification: `sequential user-driven` (donation and contact forms; l
 Visual/copy work, no new logic: run `npm test` to prove nothing else moved. Manual regression: donation form both steps, contact form, gallery filters + lightbox, store cards on home and `/tienda`, `/unirse` in 3 languages, menu on `/` vs `/programacion`.
 
 ## Validation Checklist
-- [ ] **Level 1 — Lint & Format:** no linter configured; covered by build.
-- [ ] **Level 2 — Type Check:** `npx tsc --noEmit`
-- [ ] **Level 2.5 — Code Review:** `code-review` skill on changed files (artifact link in the report).
-- [ ] **Level 3 — Unit Tests:** `npm test`
-- [ ] **Level 4 — Integration:** `npm run check`; local dev with `--env-file=<main checkout>/.env`; `/`, `/en`, `/fr`, `/unirse`, `/en/join`, `/fr/rejoindre`, `/tienda` return 200.
-- [ ] **Level 5 — Human Review:** Julio, locally in his browser, before merge: home in es/en/fr at desktop and phone; donation form up to the payment screen without paying; store page unchanged. If skipped, the redesign ships unseen.
+- [x] **Level 1 — Lint & Format:** WAIVED: the repo has no lint script; the build in `npm run check` covers syntax.
+- [x] **Level 2 — Type Check:** ✓ `npx tsc --noEmit` clean before the commit (and again on dev's tip by the orchestrator).
+- [x] **Level 2.5 — Code Review:** ✓ `.agents/code-reviews/d17-home-redesign.md` (1 high, 2 medium, 1 low kept; 3 fixed, 1 pre-existing skipped; second pass with no new findings).
+- [x] **Level 3 — Unit Tests:** ✓ `npm test` 120/120.
+- [x] **Level 4 — Integration:** ✓ `npm run check` passed; local dev on port 4391: all listed routes return 200 (`/tienda` after giving the worktree a copy of the main checkout's local D1).
+- [x] **Level 5 — Human Review:** ✓ Julio reviewed the home locally in his browser over several rounds (desktop, the donation form fields and dropdowns) and approved the merge ("commit, merge directo"). WAIVED for the parts he did not report on: en/fr pages and the donation form up to the payment screen were checked by the agent only (routes 200, step 2 rendered), not by Julio.
 
 ## Acceptance Criteria
-- [ ] Same 10 sections in today's order, content inside the container, all dark (alternating #161616 / #1b1b1b).
-- [ ] 2027 language everywhere: Anton titles, red kicker, square corners, red square buttons, no rounded cards or gold frames.
-- [ ] Hero shows the live count "N de 1.000.000 corazones" with a gold bar; "Adquiere tu Afro Acción" + "Tu Afro Acción" form; $20.000 COP, no $15.000.
-- [ ] Payment/API code and form scripts unchanged in the diff; `/unirse` and `/tienda` still work.
-- [ ] No horizontal scroll at 375 px; `npx tsc --noEmit`, `npm test`, `npm run check` pass.
+- [x] Same 10 sections, content inside the container, all dark (alternating #161616 / #1b1b1b) ✓ — order changed on Julio's request: the store now comes after AFRO IN 2027 (see the execution report).
+- [x] 2027 language everywhere ✓ (checked section by section in the browser at 1024 px and 375 px).
+- [x] Hero live count with the gold bar ✓ (`/api/contador`, 7 on the local D1); "Adquiere tu Afro Acción" and "Tu Afro Acción" ✓; `grep -rn '15.000' src/i18n` returns nothing ✓.
+- [x] Payment/API code unchanged ✓ (no file under `src/pages/api` or `src/lib` in the diff); the donation `<script>` unchanged ✓; the contact script changed only its two field ids (review fix); `/unirse` and `/tienda` return 200 ✓.
+- [x] No horizontal scroll at 375 px ✓ (`scrollWidth` 375 on `/` and `/unirse`); `npx tsc --noEmit`, `npm test`, `npm run check` pass ✓.
 
 ## Confidence Score: 8/10
 - **Strengths:** direction approved on a full-page mock-up; content and order unchanged; no backend work.
