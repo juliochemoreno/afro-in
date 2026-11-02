@@ -2,6 +2,8 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import FestivalFont from "@/components/FestivalFont.astro";
+import "@/styles/festival.css";
 import CheckoutForm from "@/components/CheckoutForm";
 import "@/styles/checkout-fields.css";
 import { countries } from "@/data/countries";
@@ -71,13 +73,14 @@ const storePath = getTranslatedPath("/tienda", lang);
 ---
 
 <Layout title={`${t("checkout.title")} | AFRO IN`}>
-  <Header variant="minimal" />
+  <FestivalFont slot="head" />
+  <Header variant="festival" />
 
-  <main class="checkout-page">
-    <div class="container">
-      <header class="checkout-head">
-        <h1>{t("checkout.title")}</h1>
-        <p>{t("checkout.subtitle")}</p>
+  <main class="fz checkout-page">
+    <div class="fz-wrap">
+      <header class="hm-head">
+        <h1 class="fz-display hm-title">{t("checkout.title")}</h1>
+        <p class="hm-sub">{t("checkout.subtitle")}</p>
       </header>
 
       <CheckoutForm
@@ -92,32 +95,23 @@ const storePath = getTranslatedPath("/tienda", lang);
     </div>
   </main>
 
-  <Footer />
+  <Footer variant="festival" />
 </Layout>
 
 <style is:global>
   .checkout-page {
-    background: var(--color-cream);
     min-height: 70vh;
-    padding: calc(var(--space-xl) + 80px) 0 var(--space-xl);
+    padding-bottom: 88px;
   }
-  .checkout-head {
-    text-align: center;
-    margin-bottom: var(--space-xl);
-  }
-  .checkout-head h1 {
-    font-size: clamp(1.8rem, 4vw, 2.6rem);
-    color: var(--color-secondary);
-    margin-bottom: var(--space-xs);
-  }
-  .checkout-head p {
-    color: var(--color-text-light);
+  .checkout-page .hm-head {
+    padding-top: 40px;
+    margin-bottom: 36px;
   }
 
   .checkout-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    gap: var(--space-lg);
+    gap: 24px;
     align-items: start;
   }
   @media (max-width: 880px) {
@@ -129,30 +123,31 @@ const storePath = getTranslatedPath("/tienda", lang);
   .checkout-main {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: 24px;
   }
 
   .checkout-card {
     /* Fieldsets default to min-inline-size: min-content, which lets long
        combobox labels push the card over the order summary. */
     min-inline-size: 0;
-    background: var(--color-white);
-    border: 1px solid var(--color-cream-dark);
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
+    margin: 0;
+    background: #222;
+    border: 1px solid #2e2e2e;
+    border-radius: 0;
+    padding: 24px;
   }
   .checkout-card legend {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--color-secondary);
-    padding: 0 var(--space-xs);
+    font-family: "Anton", var(--font-heading), sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    color: #fff;
+    padding: 0 8px;
   }
 
   .ck-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-md);
+    gap: 16px;
   }
   @media (max-width: 520px) {
     .ck-row {
@@ -161,71 +156,133 @@ const storePath = getTranslatedPath("/tienda", lang);
   }
 
   .ck-field {
-    margin-top: var(--space-md);
+    margin-top: 16px;
     display: flex;
     flex-direction: column;
   }
-  .ck-field > label {
-    font-weight: 500;
-    font-size: 0.9rem;
-    margin-bottom: var(--space-xs);
-    color: var(--color-text);
+  .checkout-page .ck-field > label {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #fff;
   }
-  .ck-field input,
-  .ck-field textarea {
+  .checkout-page .ck-field input,
+  .checkout-page .ck-field textarea {
     width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--color-cream-dark);
-    border-radius: var(--radius-md);
+    box-sizing: border-box;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1px solid #3a3a3a;
+    border-radius: 0;
     font-family: inherit;
-    font-size: 1rem;
-    background: var(--color-white);
-    color: var(--color-secondary);
-    transition: all var(--transition-fast);
+    font-size: 16px;
+    background: #161616;
+    color: #fff;
   }
-  .ck-field textarea {
+  .checkout-page .hm-input-icon input,
+  .checkout-page .hm-input-icon textarea {
+    padding-left: 44px;
+  }
+  .checkout-page .ck-field textarea {
     resize: vertical;
   }
-  .ck-field input:focus,
-  .ck-field textarea:focus {
+  .checkout-page .ck-field input::placeholder,
+  .checkout-page .ck-field textarea::placeholder {
+    color: #8f8878;
+  }
+  .checkout-page .ck-field input:focus,
+  .checkout-page .ck-field textarea:focus,
+  .checkout-page .ph-field:focus-within,
+  .checkout-page .cc-trigger:focus-visible,
+  .checkout-page .cc-trigger[aria-expanded="true"] {
     outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(227, 28, 37, 0.1);
+    border-color: var(--fz-gold);
+    box-shadow: 0 0 0 3px rgba(242, 193, 78, 0.25);
+  }
+  .checkout-page .cc-trigger {
+    border: 1px solid #3a3a3a;
+    border-radius: 0;
+    background: #161616;
+    color: #fff;
+  }
+  .checkout-page .cc-trigger:hover {
+    border-color: var(--fz-gold);
+  }
+  .checkout-page .cc-trigger:disabled {
+    background: #1b1b1b;
+    border-color: #2e2e2e;
+    color: #777;
+  }
+  .checkout-page .cc-trigger .cc-placeholder {
+    color: #8f8878;
+  }
+  .checkout-page .ph-field {
+    border: 1px solid #3a3a3a;
+    border-radius: 0;
+    background: #161616;
+  }
+  .checkout-page .ph-field .cc-trigger.ph-dial {
+    background: transparent;
+    color: #fff;
+    border-right: 1px solid #3a3a3a;
+    border-radius: 0;
+  }
+  .checkout-page .ph-field .cc-trigger.ph-dial:hover,
+  .checkout-page .ph-field .cc-trigger.ph-dial[aria-expanded="true"] {
+    background: #2a2a2a;
+  }
+  .checkout-page .ck-field .ph-field input.ph-number {
+    min-height: 46px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    box-shadow: none;
+  }
+  .checkout-page .ck-field.is-invalid input:not([type="hidden"]):not(.ph-number),
+  .checkout-page .is-invalid .ph-field,
+  .checkout-page .is-invalid .cc-trigger {
+    border-color: #ff8a8a;
+    background-color: rgba(227, 28, 37, 0.1);
+  }
+  .checkout-page .ck-field-error {
+    margin: 6px 0 0;
+    color: #ff8a8a;
+    font-weight: 500;
   }
 
   .checkout-summary {
-    background: var(--color-white);
-    border: 1px solid var(--color-cream-dark);
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
+    background: #222;
+    border: 1px solid #2e2e2e;
+    padding: 24px;
     position: sticky;
-    top: 90px;
+    top: 100px;
   }
   .checkout-summary h3 {
-    font-family: var(--font-heading);
-    color: var(--color-secondary);
-    margin-bottom: var(--space-md);
+    margin: 0 0 16px;
+    font-family: "Anton", var(--font-heading), sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    color: #fff;
   }
   .ck-items {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
-    margin: 0 0 var(--space-md);
+    gap: 12px;
+    margin: 0 0 16px;
     padding: 0;
   }
   .ck-item {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 12px;
   }
   .ck-item-img {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-sm);
-    object-fit: cover;
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
     flex-shrink: 0;
-    background: var(--color-cream);
+    background: #fff;
   }
   .ck-item-info {
     display: flex;
@@ -235,39 +292,45 @@ const storePath = getTranslatedPath("/tienda", lang);
   }
   .ck-item-name {
     font-weight: 600;
-    font-size: 0.92rem;
-    color: var(--color-secondary);
+    font-size: 15px;
+    color: #fff;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .ck-item-meta {
-    font-size: 0.78rem;
-    color: var(--color-text-light);
+    font-size: 13px;
+    color: #cfc8b6;
   }
   .ck-item-price {
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--color-secondary);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--fz-gold);
     white-space: nowrap;
   }
   .ck-total {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--color-cream-dark);
-    font-size: 1.1rem;
-    color: var(--color-secondary);
+    align-items: baseline;
+    padding-top: 16px;
+    border-top: 1px solid #3a3a3a;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
   }
   .ck-total strong {
-    font-family: var(--font-heading);
-    color: var(--color-primary);
-    font-size: 1.3rem;
+    color: var(--fz-gold);
+    font-size: 28px;
+    font-weight: 600;
   }
   .ck-pay {
+    justify-content: center;
     width: 100%;
-    margin-top: var(--space-md);
+    margin-top: 16px;
+    min-height: 52px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
   }
   .ck-pay:disabled {
     opacity: 0.6;
@@ -275,27 +338,27 @@ const storePath = getTranslatedPath("/tienda", lang);
   }
   .ck-secure {
     text-align: center;
-    font-size: 0.78rem;
-    color: var(--color-text-light);
-    margin-top: var(--space-sm);
+    font-size: 13px;
+    color: #cfc8b6;
+    margin: 12px 0 0;
   }
   .ck-error {
-    margin-top: var(--space-sm);
-    color: var(--color-primary);
-    font-size: 0.9rem;
+    margin: 12px 0 0;
+    color: #ff8a8a;
+    font-size: 15px;
     font-weight: 600;
   }
   .checkout-empty {
     text-align: center;
-    padding: var(--space-xl) 0;
+    padding: 48px 0;
   }
   .checkout-empty p {
-    color: var(--color-text-light);
-    margin-bottom: var(--space-md);
+    color: #cfc8b6;
+    margin-bottom: 16px;
   }
   .checkout-loading {
     text-align: center;
-    padding: var(--space-xl);
-    color: var(--color-text-light);
+    padding: 48px;
+    color: #cfc8b6;
   }
 </style>

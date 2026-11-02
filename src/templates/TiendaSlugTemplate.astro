@@ -2,6 +2,9 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import FestivalFont from "@/components/FestivalFont.astro";
+import ProductCard from "@/components/ProductCard.astro";
+import "@/styles/festival.css";
 import ImagePlaceholder from "@/components/ImagePlaceholder.astro";
 import {
   getRelatedProducts,
@@ -22,42 +25,14 @@ const db = (Astro.locals as any).runtime?.env?.DB;
 const relatedProducts = db ? await getRelatedProducts(db, product.slug, 4) : [];
 const mainImage = product.images[0]?.url ?? "";
 
-// Store-specific navigation
 const t = useTranslations(lang as any);
-const storeNavLinks = [
-  { href: getTranslatedPath("/", lang), label: t("nav.home") },
-  { href: getTranslatedPath("/tienda", lang), label: t("nav.store") },
-  {
-    href: getTranslatedPath("/programacion", lang),
-    label: t("nav.tour"),
-    children: [
-      {
-        href: getTranslatedPath("/programacion", lang),
-        label: t("nav.program"),
-      },
-      {
-        href: getTranslatedPath("/programacion/2027/santa-marta", lang),
-        label: "Santa Marta",
-      },
-      {
-        href: getTranslatedPath("/programacion/2027/palenque", lang),
-        label: "Palenque",
-      },
-      { href: getTranslatedPath("/artistas", lang), label: t("nav.artists") },
-    ],
-  },
-  { href: getTranslatedPath("/#contacto", lang), label: t("nav.contact") },
-];
-const storeCta = {
-  href: getTranslatedPath("/#unirse", lang),
-  label: t("nav.join"),
-};
 ---
 
 <Layout title={`${localizedProduct.name} | Tienda AFRO IN`}>
-  <Header navLinks={storeNavLinks} ctaLink={storeCta} />
-  <main class="product-page">
-    <div class="container">
+  <FestivalFont slot="head" />
+  <Header variant="festival" />
+  <main class="fz product-page">
+    <div class="fz-wrap">
       <!-- Breadcrumb -->
       <nav class="breadcrumb">
         <a href={getTranslatedPath("/tienda", lang)}
@@ -107,10 +82,9 @@ const storeCta = {
         <!-- Details -->
         <div class="product-details">
           <div class="product-info-header">
-            <span class="category-badge">{localizedProduct.category}</span>
-            <span class="sku-badge">SKU: {product.sku}</span>
+            <span class="fz-display category-badge">{localizedProduct.category}</span>
           </div>
-          <h1 class="product-name">{localizedProduct.name}</h1>
+          <h1 class="fz-display product-name">{localizedProduct.name}</h1>
 
           <div class="product-prices">
             <span class="price-cop">{formatPrice(product.price)}</span>
@@ -187,7 +161,7 @@ const storeCta = {
             }
 
             <button
-              class="btn btn-primary btn-add-cart"
+              class="fz-button fz-button-solid btn-add-cart"
               id="add-to-cart-btn"
               disabled={!product.inStock}
               data-added-text={t("store.product.added")}
@@ -202,11 +176,11 @@ const storeCta = {
             }
           </div>
 
-          <div class="product-meta">
-            <p>{t("store.product.shipping.colombia")}</p>
-            <p>{t("store.product.shipping.whatsapp")}</p>
-            <p>{t("store.product.shipping.return")}</p>
-          </div>
+          <ul class="hm-list product-meta">
+            <li>{t("store.product.shipping.colombia")}</li>
+            <li>{t("store.product.shipping.whatsapp")}</li>
+            <li>{t("store.product.shipping.return")}</li>
+          </ul>
         </div>
       </div>
 
@@ -214,29 +188,11 @@ const storeCta = {
       {
         relatedProducts.length > 0 && (
           <section class="related-products">
-            <h2>{t("store.product.related")}</h2>
-            <div class="related-grid">
-              {relatedProducts.map((related) => {
-                const locRelated = getLocalizedProduct(related, lang);
-                return (
-                  <a
-                    href={getTranslatedPath(`/tienda/${related.slug}`, lang)}
-                    class="related-card"
-                  >
-                    <div class="related-image">
-                      {related.images[0]?.url ? (
-                        <img src={related.images[0].url} alt={locRelated.name} />
-                      ) : (
-                        <ImagePlaceholder />
-                      )}
-                    </div>
-                    <h3>{locRelated.name}</h3>
-                    <span class="related-price">
-                      {formatPrice(related.price)}
-                    </span>
-                  </a>
-                );
-              })}
+            <h2 class="fz-display">{t("store.product.related")}</h2>
+            <div class="fz-product-grid">
+              {relatedProducts.map((related) => (
+                <ProductCard product={related} lang={lang as any} showQuickAdd={false} />
+              ))}
             </div>
           </section>
         )
@@ -248,102 +204,82 @@ const storeCta = {
 
 <style>
   .product-page {
-    padding: var(--space-xl) 0;
-    padding-top: 120px; /* Account for fixed header */
-    min-height: 100vh;
-    background: var(--color-cream);
+    padding-bottom: 88px;
   }
 
   .breadcrumb {
-    margin-bottom: var(--space-lg);
+    padding: 32px 0 20px;
   }
 
   .breadcrumb a {
-    color: var(--color-text-light);
-    font-size: 0.9rem;
-    transition: color var(--transition-fast);
+    color: #cfc8b6;
+    text-decoration: none;
   }
 
   .breadcrumb a:hover {
-    color: var(--color-primary);
+    color: var(--fz-gold);
   }
 
   .product-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-2xl);
-    margin-bottom: var(--space-2xl);
+    gap: 48px;
+    margin-bottom: 64px;
   }
 
-  /* Gallery */
   .product-gallery {
     position: sticky;
     top: 100px;
+    align-self: start;
   }
 
   .main-image {
     position: relative;
-    background: var(--color-white);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
+    display: grid;
+    place-items: center;
     aspect-ratio: 1;
+    overflow: hidden;
+    background: #fff;
   }
 
   .gallery-img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: var(--space-lg);
+    padding: 24px;
   }
 
   .product-badge {
     position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
+    top: 16px;
+    right: 16px;
+    padding: 3px 10px;
+    background: var(--fz-red);
+    color: #fff;
+    font-size: 12px;
     font-weight: 600;
-    text-transform: uppercase;
-    background: var(--color-primary);
-    color: var(--color-white);
-  }
-
-  .color-swatch {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border-radius: 50%;
-    border: 1px solid var(--color-cream-dark);
-    flex-shrink: 0;
-  }
-
-  .color-options .variant-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
   }
 
   .thumbnail-strip {
     display: flex;
-    gap: var(--space-sm);
-    margin-top: var(--space-md);
+    gap: 10px;
+    margin-top: 12px;
+    overflow-x: auto;
   }
 
   .thumb {
-    width: 80px;
-    height: 80px;
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
-    overflow: hidden;
+    flex: none;
+    width: 76px;
+    height: 76px;
+    padding: 0;
+    border: 0;
+    background: #fff;
     cursor: pointer;
-    background: var(--color-white);
-    transition: border-color var(--transition-fast);
   }
 
   .thumb.active,
   .thumb:hover {
-    border-color: var(--color-primary);
+    outline: 2px solid var(--fz-red);
   }
 
   .thumb img {
@@ -352,221 +288,167 @@ const storeCta = {
     object-fit: contain;
   }
 
-  /* Details */
   .product-details {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 14px;
+    align-self: start;
   }
 
   .product-info-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
+    margin: 0;
   }
 
   .category-badge {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-sm);
-    background: rgba(227, 28, 37, 0.1);
-    color: var(--color-primary);
-    border-radius: var(--radius-full);
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  .sku-badge {
-    font-size: 0.8rem;
-    color: var(--color-text-light);
-    font-weight: 500;
+    font-size: 20px;
+    color: var(--fz-red);
   }
 
   .product-name {
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    color: var(--color-secondary);
     margin: 0;
+    font-size: clamp(34px, 4vw, 52px);
+    line-height: 1.02;
+    color: #fff;
   }
 
   .product-prices {
     display: flex;
     align-items: baseline;
-    gap: var(--space-sm);
+    gap: 10px;
   }
 
   .price-cop {
-    font-family: var(--font-heading);
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--color-primary);
+    font-size: 34px;
+    font-weight: 600;
+    color: var(--fz-gold);
   }
 
   .price-usd {
-    font-size: 1rem;
-    color: var(--color-text-light);
+    font-size: 14px;
+    color: #cfc8b6;
   }
 
   .product-description {
-    font-size: 1.1rem;
-    color: var(--color-text);
-    line-height: 1.7;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.6;
+    color: #e9e2d2;
   }
 
-  /* Variant Selectors */
   .variant-selector {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 8px;
   }
 
   .variant-selector label {
     font-weight: 600;
-    color: var(--color-text);
+    color: #fff;
   }
 
   .variant-options {
     display: flex;
-    gap: var(--space-xs);
     flex-wrap: wrap;
+    gap: 10px;
   }
 
   .variant-btn {
-    padding: var(--space-sm) var(--space-md);
-    border: 2px solid var(--color-cream-dark);
-    border-radius: var(--radius-md);
-    background: var(--color-white);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 52px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 0;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
     cursor: pointer;
-    font-weight: 500;
-    transition: all var(--transition-fast);
   }
 
-  .variant-btn:hover,
+  .variant-btn:hover {
+    border-color: var(--fz-gold);
+  }
+
   .variant-btn.selected {
-    border-color: var(--color-primary);
-    background: rgba(227, 28, 37, 0.05);
+    border-color: var(--fz-red);
+    background: var(--fz-red);
   }
 
-  /* Add to Cart */
+  .variant-btn:focus-visible {
+    outline: 2px solid var(--fz-gold);
+    outline-offset: 3px;
+  }
+
+  .color-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #777;
+    flex-shrink: 0;
+  }
+
   .btn-add-cart {
-    font-size: 1.1rem;
-    padding: var(--space-md) var(--space-lg);
-    margin-top: var(--space-md);
-    transition: all 0.2s ease;
+    justify-content: center;
+    width: 100%;
+    min-height: 52px;
+    margin-top: 10px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
   }
 
   .btn-add-cart.added {
-    background: #25d366 !important;
-    border-color: #25d366 !important;
+    background: #25d366;
+    border-color: #25d366;
   }
 
   .btn-add-cart:disabled {
-    background: #ccc;
+    background: #3a3a3a;
+    border-color: #3a3a3a;
+    color: #999;
     cursor: not-allowed;
   }
 
   .size-error {
     display: block;
-    color: var(--color-primary);
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
+    color: #ff8a8a;
+    font-size: 14px;
   }
 
   .stock-status {
-    font-size: 0.9rem;
-    color: var(--color-text);
+    margin: 0;
+    color: #cfc8b6;
   }
 
   .product-meta {
-    margin-top: var(--space-md);
-    padding: var(--space-md);
-    background: var(--color-white);
-    border-radius: var(--radius-md);
+    margin: 14px 0 0;
+    font-size: 16px;
+    color: #e9e2d2;
   }
 
-  .product-meta p {
-    margin: var(--space-xs) 0;
-    font-size: 0.9rem;
-    color: var(--color-text-light);
-  }
-
-  /* Related Products */
   .related-products {
-    border-top: 1px solid var(--color-cream-dark);
-    padding-top: var(--space-xl);
+    padding-top: 56px;
+    border-top: 1px solid #2e2e2e;
   }
 
   .related-products h2 {
-    font-size: 1.5rem;
-    color: var(--color-secondary);
-    margin-bottom: var(--space-lg);
+    margin: 0 0 24px;
+    font-size: clamp(30px, 3.4vw, 46px);
+    color: #fff;
   }
 
-  .related-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-md);
-  }
-
-  .related-card {
-    text-align: center;
-    transition: transform var(--transition-fast);
-  }
-
-  .related-card:hover {
-    transform: translateY(-4px);
-  }
-
-  .related-image {
-    background: var(--color-white);
-    border-radius: var(--radius-md);
-    aspect-ratio: 1;
-    margin-bottom: var(--space-sm);
-    overflow: hidden;
-  }
-
-  .related-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: var(--space-sm);
-  }
-
-  .related-card h3 {
-    font-size: 0.95rem;
-    color: var(--color-secondary);
-    margin-bottom: var(--space-xs);
-  }
-
-  .related-price {
-    font-weight: 700;
-    color: var(--color-primary);
-  }
-
-  /* Responsive */
   @media (max-width: 968px) {
     .product-grid {
       grid-template-columns: 1fr;
-      gap: var(--space-xl);
+      gap: 28px;
     }
 
     .product-gallery {
       position: static;
-    }
-
-    .related-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: 600px) {
-    .related-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--space-sm);
-    }
-
-    .thumbnail-strip {
-      overflow-x: auto;
-      padding-bottom: var(--space-sm);
     }
   }
 </style>
