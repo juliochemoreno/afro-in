@@ -5,6 +5,7 @@ import { Eye, Ticket, Clock, CheckCircle2, Copy, Check, Gift, Download, Mail } f
 
 import type { ColDef } from "ag-grid-community";
 import AdminGrid from "@/components/admin/AdminGrid";
+import { orderRef } from "@/lib/orderRef";
 import {
   Dialog,
   DialogContent,
@@ -597,6 +598,9 @@ export default function TicketOrdersDashboard() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   Compra #{selected.id}
+                  <span className="text-muted-foreground font-mono text-sm font-normal">
+                    Ref. {orderRef(selected.bold_order_id)}
+                  </span>
                   <StatusPill status={selected.status} />
                 </DialogTitle>
                 <DialogDescription>

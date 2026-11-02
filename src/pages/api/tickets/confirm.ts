@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { confirmBoldOrder, CONFIRM_TARGETS, type ConfirmResult } from "@/lib/bold";
 import { issueTicketsForOrder, getTicketOrderByBoldId } from "@/lib/tickets";
 import { sendTicketEmail } from "@/lib/ticketEmailSend";
+import { orderRef } from "@/lib/orderRef";
 
 export const prerender = false;
 
@@ -101,7 +102,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         providerStatus: result.providerStatus,
         order: view.order
           ? {
-              id: view.order.id,
+              // What the buyer sees: never the sequential row id.
+              ref: orderRef(view.order.bold_order_id),
               event_name: view.order.event_name,
               quantity: view.order.quantity,
               amount: view.order.amount,

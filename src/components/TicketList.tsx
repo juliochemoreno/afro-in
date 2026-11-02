@@ -42,6 +42,9 @@ export default function TicketList({
   t,
 }: Props) {
   const [copied, setCopied] = React.useState(false);
+  // The URL is hidden behind the copy button; shown when copying fails
+  // (in-app browsers), so the buyer can still select it by hand.
+  const [showUrl, setShowUrl] = React.useState(false);
   const [active, setActive] = React.useState(0);
   const trackRef = React.useRef<HTMLDivElement>(null);
   const isSlider = tickets.length > 1;
@@ -53,7 +56,7 @@ export default function TicketList({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* clipboard unavailable */
+      setShowUrl(true);
     }
   };
 
@@ -94,6 +97,13 @@ export default function TicketList({
     <div className="tix-list">
       <div className="tix-list-tickets">
         <h2 className="tix-list-title">{t["tix.receipt.yourtickets"]}</h2>
+        {/* Desktop: the event once, above its tickets; each ticket then shows
+            only its number, QR and code (CSS, screen only: printed tickets keep the
+            event). Phones swipe through them one at a time. */}
+        <div className="tix-event-head">
+          <p className="tix-event-name">{eventName}</p>
+          {eventSubtitle && <p className="tix-event-sub">{eventSubtitle}</p>}
+        </div>
         {isSlider ? (
           <div className="tix-slider">
             <button
@@ -143,14 +153,16 @@ export default function TicketList({
 
       <aside className="tix-list-side">
         <div className="tix-list-head">
-          <div className="tix-list-row">
+          <div className="tix-list-row tix-list-row-event">
             <span>{t["tix.receipt.event"]}</span>
             <strong>{eventName}</strong>
           </div>
-          <div className="tix-list-row">
-            <span>{t["tix.receipt.number"]}</span>
-            <strong>#{orderNumber}</strong>
-          </div>
+          {orderNumber !== "" && (
+            <div className="tix-list-row">
+              <span>{t["tix.receipt.number"]}</span>
+              <strong>#{orderNumber}</strong>
+            </div>
+          )}
         </div>
 
         <button type="button" className="tix-print" onClick={() => window.print()}>
@@ -162,7 +174,12 @@ export default function TicketList({
             <p className="tix-savelink-title">{t["tix.receipt.savelink.title"]}</p>
             <p className="tix-savelink-text">{t["tix.receipt.savelink.text"]}</p>
             <div className="tix-savelink-row">
-              <input readOnly value={permalink} onFocus={(e) => e.target.select()} />
+              <input
+                readOnly
+                className={showUrl ? "show" : undefined}
+                value={permalink}
+                onFocus={(e) => e.target.select()}
+              />
               <button type="button" className="btn btn-primary" onClick={copy}>
                 {copied ? t["tix.receipt.copied"] : t["tix.receipt.copy"]}
               </button>
@@ -171,7 +188,8 @@ export default function TicketList({
         )}
 
         {continueHref && (
-          <a href={continueHref} className="btn btn-primary tix-continue">
+          // A text link: "Imprimir entradas" is the only primary button here.
+          <a href={continueHref} className="tix-continue">
             {continueLabel}
           </a>
         )}
