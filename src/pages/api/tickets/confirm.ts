@@ -84,7 +84,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Confirmation email, once per order (the webhook may send it first; the
     // claim decides), after the response: it never delays or fails the receipt.
     if (view.order?.status === "completed") {
-      locals.runtime.ctx.waitUntil(
+      locals.runtime.ctx?.waitUntil(
         sendTicketEmail(env, orderId, { origin: new URL(request.url).origin })
       );
     }

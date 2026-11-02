@@ -52,7 +52,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (order.isFree || order.amount === 0) {
       // A free reservation is completed with its tickets already: email them
       // after the response.
-      locals.runtime.ctx.waitUntil(
+      locals.runtime.ctx?.waitUntil(
         sendTicketEmail(env, order.orderId, { origin: new URL(request.url).origin })
       );
       return json(

@@ -27,7 +27,7 @@ export const POST: APIRoute = async (ctx) => {
   try {
     const result = await createCourtesyTicketOrder(db, body);
     // The guest gets the same email as a buyer, after the response.
-    ctx.locals.runtime.ctx.waitUntil(
+    ctx.locals.runtime.ctx?.waitUntil(
       sendTicketEmail(env, result.orderId, { origin: ctx.url.origin })
     );
     return json(result, 201);

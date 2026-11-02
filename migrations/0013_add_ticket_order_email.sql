@@ -13,4 +13,7 @@ ALTER TABLE ticket_orders ADD COLUMN email_error TEXT;       -- last failure (HT
 
 -- Orders completed before this release never get an automatic email; the
 -- admin can still send it from the order detail.
-UPDATE ticket_orders SET email_status = 'skipped' WHERE status = 'completed';
+-- An order paid but still being issued (tickets_issued = 0) stays due: it is
+-- completing right now and gets its email.
+UPDATE ticket_orders SET email_status = 'skipped'
+ WHERE status = 'completed' AND tickets_issued = 1;
