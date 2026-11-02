@@ -5,7 +5,7 @@
 
 .fz.tx-page {
   --tx-bg: #161616;
-  --tx-fg: #f3e9d2;
+  --tx-fg: #ffffff;
   --tx-muted: #bfb39c;
   --tx-accent: #e6b84a; /* gold text and lines */
   --tx-gold: #e6b84a; /* gold fills (calendar block, current stage bar) */
@@ -19,7 +19,7 @@
   --tx-error: #ff8a8a;
   --tx-error-bg: rgba(227, 28, 37, 0.1);
   --tx-flag-bg: rgba(22, 22, 22, 0.78);
-  --tx-flag-fg: #f3e9d2;
+  --tx-flag-fg: #ffffff;
 
   background: var(--tx-bg);
   color: var(--tx-fg);
@@ -67,12 +67,13 @@
 }
 
 /* Photo hero of these pages (festival.css .fz-photo-hero): the photo stays
-   dark with cream text in both themes. */
+   dark with white text in both themes. */
 .fz.tx-page .tx-hero {
   --fz-cream: #f3e9d2;
+  --fz-text: #ffffff;
   --fz-gold: #e6b84a;
   --fz-muted: #d9ccb3;
-  color: #f3e9d2;
+  color: #ffffff;
   min-height: min(56vh, 520px);
 }
 .fz.tx-page .tx-hero .fz-gold {
@@ -96,7 +97,7 @@
   margin: 14px 0 0;
   max-width: 560px;
   font-size: 18px;
-  color: #f3e9d2;
+  color: #ffffff;
 }
 @media (prefers-color-scheme: light) {
   /* The page under the hero is cream: end the wash dark, not in the page color. */

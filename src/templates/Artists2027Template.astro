@@ -61,6 +61,7 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
     <section class="fz-photo-hero artists-hero">
       <Image src={heroPhoto} alt="" widths={[768, 1296]} sizes="100vw" loading="eager" class="fz-photo-hero-img" />
       <div class="fz-wrap fz-photo-hero-content">
+        <a class="artists-back" href={getTranslatedPath("/programacion", lang)}><span aria-hidden="true">←</span> {t("edition.backToEdition")}</a>
         <p class="fz-display fz-gold artists-kicker">AFRO IN 2027</p>
         <h1 class="fz-display artists-title">{t("edition.artistsTitle")}</h1>
         <p class="artists-lead">{artistsText}</p>
@@ -84,12 +85,67 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
       </div>
     ))}
 
+    <div class="artists-end">
+      <div class="fz-wrap artists-end-inner">
+        <a class="artists-end-link" href={getTranslatedPath("/programacion", lang)}>
+          <span aria-hidden="true">←</span> {t("edition.fullProgram")}
+        </a>
+      </div>
+    </div>
   </main>
 
   <Footer variant="festival" />
 </Layout>
 
 <style is:global>
+  .artists-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    font-size: 15px;
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .artists-back:hover,
+  .artists-back:focus-visible {
+    color: #e6b84a;
+  }
+
+  /* Way back to the whole edition at the end of the page. Opaque and above every artist panel, so
+     the sticky panel before the last one never peeks out under it. */
+  .artists-end {
+    position: relative;
+    z-index: 100;
+    background: var(--fz-night);
+  }
+
+  .artists-end-inner {
+    display: flex;
+    justify-content: center;
+    padding-block: 40px 64px;
+  }
+
+  .artists-end-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .artists-end-link:hover,
+  .artists-end-link:focus-visible {
+    background: #e6b84a;
+    border-color: #e6b84a;
+    color: #161616;
+  }
+
   /* Desktop: stacking panels. Each artist is a full-height opaque panel stuck under the header, so
      the next one slides up over it. Off on tablets and phones, on short windows (the panel's content
      must fit) and for reduced motion. The last panel is not sticky: it scrolls away normally. */
@@ -173,7 +229,7 @@ const artistsText = t("edition.artistsText").replace("{n}", String(new Set(artis
     margin: 20px 0 0;
     font-size: 19px;
     max-width: 56ch;
-    color: var(--fz-cream);
+    color: var(--fz-text);
   }
 
   @media (max-width: 720px) {

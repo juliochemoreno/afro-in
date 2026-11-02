@@ -26,13 +26,13 @@ const { href, image, position = "center", kicker, range, name, place, linkText }
   </span>
   <span class="stop-link-bottom">
     <span class="stop-link-range">{range}</span>
-    <span class="stop-link-title">
-      <span class="fz-display stop-link-name">{name}</span>
+    <span class="fz-display stop-link-name">{name}</span>
+    <span class="stop-link-place"><Pin /><span>{place}</span></span>
+    <span class="stop-link-cta">
+      {linkText}
       <span class="stop-link-arrow" aria-hidden="true">→</span>
     </span>
-    <span class="stop-link-place"><Pin /><span>{place}</span></span>
   </span>
-  <span class="stop-link-sr">{linkText}</span>
 </a>
 
 <style>
@@ -45,7 +45,7 @@ const { href, image, position = "center", kicker, range, name, place, linkText }
     border: 0;
     box-shadow: none;
     text-decoration: none;
-    color: #f3e9d2;
+    color: #ffffff;
   }
 
   .stop-link-card::before {
@@ -99,13 +99,6 @@ const { href, image, position = "center", kicker, range, name, place, linkText }
     font-size: clamp(15px, 1.4vw, 18px);
   }
 
-  .stop-link-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-  }
-
   .stop-link-name {
     font-size: clamp(32px, 4vw, 64px);
     line-height: 1.05;
@@ -127,12 +120,41 @@ const { href, image, position = "center", kicker, range, name, place, linkText }
     text-overflow: ellipsis;
   }
 
+  /* The visible "open" cue, same as the "Dos territorios" cards: square cream button, gold on hover. */
+  .stop-link-cta {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: rgba(14, 10, 8, 0.45);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: clamp(14px, 1.2vw, 16px);
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
   .stop-link-arrow {
-    flex: none;
-    font-size: clamp(22px, 1.9vw, 24px);
     line-height: 1;
-    color: #e6b84a;
     transition: transform 0.2s ease;
+  }
+
+  .stop-link-card:hover .stop-link-cta,
+  .stop-link-card:focus-visible .stop-link-cta {
+    background: #e6b84a;
+    border-color: #e6b84a;
+    color: #161616;
+  }
+
+  .stop-link-photo {
+    transition: transform 0.6s ease;
+  }
+
+  .stop-link-card:hover .stop-link-photo,
+  .stop-link-card:focus-visible .stop-link-photo {
+    transform: scale(1.03);
   }
 
   .stop-link-card:hover .stop-link-arrow,
@@ -145,15 +167,6 @@ const { href, image, position = "center", kicker, range, name, place, linkText }
     outline-offset: 3px;
   }
 
-  .stop-link-sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
   @media (max-width: 1023px) {
     .stop-link-card {
       height: auto;
@@ -162,8 +175,14 @@ const { href, image, position = "center", kicker, range, name, place, linkText }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .stop-link-arrow {
+    .stop-link-arrow,
+    .stop-link-cta,
+    .stop-link-photo {
       transition: none;
+    }
+
+    .stop-link-card:hover .stop-link-photo {
+      transform: none;
     }
   }
 </style>

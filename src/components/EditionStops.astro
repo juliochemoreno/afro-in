@@ -22,13 +22,13 @@ const t = useTranslations(lang);
       <Image src={stop.cardImage} alt="" widths={[480, 960]} sizes="(max-width: 1023px) 100vw, 50vw" class="edition-stop-photo" style={`object-position: ${stop.cardPosition}`} />
       <span class="edition-stop-bottom">
         <span class="edition-stop-range">{stop.range}</span>
-        <span class="edition-stop-title">
-          <span class="fz-display edition-stop-name">{stop.name}</span>
+        <span class="fz-display edition-stop-name">{stop.name}</span>
+        <span class="edition-stop-place"><Pin /><span>{stop.place}</span></span>
+        <span class="edition-stop-cta">
+          {stop.comingSoon ? t("edition.comingSoon") : t("edition.viewProgram")}
           <span class="edition-stop-arrow" aria-hidden="true">→</span>
         </span>
-        <span class="edition-stop-place"><Pin /><span>{stop.place}</span></span>
       </span>
-      <span class="edition-stop-sr">{stop.comingSoon ? t("edition.comingSoon") : t("edition.viewProgram")}</span>
     </a>
   ))}
 </div>
@@ -65,7 +65,7 @@ const t = useTranslations(lang);
 }
 
 .fz .edition-stop {
-  color: var(--fz-cream);
+  color: var(--fz-text);
 }
 
 .edition-stop::before {
@@ -100,18 +100,11 @@ const t = useTranslations(lang);
   font-size: clamp(15px, 1.4vw, 18px);
 }
 
-.edition-stop-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
 .edition-stop-name {
   font-size: clamp(32px, 4vw, 64px);
   line-height: 1.05;
   white-space: nowrap;
-  color: #f3e9d2;
+  color: #ffffff;
 }
 
 .edition-stop-place {
@@ -129,12 +122,32 @@ const t = useTranslations(lang);
   text-overflow: ellipsis;
 }
 
+/* The visible "open" cue: a square cream button that turns gold on hover. */
+.edition-stop-cta {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(14, 10, 8, 0.45);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: clamp(14px, 1.2vw, 16px);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
 .edition-stop-arrow {
-  flex: none;
-  font-size: clamp(22px, 1.9vw, 24px);
   line-height: 1;
-  color: #e6b84a;
   transition: transform 0.2s ease;
+}
+
+.edition-stop:hover .edition-stop-cta,
+.edition-stop:focus-visible .edition-stop-cta {
+  background: #e6b84a;
+  border-color: #e6b84a;
+  color: #161616;
 }
 
 .edition-stop:hover .edition-stop-arrow,
@@ -142,23 +155,29 @@ const t = useTranslations(lang);
   transform: translateX(4px);
 }
 
+.edition-stop-photo {
+  transition: transform 0.6s ease;
+}
+
+.edition-stop:hover .edition-stop-photo,
+.edition-stop:focus-visible .edition-stop-photo {
+  transform: scale(1.03);
+}
+
 .edition-stop:focus-visible {
   outline: 2px solid #e6b84a;
   outline-offset: 3px;
 }
 
-.edition-stop-sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .edition-stop-arrow {
+  .edition-stop-arrow,
+  .edition-stop-cta,
+  .edition-stop-photo {
     transition: none;
+  }
+
+  .edition-stop:hover .edition-stop-photo {
+    transform: none;
   }
 }
 

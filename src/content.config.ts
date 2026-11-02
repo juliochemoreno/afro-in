@@ -140,6 +140,8 @@ const tour2027 = defineCollection({
               // Listed only in the artist's own dates, not in the day's agenda.
               appearanceOnly: z.boolean().default(false),
               note: z.string().optional(),
+              // The activity's poster: a thumbnail beside it that opens full size.
+              poster: image().optional(),
             })
           ),
         })
