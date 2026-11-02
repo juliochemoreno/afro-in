@@ -7,6 +7,8 @@ declare namespace Cloudflare {
 		BOLD_SECRET_KEY: string;
 		ADMIN_USER: string;
 		ADMIN_PASSWORD: string;
+		RESEND_API_KEY?: string;
+		EMAIL_SUBJECT_PREFIX?: string;
 		MEDIA: R2Bucket;
 		DB: D1Database;
 		ASSETS: Fetcher;

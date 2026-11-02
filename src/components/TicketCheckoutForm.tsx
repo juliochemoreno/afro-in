@@ -132,6 +132,8 @@ export default function TicketCheckoutForm({
           quantity: qty,
           // Lets the server refuse if the price moved on; it never sets the charge.
           expectedUnitPrice: price,
+          // The confirmation email is written in this language.
+          lang,
           buyer: {
             name: form.name,
             email: form.email,

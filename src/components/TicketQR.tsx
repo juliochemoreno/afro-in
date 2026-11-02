@@ -30,7 +30,9 @@ declare global {
 let qrSdkPromise: Promise<void> | null = null;
 function loadQrSDK(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
-  if (window.qrcode) return Promise.resolve();
+  // typeof, not a truthiness check: qrcode-generator's own types (used by the
+  // email on the server) declare a global qrcode that is always defined.
+  if (typeof window.qrcode === "function") return Promise.resolve();
   if (qrSdkPromise) return qrSdkPromise;
   qrSdkPromise = new Promise<void>((resolve, reject) => {
     const s = document.createElement("script");

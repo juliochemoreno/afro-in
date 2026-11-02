@@ -26,6 +26,13 @@ const clean = (s: unknown, max = 200): string | null => {
   return v ? v.slice(0, max) : null;
 };
 
+export type OrderLocale = "es" | "en" | "fr";
+
+/** The buyer's language for the order email; anything unknown is Spanish. */
+export function orderLocale(raw: unknown): OrderLocale {
+  return raw === "en" || raw === "fr" ? raw : "es";
+}
+
 // Crockford base32 (no I/L/O/U) — unambiguous for manual door entry.
 const CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const CODE_LENGTH = 10;
@@ -300,6 +307,8 @@ export interface TicketCheckoutInput {
   // PriceChangedError when it differs; the charge is always computed here.
   expectedUnitPrice?: number | string | null;
   buyer?: { name?: string; email?: string; phone?: string | null };
+  /** Page language (es/en/fr): the language of the confirmation email. */
+  lang?: string;
 }
 
 export interface CreatedTicketOrder {
@@ -455,8 +464,8 @@ export async function createPendingTicketOrder(
         (bold_order_id, status, provider, provider_status, currency, amount,
          event_id, event_name, unit_price, quantity,
          buyer_name, buyer_email, buyer_phone, access_token,
-         tickets_issued, paid_at, stage_id)
-       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17
+         tickets_issued, paid_at, stage_id, locale)
+       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18
        FROM events e
        WHERE e.id = ?7
          AND (SELECT COUNT(*) FROM tickets WHERE event_id = e.id)
@@ -481,7 +490,8 @@ export async function createPendingTicketOrder(
       accessToken,
       isFree ? 1 : 0,
       paidAt,
-      stageId
+      stageId,
+      orderLocale(input.lang)
     );
 
   // Free orders are completed at once: the order and its tickets are written in
@@ -521,6 +531,7 @@ export interface CourtesyTicketInput {
   eventId?: number | string;
   quantity?: number | string;
   buyer?: { name?: string; email?: string; phone?: string | null };
+  lang?: string;
 }
 
 export interface CreatedCourtesyOrder {
@@ -579,11 +590,11 @@ export async function createCourtesyTicketOrder(
         (bold_order_id, status, provider, provider_status, currency, amount,
          event_id, event_name, unit_price, quantity,
          buyer_name, buyer_email, buyer_phone, access_token,
-         tickets_issued, paid_at)
+         tickets_issued, paid_at, locale)
        VALUES (?, 'completed', 'courtesy', 'COMPLIMENTARY', 'COP', 0,
                ?, ?, 0, ?,
                ?, ?, ?, ?,
-               1, CURRENT_TIMESTAMP)`
+               1, CURRENT_TIMESTAMP, ?)`
     )
     .bind(
       orderId,
@@ -593,7 +604,8 @@ export async function createCourtesyTicketOrder(
       name,
       email,
       clean(input.buyer?.phone, 40),
-      accessToken
+      accessToken,
+      orderLocale(input.lang)
     );
 
   // Order + tickets in one batch (single transaction): all or nothing.
@@ -631,6 +643,7 @@ interface TicketOrderRow {
   access_token: string;
   paid_at: string | null;
   created_at: string;
+  locale?: string | null;
 }
 
 /**
