@@ -127,19 +127,19 @@ Workflow classification: `sequential user-driven` (add to cart → checkout → 
 Visual work with no new logic: `npm test` must still pass (`tests/checkout-fields.test.ts` covers field helpers). Manual regression after implementation: filters, quick add, size validation, cart quantities, checkout validation, Bold test-mode redirect, `/pedido` states, `/tienda`, `/en/store`, `/fr/boutique`, `/checkout`, `/en/checkout`, `/fr/paiement`, home store section unchanged.
 
 ## Validation Checklist
-- [ ] **Level 1 — Lint & Format:** no linter configured; covered by the build.
-- [ ] **Level 2 — Type Check:** `npx tsc --noEmit`
-- [ ] **Level 2.5 — Code Review:** `code-review` skill on the changed files; artifact saved in `.agents/code-reviews/d30-store-redesign.md`.
-- [ ] **Level 3 — Unit Tests:** `npm test`
-- [ ] **Level 4 — Integration:** `npm run check`; local dev with the main checkout's env; the six store URLs above return 200.
-- [ ] **Level 5 — Human Review:** Julio, locally in his browser, before merge to `dev`: store list, one product (with and without sizes), cart, checkout up to the payment screen without paying, `/pedido`, in es/en/fr, desktop and 375 px. If skipped, the redesign ships unseen.
+- [x] **Level 1 — Lint & Format:** no linter configured; covered by the build. (waived: no linter configured)
+- [x] **Level 2 — Type Check:** `npx tsc --noEmit`
+- [x] **Level 2.5 — Code Review:** `code-review` skill on the changed files; artifact saved in `.agents/code-reviews/d30-store-redesign.md`.
+- [x] **Level 3 — Unit Tests:** `npm test`
+- [x] **Level 4 — Integration:** `npm run check`; local dev with the main checkout's env; the six store URLs above return 200.
+- [x] **Level 5 — Human Review:** Julio, locally in his browser, before merge to `dev`: store list, one product (with and without sizes), cart, checkout up to the payment screen without paying, `/pedido`, in es/en/fr, desktop and 375 px. If skipped, the redesign ships unseen. (done by Julio locally on 2026-11-02)
 
 ## Acceptance Criteria
-- [ ] Store list, product, cart, checkout and order pages are dark, in the 2027 style (Anton titles, square corners, red buttons, white text, gold price once).
-- [ ] Home and `/tienda` use one shared card component; no duplicated card CSS.
-- [ ] Checkout inputs have icons and placeholders that do not repeat labels.
-- [ ] No change to payment amounts, shipping logic, Bold, API or schema; form scripts/validation unchanged in the diff.
-- [ ] No horizontal scroll at 375 px; `npx tsc --noEmit`, `npm test`, `npm run check` pass.
+- [x] Store list, product, cart, checkout and order pages are dark, in the 2027 style (Anton titles, square corners, red buttons, white text, gold price once).
+- [x] Home and `/tienda` use one shared card component; no duplicated card CSS. (home store section not re-checked visually after the change; it renders the same component with `showQuickAdd={false}`)
+- [x] Checkout inputs have icons and placeholders that do not repeat labels.
+- [x] No change to payment amounts, shipping logic, Bold, API or schema; form scripts/validation unchanged in the diff.
+- [x] No horizontal scroll at 375 px; `npx tsc --noEmit`, `npm test`, `npm run check` pass.
 
 ## Confidence Score: 8/10
 - **Strengths:** direction approved on a preview; card already built in D17; thin page wrappers; no backend work.
