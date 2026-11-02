@@ -41,6 +41,7 @@ test("calParts never shifts the day with the runtime time zone", () => {
 test("eventTime formats the wall-clock time", () => {
   assert.equal(eventTime("2027-01-15T20:00", "en"), "8:00 PM");
   assert.equal(eventTime("2027-01-15T20:00", "fr"), "20:00");
+  assert.equal(eventTime("2027-01-15T16:00", "es"), "4:00 p. m.");
   assert.equal(eventTime("2027-01-15", "es"), null);
 });
 

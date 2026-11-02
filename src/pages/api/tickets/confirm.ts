@@ -1,6 +1,8 @@
 import type { APIRoute } from "astro";
 import { confirmBoldOrder, CONFIRM_TARGETS, type ConfirmResult } from "@/lib/bold";
 import { issueTicketsForOrder, getTicketOrderByBoldId } from "@/lib/tickets";
+import { sendTicketEmail } from "@/lib/ticketEmailSend";
+import { orderRef } from "@/lib/orderRef";
 
 export const prerender = false;
 
@@ -80,6 +82,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       view = await getTicketOrderByBoldId(env.DB, orderId);
     }
 
+    // Confirmation email, once per order (the webhook may send it first; the
+    // claim decides), after the response: it never delays or fails the receipt.
+    if (view.order?.status === "completed") {
+      locals.runtime.ctx?.waitUntil(
+        sendTicketEmail(env, orderId, { origin: new URL(request.url).origin })
+      );
+    }
+
     // D1 is the source of truth: the status shown is the order's status after
     // this confirmation, so a paid buyer is never shown "pending" when the
     // webhook already completed the order, and "completed" is never shown
@@ -92,7 +102,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         providerStatus: result.providerStatus,
         order: view.order
           ? {
-              id: view.order.id,
+              // What the buyer sees: never the sequential row id.
+              ref: orderRef(view.order.bold_order_id),
               event_name: view.order.event_name,
               quantity: view.order.quantity,
               amount: view.order.amount,

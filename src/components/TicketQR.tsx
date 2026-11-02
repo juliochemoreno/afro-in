@@ -1,47 +1,21 @@
 "use client";
 
 import * as React from "react";
+import qrcode from "qrcode-generator";
 import { calParts, eventDays } from "@/lib/eventDisplay";
 
-// Load a tiny QR generator from CDN at runtime (same pattern as the Bold SDK) so
-// we don't add an npm dependency. The ticket code is encoded entirely in the
-// browser — it never leaves the page — so no secret reaches the CDN.
-const QR_SDK =
-  "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
-// Subresource Integrity: the browser refuses the script if the CDN serves
-// anything other than this exact file.
-const QR_SDK_INTEGRITY =
-  "sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k";
-
-declare global {
-  interface Window {
-    // qrcode-generator UMD global (loaded from CDN at runtime)
-    qrcode?: (
-      typeNumber: number,
-      errorCorrectionLevel: "L" | "M" | "Q" | "H"
-    ) => {
-      addData: (data: string) => void;
-      make: () => void;
-      createDataURL: (cellSize?: number, margin?: number) => string;
-    };
+// The QR is drawn at render time with qrcode-generator (bundled, no CDN), so
+// it is in the server-rendered HTML and never depends on a third party. Same
+// content and settings as the email and the door scanner: the plain code, "M".
+function qrDataUrl(code: string): string | null {
+  try {
+    const qr = qrcode(0, "M");
+    qr.addData(code);
+    qr.make();
+    return qr.createDataURL(6, 6);
+  } catch {
+    return null;
   }
-}
-
-let qrSdkPromise: Promise<void> | null = null;
-function loadQrSDK(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (window.qrcode) return Promise.resolve();
-  if (qrSdkPromise) return qrSdkPromise;
-  qrSdkPromise = new Promise<void>((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = QR_SDK;
-    s.integrity = QR_SDK_INTEGRITY;
-    s.crossOrigin = "anonymous";
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("qr sdk failed"));
-    document.body.appendChild(s);
-  });
-  return qrSdkPromise;
 }
 
 interface Props {
@@ -77,25 +51,7 @@ export default function TicketQR({
   const cal = eventDate ? calParts(eventDate, lang) : null;
   // Multi-day event: "3 días" (Julio); the subtitle already gives the dates.
   const days = eventDate ? eventDays(eventDate, lang, eventEndDate) : null;
-  const [dataUrl, setDataUrl] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    loadQrSDK()
-      .then(() => {
-        if (cancelled || !window.qrcode) return;
-        const qr = window.qrcode(0, "M");
-        qr.addData(code);
-        qr.make();
-        if (!cancelled) setDataUrl(qr.createDataURL(6, 6));
-      })
-      .catch(() => {
-        /* fall back to code text only */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [code]);
+  const dataUrl = React.useMemo(() => qrDataUrl(code), [code]);
 
   return (
     <article className={`tix-stub ${used ? "used" : ""}`}>

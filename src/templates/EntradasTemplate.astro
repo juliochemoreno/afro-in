@@ -10,6 +10,7 @@ import TicketReceipt from "@/components/TicketReceipt";
 import TicketList from "@/components/TicketList";
 import type { TicketOrderView } from "@/lib/tickets";
 import { shortDateRange } from "@/lib/eventDisplay";
+import { orderRef } from "@/lib/orderRef";
 import { getTranslatedPath, useTranslations } from "@/i18n/utils";
 // Static asset (no astro:assets optimizing: SSR page, rule 4).
 import heroPhoto from "@/assets/img/2017/2017-afroin-img-1.jpg";
@@ -35,11 +36,17 @@ const navLinks = [
 const T_KEYS = [
   "tix.receipt.loading",
   "tix.receipt.success.title",
+  "tix.receipt.confirmed",
   "tix.receipt.success.text",
   "tix.receipt.pending.title",
   "tix.receipt.pending.text",
   "tix.receipt.failed.title",
   "tix.receipt.failed.text",
+  "tix.receipt.notfound.title",
+  "tix.receipt.notfound.text",
+  "tix.receipt.contact.whatsapp",
+  "tix.receipt.contact.email",
+  "tix.receipt.yourorder",
   "tix.receipt.event",
   "tix.receipt.number",
   "tix.receipt.yourtickets",
@@ -87,8 +94,10 @@ const tokenImage = tokenOrder?.event?.image_r2_key
     <section class="fz-photo-hero tx-hero tix-hero">
       <img src={heroPhoto.src} alt="" class="fz-photo-hero-img" decoding="async" />
       <div class="fz-wrap fz-photo-hero-content">
-        <p class="fz-display fz-gold tx-hero-kicker">AFRO IN</p>
-        <h1 class="fz-display tx-hero-title">{t("tix.receipt.yourtickets")}</h1>
+        {/* "Tus entradas" once there are tickets; TicketReceipt updates it client-side. */}
+        <h1 class="fz-display tx-hero-title">
+          {t(tokenCompleted ? "tix.receipt.yourtickets" : "tix.receipt.yourorder")}
+        </h1>
       </div>
     </section>
     <div class="tix-wrap">
@@ -96,12 +105,10 @@ const tokenImage = tokenOrder?.event?.image_r2_key
         tokenOrder ? (
           tokenCompleted ? (
             <div class="tix-success">
-              <div class="tix-success-head">
-                <div class="receipt-badge ok" aria-hidden="true">
-                  ✓
-                </div>
-                <h2>{t("tix.receipt.success.title")}</h2>
-              </div>
+              {/* The hero already says "Tus entradas": one small line, no second headline. */}
+              <p class="tix-confirmed">
+                <span aria-hidden="true">✓</span> {t("tix.receipt.confirmed")}
+              </p>
               <TicketList
                 client:load
                 eventName={tokenOrder.order!.event_name}
@@ -110,7 +117,7 @@ const tokenImage = tokenOrder?.event?.image_r2_key
                 eventDate={tokenOrder.event?.event_date ?? null}
                 eventEndDate={tokenOrder.event?.end_date ?? null}
                 lang={lang}
-                orderNumber={tokenOrder.order!.id}
+                orderNumber={orderRef(tokenOrder.order!.bold_order_id)}
                 tickets={tokenOrder.tickets}
                 permalink={permalink ?? null}
                 continueHref={eventsPath}
@@ -169,60 +176,74 @@ const tokenImage = tokenOrder?.event?.image_r2_key
   .tix-hero .tx-hero-title {
     font-size: clamp(44px, 7vw, 80px);
   }
+  /* The hero's container: content starts on the same edge as "Tus entradas". */
   .tix-wrap {
-    max-width: 640px;
+    max-width: calc(var(--fz-content-max) + 2 * var(--fz-gutter));
     margin: 0 auto;
-    padding: 40px 16px 0;
+    padding: 40px var(--fz-gutter) 0;
   }
 
-  /* Pending / failed / loading */
+  /* Pending / failed / not found: no frame, aligned to the page container. */
   .tix-page .receipt {
-    border: 1px solid var(--tx-accent);
-    text-align: center;
+    max-width: 560px;
+    padding: 8px 0 0;
+    text-align: left;
   }
-  .tix-page .receipt > * {
-    margin-left: auto;
-    margin-right: auto;
+  .tix-page .receipt-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
   }
-  .tix-page .receipt h2,
-  .tix-success-head h2 {
-    margin: 0 0 10px;
+  .tix-page .receipt h2 {
+    margin: 0;
     font-family: "Anton", var(--font-heading, "Outfit"), sans-serif;
     font-weight: 400;
-    font-size: clamp(34px, 6vw, 48px);
-    line-height: 1.05;
+    font-size: clamp(28px, 4.5vw, 38px);
+    line-height: 1.1;
     color: var(--tx-fg);
   }
-  .tix-page .receipt {
-    padding: clamp(24px, 6vw, 40px) clamp(16px, 5vw, 40px);
-    outline: 1px solid var(--tx-line);
-    outline-offset: -9px;
-  }
-  .tix-page .receipt-text {
-    margin: 0 auto 24px;
-    max-width: 44ch;
-    color: var(--tx-muted);
-  }
-  .tix-page .receipt-badge {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 14px;
-    border: 2px solid currentColor;
-    border-radius: 50%;
+  .tix-page .receipt-icon {
+    flex: none;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 26px;
-    background: transparent;
+    font-weight: 800;
+    font-size: 20px;
+    color: #fff;
+    background: var(--tx-surface);
   }
-  .tix-page .receipt-badge.ok {
-    color: var(--tx-accent);
+  .tix-page .receipt-icon.pending {
+    color: var(--tx-fg);
   }
-  .tix-page .receipt-badge.pending {
-    color: var(--tx-accent);
+  .tix-page .receipt-icon.fail {
+    background: var(--fz-red);
   }
-  .tix-page .receipt-badge.fail {
-    color: var(--fz-red);
+  .tix-page .receipt-text {
+    margin: 0 0 24px;
+    max-width: 48ch;
+    color: var(--tx-muted);
+  }
+  .tix-page .receipt-contact {
+    margin-bottom: 8px;
+  }
+  .tix-page .receipt-contact p {
+    margin: 12px 0 0;
+    font-size: 14px;
+    color: var(--tx-muted);
+  }
+  .tix-page .receipt-contact p a {
+    color: var(--tx-fg);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .tix-page .receipt .tix-continue {
+    color: var(--tx-fg);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 4px;
   }
   .tix-page .receipt-status {
     text-align: center;
@@ -260,8 +281,15 @@ const tokenImage = tokenOrder?.event?.image_r2_key
   .tix-success {
     text-align: center;
   }
-  .tix-success-head {
-    margin-bottom: 20px;
+  .tix-confirmed {
+    margin: 0 0 20px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--tx-fg);
+  }
+  .tix-confirmed span {
+    color: var(--tx-accent);
+    margin-right: 4px;
   }
   .tix-success .receipt-text {
     color: var(--tx-muted);
@@ -559,16 +587,17 @@ const tokenImage = tokenOrder?.event?.image_r2_key
   .tix-print {
     display: block;
     margin: 4px auto 28px;
-    padding: 10px 18px;
-    border: 1px solid var(--tx-accent);
-    background: transparent;
-    color: var(--tx-accent);
+    padding: 12px 20px;
+    border: 0;
+    border-radius: 0;
+    background: var(--fz-red);
+    color: #fff;
     font: inherit;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
   }
   .tix-print:hover {
-    color: var(--tx-fg);
+    filter: brightness(1.08);
   }
   .tix-savelink {
     max-width: 460px;
@@ -606,8 +635,8 @@ const tokenImage = tokenOrder?.event?.image_r2_key
     padding: 0 16px;
     min-height: 44px;
     background: transparent;
-    border: 1px solid var(--tx-accent);
-    color: var(--tx-accent);
+    border: 1px solid var(--tx-field-line);
+    color: var(--tx-fg);
   }
   @media (max-width: 480px) {
     .tix-savelink-row {
@@ -620,6 +649,12 @@ const tokenImage = tokenOrder?.event?.image_r2_key
   .tix-page .tix-continue {
     display: inline-block;
     margin-top: 28px;
+  }
+  .tix-list .tix-continue {
+    color: var(--tx-fg);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 4px;
   }
   .tix-list-side .tix-continue {
     align-self: center;
@@ -639,14 +674,10 @@ const tokenImage = tokenOrder?.event?.image_r2_key
 
   /* Desktop: tickets on the left, order details and actions on the right. */
   @media (min-width: 960px) {
-    /* Only the tickets view widens; pending/failed receipts keep 640px. */
-    .tix-wrap:has(.tix-list) {
-      max-width: 940px;
-    }
     .tix-list {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 340px;
-      gap: 56px;
+      grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+      gap: 48px;
       align-items: start;
     }
     .tix-list-side {
@@ -655,31 +686,61 @@ const tokenImage = tokenOrder?.event?.image_r2_key
       position: sticky;
       top: 110px;
       padding: 24px;
-      border: 1px solid var(--tx-line);
+      background: var(--tx-surface);
+    }
+    .tix-confirmed {
+      text-align: left;
+    }
+    /* No carousel on desktop: compact tickets side by side, all visible. */
+    .tix-slider-track {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 24px;
+      overflow: visible;
+      scroll-snap-type: none;
+      padding: 0;
+    }
+    .tix-slide {
+      flex: none;
+      width: auto;
+    }
+    .tix-slide .tix-stub,
+    .tix-single .tix-stub {
+      width: 100%;
+    }
+    .tix-single {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+    .tix-slider-arrow,
+    .tix-dots {
+      display: none;
     }
     .tix-list-head {
       order: 0;
       flex-direction: column;
       gap: 10px;
       max-width: none;
-      margin: 0 0 20px;
-      padding: 0 0 16px;
-      border-top: 0;
+      margin: 0 0 16px;
+      padding: 0;
+      border: 0;
       justify-content: flex-start;
     }
     .tix-list-row {
-      flex-direction: column;
-      gap: 2px;
-    }
-    .tix-list-row strong {
-      font-size: 17px;
+      justify-content: space-between;
     }
     .tix-list-side .tix-print {
       width: 100%;
-      margin: 0 0 24px;
+      margin: 0 0 28px;
     }
+    /* Spacing, no lines; the button copies the link (no long URL on show). */
     .tix-list-side .tix-savelink {
       max-width: none;
+      padding-top: 0;
+      border-top: 0;
+    }
+    .tix-list-side .tix-savelink-row input {
+      display: none;
     }
     .tix-list-side .tix-savelink-row {
       flex-direction: column;
@@ -688,12 +749,103 @@ const tokenImage = tokenOrder?.event?.image_r2_key
       width: 100%;
     }
     .tix-list-side .tix-continue {
-      align-self: stretch;
-      text-align: center;
+      align-self: center;
+      margin-top: 24px;
     }
     .tix-single,
     .tix-slider {
       margin-bottom: 0;
+    }
+  }
+  .tix-event-head {
+    display: none;
+  }
+  /* On screen the event is said once, above the tickets; the order panel and
+     each ticket drop it (printed tickets keep it: screen only). Phones keep
+     the swipe carousel, one compact ticket at a time (good at the door). */
+  @media screen {
+    .tix-event-head {
+      display: block;
+      margin: 0 0 20px;
+      text-align: left;
+    }
+    .tix-event-name {
+      margin: 0;
+      font-family: "Anton", var(--font-heading, "Outfit"), sans-serif;
+      font-size: clamp(26px, 3vw, 36px);
+      line-height: 1.1;
+      color: var(--tx-fg);
+    }
+    .tix-event-sub {
+      margin: 6px 0 0;
+      color: var(--tx-muted);
+    }
+    .tix-list-row-event {
+      display: none;
+    }
+    .tix-list .tix-stub-name,
+    .tix-list .tix-stub-meta,
+    .tix-list .tix-stub-brand {
+      display: none;
+    }
+    /* Compact ticket: its number on the band, then QR and code. */
+    .tix-list .tix-stub-banner {
+      padding: 12px 16px;
+    }
+    .tix-list .tix-stub-top {
+      justify-content: center;
+      font-size: 13px;
+    }
+    .tix-list .tix-stub-body {
+      gap: 8px;
+      padding: 18px 16px 16px;
+    }
+    /* Order line: "Compra" left, the reference right; no lines. */
+    .tix-list-head {
+      order: 0;
+      max-width: none;
+      margin: 8px 0 16px;
+      padding: 0;
+      border: 0;
+    }
+    .tix-list-row {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .tix-savelink {
+      padding-top: 0;
+      border-top: 0;
+    }
+    /* The button copies the link: no long URL on show. */
+    .tix-savelink-row input:not(.show) {
+      display: none;
+    }
+    .tix-confirmed {
+      text-align: left;
+    }
+  }
+  @media screen and (max-width: 959px) {
+    .tix-list .tix-print {
+      width: 100%;
+      margin: 0 0 24px;
+    }
+    .tix-page .tix-savelink-row .btn {
+      width: 100%;
+    }
+    .tix-list .tix-continue {
+      align-self: center;
+    }
+  }
+  @media screen and (min-width: 960px) {
+    .tix-list .tix-stub-qr-box {
+      padding: 8px;
+    }
+    .tix-list .tix-stub-qr img,
+    .tix-list .tix-stub-qr-ph {
+      width: 140px;
+    }
+    .tix-list .tix-stub-code-value {
+      font-size: 18px;
     }
   }
   .tix-page :focus-visible {
@@ -717,7 +869,7 @@ const tokenImage = tokenOrder?.event?.image_r2_key
     footer,
     .tix-hero,
     .whatsapp-float,
-    .tix-success-head,
+    .tix-confirmed,
     .tix-list-head,
     .tix-print,
     .tix-savelink,
@@ -766,9 +918,6 @@ const tokenImage = tokenOrder?.event?.image_r2_key
     .tix-stub-cal {
       background: #fff;
       border: 1px solid #000;
-    }
-    .tix-stub-perf {
-      border-top-color: #000;
     }
     .tix-stub-perf::before,
     .tix-stub-perf::after {

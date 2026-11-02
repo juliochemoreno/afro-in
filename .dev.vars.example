@@ -15,3 +15,7 @@ ADMIN_PASSWORD=""
 # Bold.co keys: TEST mode keys only (local dev and Worker Previews)
 BOLD_API_KEY=""
 BOLD_SECRET_KEY=""
+
+# Resend API key for the ticket confirmation email: the DEV key, never the
+# production one. Empty = no email is sent (a warning is logged).
+RESEND_API_KEY=""

@@ -88,9 +88,11 @@ export function kickerDate(eventDate: string, lang: string, endDate?: string | n
 export function eventTime(eventDate: string, lang: string): string | null {
   if (!/T\d{2}:\d{2}/.test(eventDate)) return null;
   const d = wallClock(eventDate)!;
-  return tidy(
-    d.toLocaleTimeString(localeTag(lang), { hour: "numeric", minute: "2-digit", timeZone: "UTC" })
-  );
+  // Spaces only: the final dot of "p. m." belongs to the abbreviation (tidy
+  // would drop it, as it does for "ene.").
+  return d
+    .toLocaleTimeString(localeTag(lang), { hour: "numeric", minute: "2-digit", timeZone: "UTC" })
+    .replace(/[\u202f\u00a0]/g, " ");
 }
 
 /** "15 ene 2027": the event's day, short, in the page language. */
