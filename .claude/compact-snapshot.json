@@ -1,7 +1,10 @@
 {
-  "timestamp": "2026-06-23T05:08:38.071Z",
-  "branch": "main",
-  "uncommitted": "",
-  "activePlan": "bold-donation-method.md",
+  "timestamp": "2026-11-02T04:35:15.536Z",
+  "branch": "feat/admin-nav-groups",
+  "uncommitted": " M .claude/compact-snapshot.json\n?? .claude/launch.json",
+  "activePlan": "d9-programacion-2027.md",
+  "activePlanPath": ".agents/plans/d9-programacion-2027.md",
+  "step": null,
+  "plansDir": ".agents/plans",
   "inWorktree": false
 }
